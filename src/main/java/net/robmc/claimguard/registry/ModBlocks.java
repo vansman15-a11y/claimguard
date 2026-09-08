@@ -34,6 +34,11 @@ public class ModBlocks {
                             .strength(50.0f, 1200.0f) // hard to break/blast-resistant, like a claim block should be
                             .sound(SoundType.NETHERITE_BLOCK)
                             .lightLevel((state) -> 15) // it glows, matching the beacon-like top in your screenshot
+                            // The beacon model is see-through glass. Without noOcclusion the game
+                            // culls the touching faces of neighbouring blocks (assuming this cube
+                            // hides them), so you end up looking straight through into caves/void.
+                            .noOcclusion()
+                            .isRedstoneConductor((state, level, pos) -> false)
             )
     );
 
