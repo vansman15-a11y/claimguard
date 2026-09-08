@@ -20,9 +20,9 @@ public final class ClaimMenuClient {
         // If the upgrade screen is already open for this same core, keep the player
         // there and just refresh its numbers (this packet is also sent post-upgrade).
         if (current instanceof ClaimUpgradeScreen upgrade && upgrade.isFor(packet.corePos())) {
-            mc.setScreen(new ClaimUpgradeScreen(packet.corePos(), packet.tierOrdinal(), packet.claimName()));
+            mc.setScreen(new ClaimUpgradeScreen(packet.corePos(), packet.tierOrdinal(), packet.claimName(), packet.boundHere()));
             return;
         }
-        mc.setScreen(new ClaimMenuScreen(packet.corePos(), packet.tierOrdinal(), packet.claimName()));
+        mc.setScreen(new ClaimMenuScreen(packet.corePos(), packet.tierOrdinal(), packet.claimName(), packet.boundHere()));
     }
 }

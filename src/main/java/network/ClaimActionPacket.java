@@ -17,7 +17,9 @@ public class ClaimActionPacket {
     public enum Action {
         SHOW_BORDER,
         UPGRADE,
-        REMOVE
+        REMOVE,
+        BIND,
+        UNBIND
     }
 
     private final BlockPos corePos;
@@ -48,6 +50,8 @@ public class ClaimActionPacket {
                 case SHOW_BORDER -> ClaimActions.showBorder(player, packet.corePos);
                 case UPGRADE -> ClaimActions.tryUpgrade(player, packet.corePos);
                 case REMOVE -> ClaimActions.remove(player, packet.corePos);
+                case BIND -> ClaimActions.bind(player, packet.corePos);
+                case UNBIND -> ClaimActions.unbind(player, packet.corePos);
             }
         });
         context.setPacketHandled(true);

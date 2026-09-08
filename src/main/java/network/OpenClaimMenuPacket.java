@@ -20,11 +20,13 @@ public class OpenClaimMenuPacket {
     private final BlockPos corePos;
     private final int tierOrdinal;
     private final String claimName;
+    private final boolean boundHere;
 
-    public OpenClaimMenuPacket(BlockPos corePos, int tierOrdinal, String claimName) {
+    public OpenClaimMenuPacket(BlockPos corePos, int tierOrdinal, String claimName, boolean boundHere) {
         this.corePos = corePos;
         this.tierOrdinal = tierOrdinal;
         this.claimName = claimName;
+        this.boundHere = boundHere;
     }
 
     public BlockPos corePos() {
@@ -39,14 +41,19 @@ public class OpenClaimMenuPacket {
         return claimName;
     }
 
+    public boolean boundHere() {
+        return boundHere;
+    }
+
     public static void encode(OpenClaimMenuPacket packet, FriendlyByteBuf buf) {
         buf.writeBlockPos(packet.corePos);
         buf.writeVarInt(packet.tierOrdinal);
         buf.writeUtf(packet.claimName);
+        buf.writeBoolean(packet.boundHere);
     }
 
     public static OpenClaimMenuPacket decode(FriendlyByteBuf buf) {
-        return new OpenClaimMenuPacket(buf.readBlockPos(), buf.readVarInt(), buf.readUtf());
+        return new OpenClaimMenuPacket(buf.readBlockPos(), buf.readVarInt(), buf.readUtf(), buf.readBoolean());
     }
 
     public static void handle(OpenClaimMenuPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {

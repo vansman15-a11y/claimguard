@@ -19,19 +19,21 @@ import net.robmc.claimguard.network.ClaimGuardNetwork;
 public class ClaimMenuScreen extends Screen {
 
     private static final int PANEL_W = 230;
-    private static final int PANEL_H = 150;
+    private static final int PANEL_H = 176;
     private static final int PANEL_BG = 0xD0100C1A;
     private static final int PANEL_BORDER = 0xFF57C97A;
 
     private final BlockPos corePos;
     private final ClaimTier tier;
     private final String claimName;
+    private final boolean boundHere;
 
-    public ClaimMenuScreen(BlockPos corePos, int tierOrdinal, String claimName) {
+    public ClaimMenuScreen(BlockPos corePos, int tierOrdinal, String claimName, boolean boundHere) {
         super(Component.literal("Clan Beacon"));
         this.corePos = corePos;
         this.tier = ClaimTier.byIndex(tierOrdinal);
         this.claimName = claimName;
+        this.boundHere = boundHere;
     }
 
     @Override
@@ -40,7 +42,7 @@ public class ClaimMenuScreen extends Screen {
         int top = (this.height - PANEL_H) / 2;
         int btnLeft = cx - PANEL_W / 2 + 15;
         int btnW = PANEL_W - 30;
-        int y = top + 66;
+        int y = top + 62;
 
         addRenderableWidget(Button.builder(Component.literal("Show border (30s)"), b -> {
             ClaimGuardNetwork.CHANNEL.sendToServer(new ClaimActionPacket(corePos, ClaimActionPacket.Action.SHOW_BORDER));
@@ -48,8 +50,18 @@ public class ClaimMenuScreen extends Screen {
         }).bounds(btnLeft, y, btnW, 20).build());
 
         y += 24;
+        addRenderableWidget(Button.builder(
+                Component.literal(boundHere ? "Leave bind" : "Bind (revive here)"),
+                b -> {
+                    ClaimGuardNetwork.CHANNEL.sendToServer(new ClaimActionPacket(
+                            corePos, boundHere ? ClaimActionPacket.Action.UNBIND : ClaimActionPacket.Action.BIND));
+                    // server sends a fresh menu packet; screen refreshes
+                }
+        ).bounds(btnLeft, y, btnW, 20).build());
+
+        y += 24;
         addRenderableWidget(Button.builder(Component.literal("Upgrade"), b ->
-                minecraft.setScreen(new ClaimUpgradeScreen(corePos, tier.ordinal(), claimName))
+                minecraft.setScreen(new ClaimUpgradeScreen(corePos, tier.ordinal(), claimName, boundHere))
         ).bounds(btnLeft, y, btnW / 2 - 2, 20).build());
         addRenderableWidget(Button.builder(Component.literal("Remove"), b -> confirmRemove())
                 .bounds(btnLeft + btnW / 2 + 2, y, btnW / 2 - 2, 20).build());

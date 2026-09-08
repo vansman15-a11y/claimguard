@@ -11,6 +11,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.robmc.claimguard.ClaimGuard;
 import net.robmc.claimguard.claim.Claim;
 import net.robmc.claimguard.claim.ClaimManager;
+import net.robmc.claimguard.clan.ClanManager;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.TerritoryTitlePacket;
 
@@ -68,16 +69,25 @@ public class TerritoryEvents {
 
         if (currentCore != null) {
             lastClaimCore.put(player.getUUID(), currentCore);
-            showTitle(player, "Territory of " + currentClaim.get().displayName());
+            showTitle(player, "Territory of " + territoryName(currentClaim.get(), player.getServer()));
         } else {
             // They left a claim and aren't in a new one - show a farewell for the claim
             // they just walked out of (previousCore is never null in this branch).
             lastClaimCore.remove(player.getUUID());
             String leftName = manager.getClaimByCore(previousCore)
-                    .map(Claim::displayName)
-                    .orElse(Claim.PLACEHOLDER_CLAN_NAME);
+                    .map(claim -> territoryName(claim, player.getServer()))
+                    .orElse("this territory");
             showTitle(player, "Leaving territory of " + leftName);
         }
+    }
+
+    /**
+     * The name shown in territory messages: the owning clan's name if the claim
+     * belongs to a clan, otherwise the founder's player name.
+     */
+    private static String territoryName(Claim claim, MinecraftServer server) {
+        String clanName = ClanManager.get(server).clanNameOrNull(claim.getClanId());
+        return clanName != null ? clanName : getOwnerName(server, claim.getOwner());
     }
 
     /**
@@ -85,10 +95,8 @@ public class TerritoryEvents {
      * can't, which is why we always store the UUID (in Claim) and only look up the
      * display name at the moment we need to show it.
      *
-     * Currently unused - kept as the intended per-owner fallback for Claim.displayName()
-     * once claims can belong to a clan instead of a single player.
+     * Used as the fallback for {@link #territoryName} when a claim has no clan.
      */
-    @SuppressWarnings("unused")
     private static String getOwnerName(MinecraftServer server, UUID owner) {
         // If the owner is online right now, this is the simplest and most up-to-date source.
         ServerPlayer onlineOwner = server.getPlayerList().getPlayer(owner);

@@ -1,0 +1,29 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "claimguard:clan_charter"
+    ]
+  },
+  "criteria": {
+    "has_paper": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [{ "items": ["minecraft:paper"] }] }
+    },
+    "has_ink": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [{ "items": ["minecraft:ink_sac"] }] }
+    },
+    "has_banner": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [{ "tag": "minecraft:banners" }] }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": { "recipe": "claimguard:clan_charter" }
+    }
+  },
+  "requirements": [
+    ["has_paper", "has_ink", "has_banner", "has_the_recipe"]
+  ]
+}

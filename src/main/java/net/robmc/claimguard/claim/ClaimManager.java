@@ -55,8 +55,8 @@ public class ClaimManager extends SavedData {
         );
     }
 
-    public Claim createClaim(BlockPos corePos, UUID owner) {
-        Claim claim = new Claim(corePos.immutable(), owner, ClaimTier.LEVEL_1);
+    public Claim createClaim(BlockPos corePos, UUID owner, UUID clanId) {
+        Claim claim = new Claim(corePos.immutable(), owner, ClaimTier.LEVEL_1, clanId);
         claimsByCore.put(claim.getCorePos(), claim);
         setDirty(); // tells Minecraft "something changed, please re-save this to disk"
         return claim;

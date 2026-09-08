@@ -76,7 +76,11 @@ public class ClaimCoreBlock extends BaseEntityBlock {
             return;
         }
 
-        Claim claim = manager.createClaim(pos, serverPlayer.getUUID());
+        java.util.UUID clanId = net.robmc.claimguard.clan.ClanManager.get(serverPlayer.server)
+                .getClanOf(serverPlayer.getUUID())
+                .map(net.robmc.claimguard.clan.Clan::getId)
+                .orElse(null);
+        Claim claim = manager.createClaim(pos, serverPlayer.getUUID(), clanId);
 
         if (level.getBlockEntity(pos) instanceof ClaimCoreBlockEntity blockEntity) {
             blockEntity.setOwner(serverPlayer.getUUID());

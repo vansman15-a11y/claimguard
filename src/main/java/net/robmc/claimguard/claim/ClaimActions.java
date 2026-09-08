@@ -8,6 +8,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.PacketDistributor;
+import net.robmc.claimguard.bind.BindManager;
+import net.robmc.claimguard.clan.ClanManager;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.OpenClaimMenuPacket;
 import net.robmc.claimguard.network.ShowClaimBorderPacket;
@@ -115,10 +117,35 @@ public final class ClaimActions {
         return claim;
     }
 
+    // --- bindstone ---
+
+    public static void bind(ServerPlayer player, BlockPos corePos) {
+        Optional<Claim> claim = ownedClaim(player, corePos);
+        if (claim.isEmpty()) {
+            return;
+        }
+        BindManager.get(player.server).setBind(player.getUUID(), corePos, player.serverLevel().dimension());
+        player.displayClientMessage(Component.literal("Bound to this claim. You'll revive here when you die."), false);
+        sendMenu(player, claim.get());
+    }
+
+    public static void unbind(ServerPlayer player, BlockPos corePos) {
+        Optional<Claim> claim = ownedClaim(player, corePos);
+        if (claim.isEmpty()) {
+            return;
+        }
+        BindManager.get(player.server).clearBind(player.getUUID());
+        player.displayClientMessage(Component.literal("Bind removed. You'll respawn at your bed, or world spawn if you have none."), false);
+        sendMenu(player, claim.get());
+    }
+
     private static void sendMenu(ServerPlayer player, Claim claim) {
+        String clanName = ClanManager.get(player.server).clanNameOrNull(claim.getClanId());
+        String name = clanName != null ? clanName : player.getGameProfile().getName();
+        boolean boundHere = BindManager.get(player.server).isBoundTo(player.getUUID(), claim.getCorePos());
         ClaimGuardNetwork.CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
-                new OpenClaimMenuPacket(claim.getCorePos(), claim.getTier().ordinal(), claim.displayName())
+                new OpenClaimMenuPacket(claim.getCorePos(), claim.getTier().ordinal(), name, boundHere)
         );
     }
 

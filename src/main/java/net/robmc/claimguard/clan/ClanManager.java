@@ -84,6 +84,15 @@ public class ClanManager extends SavedData {
         return Optional.ofNullable(clansById.get(clanId));
     }
 
+    /** Clan name for an id, or null if the id is null / unknown. */
+    public String clanNameOrNull(UUID clanId) {
+        if (clanId == null) {
+            return null;
+        }
+        Clan clan = clansById.get(clanId);
+        return clan == null ? null : clan.getName();
+    }
+
     public Optional<Clan> getClanByName(String name) {
         return clansById.values().stream()
                 .filter(c -> c.getName().equalsIgnoreCase(name))

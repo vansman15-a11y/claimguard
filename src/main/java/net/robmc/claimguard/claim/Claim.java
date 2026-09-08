@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.phys.AABB;
 
+import javax.annotation.Nullable;
 import java.util.UUID;
 
 /**
@@ -16,27 +17,22 @@ import java.util.UUID;
  */
 public class Claim {
 
-    /**
-     * Name shown for every claim until a real clan system exists ("Rangers" is the
-     * server's clan). FUTURE: replace {@link #displayName()} with a per-claim clan
-     * lookup and fall back to the owner's name for un-clanned claims.
-     */
-    public static final String PLACEHOLDER_CLAN_NAME = "Rangers";
-
     private final BlockPos corePos;
     private final UUID owner;
     private ClaimTier tier;
+    /** The clan that owns this claim (the founder's clan when the core was placed), or null. */
+    @Nullable
+    private UUID clanId;
 
-    // FUTURE: when the clan system exists, add a `UUID clanId` (or similar) field here
-    // and let ClaimManager check clan membership in addition to (or instead of) owner UUID.
     // FUTURE: when bed-style respawn/waypoint is added, this is the natural place to store
     // "this is the claim the player last set as their spawn point" - probably as a flag here,
     // or as a separate per-player mapping in ClaimManager pointing at a corePos.
 
-    public Claim(BlockPos corePos, UUID owner, ClaimTier tier) {
+    public Claim(BlockPos corePos, UUID owner, ClaimTier tier, @Nullable UUID clanId) {
         this.corePos = corePos;
         this.owner = owner;
         this.tier = tier;
+        this.clanId = clanId;
     }
 
     public BlockPos getCorePos() {
@@ -45,6 +41,15 @@ public class Claim {
 
     public UUID getOwner() {
         return owner;
+    }
+
+    @Nullable
+    public UUID getClanId() {
+        return clanId;
+    }
+
+    public void setClanId(@Nullable UUID clanId) {
+        this.clanId = clanId;
     }
 
     public ClaimTier getTier() {
@@ -57,11 +62,6 @@ public class Claim {
 
     public boolean isOwnedBy(UUID playerId) {
         return owner.equals(playerId);
-    }
-
-    /** The name shown in territory messages and the claim menu. */
-    public String displayName() {
-        return PLACEHOLDER_CLAN_NAME;
     }
 
     /** 1-based level number for display (LEVEL_1 -> "Level 1"). */
@@ -106,6 +106,9 @@ public class Claim {
         tag.putLong("CorePos", corePos.asLong());
         tag.putUUID("Owner", owner);
         tag.putInt("Tier", tier.ordinal());
+        if (clanId != null) {
+            tag.putUUID("ClanId", clanId);
+        }
         return tag;
     }
 
@@ -113,6 +116,7 @@ public class Claim {
         BlockPos pos = BlockPos.of(tag.getLong("CorePos"));
         UUID owner = tag.getUUID("Owner");
         ClaimTier tier = ClaimTier.byIndex(tag.getInt("Tier"));
-        return new Claim(pos, owner, tier);
+        UUID clanId = tag.hasUUID("ClanId") ? tag.getUUID("ClanId") : null;
+        return new Claim(pos, owner, tier, clanId);
     }
 }

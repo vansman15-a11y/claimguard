@@ -1,13 +1,16 @@
 {
-  "type": "minecraft:crafting_shapeless",
+  "type": "minecraft:crafting_shaped",
   "category": "misc",
-  "ingredients": [
-    { "item": "minecraft:paper" },
-    { "item": "minecraft:paper" },
-    { "item": "minecraft:paper" },
-    { "item": "minecraft:ink_sac" },
-    { "tag": "minecraft:banners" }
+  "pattern": [
+    " B ",
+    "PIP",
+    " P "
   ],
+  "key": {
+    "B": { "tag": "minecraft:banners" },
+    "P": { "item": "minecraft:paper" },
+    "I": { "item": "minecraft:ink_sac" }
+  },
   "result": {
     "item": "claimguard:clan_charter"
   }

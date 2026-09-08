@@ -26,12 +26,14 @@ public class ClaimUpgradeScreen extends Screen {
     private final BlockPos corePos;
     private final ClaimTier current;
     private final String claimName;
+    private final boolean boundHere;
 
-    public ClaimUpgradeScreen(BlockPos corePos, int tierOrdinal, String claimName) {
+    public ClaimUpgradeScreen(BlockPos corePos, int tierOrdinal, String claimName, boolean boundHere) {
         super(Component.literal("Beacon Upgrades"));
         this.corePos = corePos;
         this.current = ClaimTier.byIndex(tierOrdinal);
         this.claimName = claimName;
+        this.boundHere = boundHere;
     }
 
     /** Used by ClaimMenuClient to decide whether a refresh packet belongs to this screen. */
@@ -55,7 +57,7 @@ public class ClaimUpgradeScreen extends Screen {
         addRenderableWidget(confirm);
 
         addRenderableWidget(Button.builder(Component.literal("Back"), b ->
-                minecraft.setScreen(new ClaimMenuScreen(corePos, current.ordinal(), claimName))
+                minecraft.setScreen(new ClaimMenuScreen(corePos, current.ordinal(), claimName, boundHere))
         ).bounds(cx + 2, y, btnW / 2 - 2, 20).build());
     }
 

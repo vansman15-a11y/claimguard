@@ -110,5 +110,19 @@ public class ClaimGuardNetwork {
                 SetClanMotdPacket::decode,
                 SetClanMotdPacket::handle
         );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                OpenRespawnChoicePacket.class,
+                OpenRespawnChoicePacket::encode,
+                OpenRespawnChoicePacket::decode,
+                OpenRespawnChoicePacket::handle
+        );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                RespawnChoicePacket.class,
+                RespawnChoicePacket::encode,
+                RespawnChoicePacket::decode,
+                RespawnChoicePacket::handle
+        );
     }
 }

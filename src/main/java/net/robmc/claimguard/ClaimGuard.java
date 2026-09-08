@@ -8,6 +8,7 @@ import net.robmc.claimguard.registry.ModBlockEntities;
 import net.robmc.claimguard.registry.ModBlocks;
 import net.robmc.claimguard.registry.ModCreativeTabs;
 import net.robmc.claimguard.registry.ModItems;
+import net.robmc.claimguard.registry.ModRecipes;
 
 /**
  * The mod's entry point. @Mod("claimguard") is what actually tells Forge "this class
@@ -28,6 +29,7 @@ public class ClaimGuard {
         ModItems.register(modEventBus);
         ModBlockEntities.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
+        ModRecipes.register(modEventBus);
         ClaimGuardNetwork.register();
 
         // ProtectionEvents and TerritoryEvents register themselves via
