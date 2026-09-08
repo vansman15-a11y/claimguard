@@ -16,6 +16,13 @@ import java.util.UUID;
  */
 public class Claim {
 
+    /**
+     * Name shown for every claim until a real clan system exists ("Rangers" is the
+     * server's clan). FUTURE: replace {@link #displayName()} with a per-claim clan
+     * lookup and fall back to the owner's name for un-clanned claims.
+     */
+    public static final String PLACEHOLDER_CLAN_NAME = "Rangers";
+
     private final BlockPos corePos;
     private final UUID owner;
     private ClaimTier tier;
@@ -50,6 +57,16 @@ public class Claim {
 
     public boolean isOwnedBy(UUID playerId) {
         return owner.equals(playerId);
+    }
+
+    /** The name shown in territory messages and the claim menu. */
+    public String displayName() {
+        return PLACEHOLDER_CLAN_NAME;
+    }
+
+    /** 1-based level number for display (LEVEL_1 -> "Level 1"). */
+    public int getLevel() {
+        return tier.ordinal() + 1;
     }
 
     /** Horizontal half-width (X and Z) of the protected column, in blocks. */

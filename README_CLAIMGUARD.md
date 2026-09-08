@@ -40,15 +40,17 @@ Distant Horizons.
   build limit.
 - Other players can't break/place blocks, open containers, or interact with
   anything inside the cube. Server operators always bypass this.
-- Right-click your own core holding one of the upgrade items (the full cost is
-  taken from anywhere in your inventory):
-  - Level 1→2: 8 diamonds, radius 8→16
-  - Level 2→3: 16 diamonds, radius 16→24
-  - Level 3→4: 32 diamonds, radius 24→32  *(good "starter base" size, 65×65 footprint)*
-  - Level 4→5: 48 diamonds + 1 blaze rod, radius 32→42
-  - Level 5→6 (max): 64 diamonds + 2 blaze rods, radius 42→52  *(105×105 footprint)*
-- Right-click your own core **bare-handed** to flash the claim border in the
-  world for 30s; right-click again to hide it.
+- Right-click your own core → **Clan Beacon menu** with three actions:
+  - **Show border (30s)** – outlines the claim in the world; right-click the
+    core again (or reopen) to re-trigger.
+  - **Upgrade** → a table of every tier, its item cost, and the size it grants,
+    with the next step highlighted. *Confirm Upgrade* spends the items (taken
+    from anywhere in your inventory) and refreshes the table.
+  - **Remove** → a confirmation prompt; confirming breaks the core (it drops so
+    you can re-place it) and unprotects the area.
+  - Tiers: L1→2 8 diamond (r8→16); L2→3 16 diamond (r16→24); L3→4 32 diamond
+    (r24→32, "starter base"); L4→5 48 diamond + 1 blaze rod (r32→42);
+    L5→6 64 diamond + 2 blaze rods (r42→52, max).
 - Only the owner can break the core (which deletes the claim).
 - Claims persist through server restarts.
 

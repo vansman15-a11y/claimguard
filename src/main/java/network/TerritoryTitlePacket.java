@@ -1,8 +1,9 @@
 package net.robmc.claimguard.network;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import net.robmc.claimguard.client.TerritoryOverlayClient;
 
 import java.util.function.Supplier;
 
@@ -27,7 +28,10 @@ public class TerritoryTitlePacket {
 
     public static void handle(TerritoryTitlePacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
-        context.enqueueWork(() -> TerritoryOverlayClient.show(packet.text, packet.durationTicks));
+        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(
+                Dist.CLIENT,
+                () -> () -> net.robmc.claimguard.client.TerritoryOverlayClient.show(packet.text, packet.durationTicks)
+        ));
         context.setPacketHandled(true);
     }
 }

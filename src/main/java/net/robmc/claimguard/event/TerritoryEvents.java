@@ -68,30 +68,16 @@ public class TerritoryEvents {
 
         if (currentCore != null) {
             lastClaimCore.put(player.getUUID(), currentCore);
-            showTitle(player, "Territory of " + territoryName(currentClaim.get(), player.getServer()));
+            showTitle(player, "Territory of " + currentClaim.get().displayName());
         } else {
             // They left a claim and aren't in a new one - show a farewell for the claim
             // they just walked out of (previousCore is never null in this branch).
             lastClaimCore.remove(player.getUUID());
             String leftName = manager.getClaimByCore(previousCore)
-                    .map(claim -> territoryName(claim, player.getServer()))
-                    .orElse(PLACEHOLDER_CLAN_NAME);
+                    .map(Claim::displayName)
+                    .orElse(Claim.PLACEHOLDER_CLAN_NAME);
             showTitle(player, "Leaving territory of " + leftName);
         }
-    }
-
-    /**
-     * The name shown in the "Territory of ___" message.
-     *
-     * Right now every claim is treated as belonging to the "Rangers" clan, so this
-     * always returns that. FUTURE: once the clan system exists, read the owning clan
-     * off the claim (see the clanId note in Claim) and return its name here, falling
-     * back to {@link #getOwnerName} for any claim that isn't attached to a clan.
-     */
-    private static final String PLACEHOLDER_CLAN_NAME = "Rangers";
-
-    private static String territoryName(Claim claim, MinecraftServer server) {
-        return PLACEHOLDER_CLAN_NAME;
     }
 
     /**
@@ -99,8 +85,8 @@ public class TerritoryEvents {
      * can't, which is why we always store the UUID (in Claim) and only look up the
      * display name at the moment we need to show it.
      *
-     * Currently unused - kept as the intended per-owner fallback for {@link #territoryName}
-     * once claims can belong to a clan.
+     * Currently unused - kept as the intended per-owner fallback for Claim.displayName()
+     * once claims can belong to a clan instead of a single player.
      */
     @SuppressWarnings("unused")
     private static String getOwnerName(MinecraftServer server, UUID owner) {

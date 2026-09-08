@@ -1,8 +1,9 @@
 package net.robmc.claimguard.network;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import net.robmc.claimguard.client.ClaimBorderClient;
 
 import java.util.function.Supplier;
 
@@ -10,8 +11,8 @@ import java.util.function.Supplier;
  * Server -> client: "draw this box outline in the world for a few seconds."
  * Sent when a claim owner right-clicks their core bare-handed (see ClaimCoreBlock.use).
  *
- * Same cross-side pattern as TerritoryTitlePacket: the handler touches a
- * client-only class, but handle() only ever runs on the client.
+ * handle() only ever runs on the client; DistExecutor keeps the client-only
+ * ClaimBorderClient class off a dedicated server's classloader.
  */
 public class ShowClaimBorderPacket {
 
@@ -53,10 +54,13 @@ public class ShowClaimBorderPacket {
 
     public static void handle(ShowClaimBorderPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
-        context.enqueueWork(() -> ClaimBorderClient.toggle(
-                packet.minX, packet.minY, packet.minZ,
-                packet.maxX, packet.maxY, packet.maxZ,
-                packet.durationTicks
+        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(
+                Dist.CLIENT,
+                () -> () -> net.robmc.claimguard.client.ClaimBorderClient.toggle(
+                        packet.minX, packet.minY, packet.minZ,
+                        packet.maxX, packet.maxY, packet.maxZ,
+                        packet.durationTicks
+                )
         ));
         context.setPacketHandled(true);
     }

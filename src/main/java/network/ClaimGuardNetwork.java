@@ -33,5 +33,19 @@ public class ClaimGuardNetwork {
                 ShowClaimBorderPacket::decode,
                 ShowClaimBorderPacket::handle
         );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                OpenClaimMenuPacket.class,
+                OpenClaimMenuPacket::encode,
+                OpenClaimMenuPacket::decode,
+                OpenClaimMenuPacket::handle
+        );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                ClaimActionPacket.class,
+                ClaimActionPacket::encode,
+                ClaimActionPacket::decode,
+                ClaimActionPacket::handle
+        );
     }
 }

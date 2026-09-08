@@ -7,9 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -20,20 +18,15 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraftforge.network.PacketDistributor;
 import net.robmc.claimguard.block.entity.ClaimCoreBlockEntity;
 import net.robmc.claimguard.claim.Claim;
+import net.robmc.claimguard.claim.ClaimActions;
 import net.robmc.claimguard.claim.ClaimManager;
 import net.robmc.claimguard.claim.ClaimTier;
-import net.robmc.claimguard.network.ClaimGuardNetwork;
-import net.robmc.claimguard.network.ShowClaimBorderPacket;
 import net.robmc.claimguard.registry.ModBlockEntities;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -43,12 +36,6 @@ import java.util.Optional;
  * (see ClaimCoreBlockEntity) to remember its owner.
  */
 public class ClaimCoreBlock extends BaseEntityBlock {
-
-    /**
-     * How long the claim-border outline stays on screen after an owner right-clicks
-     * the core. Right-clicking the core again before this elapses hides it early.
-     */
-    private static final int BORDER_DISPLAY_TICKS = 600; // 30 seconds
 
     public ClaimCoreBlock(Properties properties) {
         super(properties);
@@ -101,17 +88,16 @@ public class ClaimCoreBlock extends BaseEntityBlock {
         );
     }
 
-    // --- Right-click: this is where upgrading happens ---
+    // --- Right-click: opens the claim menu for the owner ---
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (level.isClientSide()) {
-            // Returning SUCCESS here lets the client play the "interact" animation/sound
-            // without duplicating the actual logic - the server is doing the real work below.
+            // Returning SUCCESS lets the client play the interact animation; the server
+            // decides what actually happens (opens the menu, or denies) below.
             return InteractionResult.SUCCESS;
         }
 
-        ServerLevel serverLevel = (ServerLevel) level;
-        ClaimManager manager = ClaimManager.get(serverLevel);
+        ClaimManager manager = ClaimManager.get((ServerLevel) level);
         Optional<Claim> maybeClaim = manager.getClaimByCore(pos);
 
         if (maybeClaim.isEmpty()) {
@@ -120,124 +106,11 @@ public class ClaimCoreBlock extends BaseEntityBlock {
             return InteractionResult.PASS;
         }
 
-        Claim claim = maybeClaim.get();
-
-        if (!claim.isOwnedBy(player.getUUID())) {
-            player.displayClientMessage(Component.literal("This claim belongs to someone else."), true);
-            return InteractionResult.FAIL;
+        if (player instanceof ServerPlayer serverPlayer) {
+            // Owner check, menu packet, and everything the menu triggers live in ClaimActions.
+            ClaimActions.openMenu(serverPlayer, pos);
         }
-
-        ItemStack held = player.getItemInHand(hand);
-
-        // Bare-handed right-click by the owner: flash the claim's borders in the world
-        // for a few seconds so they can see exactly what's protected. Works at any tier.
-        if (held.isEmpty() && player instanceof ServerPlayer serverPlayer) {
-            AABB bounds = claim.getBounds(level.getMinBuildHeight(), level.getMaxBuildHeight());
-            ClaimGuardNetwork.CHANNEL.send(
-                    PacketDistributor.PLAYER.with(() -> serverPlayer),
-                    new ShowClaimBorderPacket(
-                            (int) bounds.minX, (int) bounds.minY, (int) bounds.minZ,
-                            (int) bounds.maxX, (int) bounds.maxY, (int) bounds.maxZ,
-                            BORDER_DISPLAY_TICKS
-                    )
-            );
-            return InteractionResult.SUCCESS;
-        }
-
-        ClaimTier currentTier = claim.getTier();
-        List<ItemStack> cost = currentTier.getUpgradeCost();
-
-        if (cost.isEmpty()) {
-            player.displayClientMessage(Component.literal("This claim is already at maximum size."), true);
-            return InteractionResult.FAIL;
-        }
-
-        // Holding one of the required items is the "try to upgrade" trigger; the rest
-        // of the cost is then checked/consumed from anywhere in the player's inventory.
-        boolean holdingACostItem = cost.stream().anyMatch(c -> held.is(c.getItem()));
-        if (!holdingACostItem) {
-            player.displayClientMessage(Component.literal(
-                    "Current size: " + describeArea(currentTier)
-                            + ". Hold " + describeCost(cost) + " and right-click to upgrade."
-            ), true);
-            return InteractionResult.PASS;
-        }
-
-        if (!hasAll(player, cost)) {
-            player.displayClientMessage(Component.literal(
-                    "Upgrade costs " + describeCost(cost) + ". " + describeShortfall(player, cost)
-            ), true);
-            return InteractionResult.FAIL;
-        }
-
-        consumeAll(player, cost);
-        manager.upgrade(pos);
-
-        ClaimTier newTier = manager.getClaimByCore(pos).get().getTier();
-        player.displayClientMessage(Component.literal(
-                "Claim upgraded! New protected area: " + describeArea(newTier)
-        ), false);
-
         return InteractionResult.CONSUME;
-    }
-
-    // --- multi-item upgrade cost helpers ---
-
-    /** "48x Diamond and 1x Blaze Rod" */
-    private static String describeCost(List<ItemStack> cost) {
-        List<String> parts = new ArrayList<>();
-        for (ItemStack stack : cost) {
-            parts.add(stack.getCount() + "x " + stack.getHoverName().getString());
-        }
-        return String.join(" and ", parts);
-    }
-
-    /** "You have 30 Diamond, 0 Blaze Rod." - only lists the items still short. */
-    private static String describeShortfall(Player player, List<ItemStack> cost) {
-        List<String> parts = new ArrayList<>();
-        for (ItemStack stack : cost) {
-            int have = countItem(player, stack.getItem());
-            if (have < stack.getCount()) {
-                parts.add("you have " + have + " " + stack.getHoverName().getString());
-            }
-        }
-        return parts.isEmpty() ? "" : String.join(", ", parts) + ".";
-    }
-
-    private static boolean hasAll(Player player, List<ItemStack> cost) {
-        for (ItemStack stack : cost) {
-            if (countItem(player, stack.getItem()) < stack.getCount()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static int countItem(Player player, Item item) {
-        Inventory inv = player.getInventory();
-        int total = 0;
-        for (int i = 0; i < inv.getContainerSize(); i++) {
-            ItemStack stack = inv.getItem(i);
-            if (stack.is(item)) {
-                total += stack.getCount();
-            }
-        }
-        return total;
-    }
-
-    private static void consumeAll(Player player, List<ItemStack> cost) {
-        Inventory inv = player.getInventory();
-        for (ItemStack needed : cost) {
-            int remaining = needed.getCount();
-            for (int i = 0; i < inv.getContainerSize() && remaining > 0; i++) {
-                ItemStack stack = inv.getItem(i);
-                if (stack.is(needed.getItem())) {
-                    int take = Math.min(remaining, stack.getCount());
-                    stack.shrink(take);
-                    remaining -= take;
-                }
-            }
-        }
     }
 
     // --- Breaking: only the owner (or an operator) should be able to remove the core ---

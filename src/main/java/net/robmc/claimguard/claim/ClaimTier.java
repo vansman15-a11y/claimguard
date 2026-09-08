@@ -57,6 +57,27 @@ public enum ClaimTier {
         return upgradeCost.isEmpty();
     }
 
+    /** Full-height footprint edge length in blocks, e.g. "65x65". */
+    public String describeFootprint() {
+        int size = radius * 2 + 1;
+        return size + "x" + size;
+    }
+
+    /** Human-readable upgrade cost, e.g. "48 Diamond + 1 Blaze Rod" ("-" at max tier). */
+    public String describeUpgradeCost() {
+        if (upgradeCost.isEmpty()) {
+            return "-";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (ItemStack stack : upgradeCost) {
+            if (sb.length() > 0) {
+                sb.append(" + ");
+            }
+            sb.append(stack.getCount()).append(" ").append(stack.getHoverName().getString());
+        }
+        return sb.toString();
+    }
+
     /** Returns the next tier up, or null if this is already the max tier. */
     public ClaimTier next() {
         int nextIndex = this.ordinal() + 1;
