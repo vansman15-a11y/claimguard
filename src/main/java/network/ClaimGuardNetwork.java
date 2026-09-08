@@ -26,5 +26,12 @@ public class ClaimGuardNetwork {
                 TerritoryTitlePacket::decode,
                 TerritoryTitlePacket::handle
         );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                ShowClaimBorderPacket.class,
+                ShowClaimBorderPacket::encode,
+                ShowClaimBorderPacket::decode,
+                ShowClaimBorderPacket::handle
+        );
     }
 }

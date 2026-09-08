@@ -70,8 +70,13 @@ public class TerritoryEvents {
             lastClaimCore.put(player.getUUID(), currentCore);
             showTitle(player, "Territory of " + territoryName(currentClaim.get(), player.getServer()));
         } else {
-            // They left a claim and aren't in a new one - go quiet, no message for now.
+            // They left a claim and aren't in a new one - show a farewell for the claim
+            // they just walked out of (previousCore is never null in this branch).
             lastClaimCore.remove(player.getUUID());
+            String leftName = manager.getClaimByCore(previousCore)
+                    .map(claim -> territoryName(claim, player.getServer()))
+                    .orElse(PLACEHOLDER_CLAN_NAME);
+            showTitle(player, "Leaving territory of " + leftName);
         }
     }
 

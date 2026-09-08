@@ -18,11 +18,15 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.network.PacketDistributor;
 import net.robmc.claimguard.block.entity.ClaimCoreBlockEntity;
 import net.robmc.claimguard.claim.Claim;
 import net.robmc.claimguard.claim.ClaimManager;
 import net.robmc.claimguard.claim.ClaimTier;
+import net.robmc.claimguard.network.ClaimGuardNetwork;
+import net.robmc.claimguard.network.ShowClaimBorderPacket;
 import net.robmc.claimguard.registry.ModBlockEntities;
 
 import javax.annotation.Nullable;
@@ -35,6 +39,9 @@ import java.util.Optional;
  * (see ClaimCoreBlockEntity) to remember its owner.
  */
 public class ClaimCoreBlock extends BaseEntityBlock {
+
+    /** How long the claim-border outline stays on screen after an owner right-clicks the core. */
+    private static final int BORDER_DISPLAY_TICKS = 200; // 10 seconds
 
     public ClaimCoreBlock(Properties properties) {
         super(properties);
@@ -113,6 +120,23 @@ public class ClaimCoreBlock extends BaseEntityBlock {
             return InteractionResult.FAIL;
         }
 
+        ItemStack held = player.getItemInHand(hand);
+
+        // Bare-handed right-click by the owner: flash the claim's borders in the world
+        // for a few seconds so they can see exactly what's protected. Works at any tier.
+        if (held.isEmpty() && player instanceof ServerPlayer serverPlayer) {
+            AABB bounds = claim.getBounds();
+            ClaimGuardNetwork.CHANNEL.send(
+                    PacketDistributor.PLAYER.with(() -> serverPlayer),
+                    new ShowClaimBorderPacket(
+                            (int) bounds.minX, (int) bounds.minY, (int) bounds.minZ,
+                            (int) bounds.maxX, (int) bounds.maxY, (int) bounds.maxZ,
+                            BORDER_DISPLAY_TICKS
+                    )
+            );
+            return InteractionResult.SUCCESS;
+        }
+
         ClaimTier currentTier = claim.getTier();
 
         if (currentTier.isMaxTier()) {
@@ -120,7 +144,6 @@ public class ClaimCoreBlock extends BaseEntityBlock {
             return InteractionResult.FAIL;
         }
 
-        ItemStack held = player.getItemInHand(hand);
         boolean holdingCorrectItem = held.is(currentTier.getUpgradeItem());
 
         if (!holdingCorrectItem) {
