@@ -4,7 +4,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.robmc.claimguard.registry.ModBlocks;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -119,6 +122,31 @@ public class ClaimManager extends SavedData {
 
     public List<Claim> getAllClaims() {
         return new ArrayList<>(claimsByCore.values());
+    }
+
+    /**
+     * Removes any claim whose core block is no longer present in the given chunk.
+     *
+     * A claim is normally deleted when its core is broken (see
+     * ClaimCoreBlock.playerWillDestroy), but a core can also disappear without
+     * that ever running - worldedit, /setblock, /fill, chunk regeneration, or (the
+     * reason this exists) an older buggy build that reverted the placed block but
+     * left the claim behind. Called every time a chunk loads, so those stale
+     * claims get cleaned up the moment the area is next loaded.
+     */
+    public void forgetClaimsWithMissingCore(ChunkAccess chunk) {
+        ChunkPos chunkPos = chunk.getPos();
+        List<BlockPos> stale = new ArrayList<>();
+        for (BlockPos core : claimsByCore.keySet()) {
+            boolean inThisChunk = (core.getX() >> 4) == chunkPos.x && (core.getZ() >> 4) == chunkPos.z;
+            if (inThisChunk && !chunk.getBlockState(core).is(ModBlocks.CLAIM_CORE.get())) {
+                stale.add(core);
+            }
+        }
+        for (BlockPos core : stale) {
+            claimsByCore.remove(core);
+            setDirty();
+        }
     }
 
     // --- NBT save/load: this is what makes claims survive a server restart ---

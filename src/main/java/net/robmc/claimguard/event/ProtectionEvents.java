@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
+import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.ExplosionEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -76,6 +77,17 @@ public class ProtectionEvents {
         }
         event.setCanceled(true);
         sendDenyMessage(player);
+    }
+
+    /**
+     * Cleans up claims whose core block has gone missing (worldedit, /setblock,
+     * chunk regen, or an old buggy build). Runs as each chunk loads.
+     */
+    @SubscribeEvent
+    public static void onChunkLoad(ChunkEvent.Load event) {
+        if (event.getLevel() instanceof ServerLevel serverLevel) {
+            ClaimManager.get(serverLevel).forgetClaimsWithMissingCore(event.getChunk());
+        }
     }
 
     /** Stops explosions (TNT, creepers, etc.) from destroying blocks inside a claim. */
