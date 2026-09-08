@@ -1,6 +1,5 @@
 package net.robmc.claimguard.event;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,7 +12,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.robmc.claimguard.ClaimGuard;
 import net.robmc.claimguard.claim.Claim;
 import net.robmc.claimguard.claim.ClaimManager;
-import net.robmc.claimguard.registry.ModBlocks;
 
 import java.util.Optional;
 
@@ -57,39 +55,6 @@ public class ProtectionEvents {
         }
         event.setCanceled(true);
         sendDenyMessage(player);
-    }
-
-    /**
-     * Enforces {@link ClaimManager#MIN_CLAIM_SPACING}: a new Claim Core can't be
-     * placed too close to an existing claim. Cancelling the place event makes Forge
-     * revert the block and hand the item back to the player automatically.
-     *
-     * Separate from {@link #onBlockPlace} because this rule is specific to the
-     * Claim Core block, not the general "don't build in someone's claim" rule.
-     */
-    @SubscribeEvent
-    public static void onClaimCorePlace(BlockEvent.EntityPlaceEvent event) {
-        if (!(event.getLevel() instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        if (!event.getPlacedBlock().is(ModBlocks.CLAIM_CORE.get())) {
-            return;
-        }
-
-        Optional<Claim> tooClose = ClaimManager.get(serverLevel).findClaimTooCloseTo(event.getPos());
-        if (tooClose.isEmpty()) {
-            return;
-        }
-
-        event.setCanceled(true);
-        if (event.getEntity() instanceof Player player) {
-            BlockPos core = tooClose.get().getCorePos();
-            player.displayClientMessage(Component.literal(
-                    "Too close to an existing claim (core at " + core.getX() + ", " + core.getY()
-                            + ", " + core.getZ() + "). Claims must be at least "
-                            + ClaimManager.MIN_CLAIM_SPACING + " blocks apart."
-            ), true);
-        }
     }
 
     /**

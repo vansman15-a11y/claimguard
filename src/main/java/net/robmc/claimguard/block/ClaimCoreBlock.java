@@ -52,6 +52,29 @@ public class ClaimCoreBlock extends BaseEntityBlock {
         }
 
         ClaimManager manager = ClaimManager.get((ServerLevel) level);
+
+        // Minimum-spacing rule: refuse the placement if another claim's core is
+        // within MIN_CLAIM_SPACING blocks. This has to happen BEFORE createClaim,
+        // otherwise the check would find the claim we just made and reject it.
+        Optional<Claim> tooClose = manager.findClaimTooCloseTo(pos);
+        if (tooClose.isPresent()) {
+            level.removeBlock(pos, false); // pull the block back out of the world
+            if (!serverPlayer.isCreative()) {
+                // Survival: the item was already spent placing the block - hand it back.
+                ItemStack refund = new ItemStack(stack.getItem());
+                if (!serverPlayer.getInventory().add(refund)) {
+                    serverPlayer.drop(refund, false);
+                }
+            }
+            BlockPos other = tooClose.get().getCorePos();
+            serverPlayer.displayClientMessage(Component.literal(
+                    "Too close to an existing claim (core at " + other.getX() + ", " + other.getY()
+                            + ", " + other.getZ() + "). Claims must be at least "
+                            + ClaimManager.MIN_CLAIM_SPACING + " blocks apart."
+            ), false);
+            return;
+        }
+
         Claim claim = manager.createClaim(pos, serverPlayer.getUUID());
 
         if (level.getBlockEntity(pos) instanceof ClaimCoreBlockEntity blockEntity) {
