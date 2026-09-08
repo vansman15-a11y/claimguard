@@ -54,6 +54,25 @@ Distant Horizons.
 - Only the owner can break the core (which deletes the claim).
 - Claims persist through server restarts.
 
+## Clans
+
+- Craft a **Clan Charter** (3 paper + ink sac + any banner). Right-click it to
+  become its owner (adds your own signature).
+- `/signature <player>` asks someone to sign. They reply `/accept`, `/deny`, or
+  `/block` (block = they never get a request from you again).
+- With enough signatures (**1 while testing**, 3 for real), right-click the
+  charter → **Create Clan** (name / tag / motto). Co-signers join as Members.
+  Clans hold up to 8.
+- `/clan` opens the roster: All / Online filter, one row per member. Right-click
+  a member for **Whisper** plus **Promote / Demote / Kick / Ban** (only the ones
+  your rank allows).
+  - Leader: everything. Officer: promote / demote / kick players below them (never
+    to their own rank, never ban). Member / Recruit: whisper + invite only.
+- Roster buttons: **Invite** (`/clan invite <player>` → they `/clan accept`),
+  **MOTD** (leader/officer can edit), **Ban list** (leader can unban).
+- Not yet linked to claims — clan membership doesn't affect claim protection or
+  the "Territory of …" message yet.
+
 ## Known placeholders
 
 - **Look**: renders as a vanilla beacon (glass shell + glowing core) with a full-height
