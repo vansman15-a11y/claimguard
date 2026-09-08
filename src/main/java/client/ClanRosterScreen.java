@@ -28,7 +28,7 @@ import java.util.function.Consumer;
 public class ClanRosterScreen extends Screen {
 
     private static final int PANEL_W = 320;
-    private static final int PANEL_H = 232;
+    private static final int PANEL_H = 256;
     private static final int PANEL_BG = 0xD0100C1A;
     private static final int PANEL_BORDER = 0xFF57C97A;
     private static final int ROW_H = 15;
@@ -37,6 +37,7 @@ public class ClanRosterScreen extends Screen {
     private final String clanName;
     private final String clanTag;
     private final String motd;
+    private final String raidWindow;
     private final ClanRank viewerRank;
     private final UUID viewerId;
     private final List<OpenClanRosterPacket.MemberRow> allMembers;
@@ -57,6 +58,7 @@ public class ClanRosterScreen extends Screen {
         this.clanName = data.clanName();
         this.clanTag = data.clanTag();
         this.motd = data.motd();
+        this.raidWindow = data.raidWindow();
         this.viewerRank = ClanRank.byIndex(data.viewerRankOrdinal());
         this.allMembers = data.members();
         this.viewerId = net.minecraft.client.Minecraft.getInstance().player != null
@@ -108,6 +110,11 @@ public class ClanRosterScreen extends Screen {
                 ClaimGuardNetwork.CHANNEL.sendToServer(new net.robmc.claimguard.network.OpenClanBrowseRequestPacket())
         ).bounds(barLeft + 3 * (quarter + 5), barY, quarter, 18).build());
 
+        if (viewerRank == ClanRank.LEADER) {
+            addRenderableWidget(Button.builder(Component.literal("Set raid window"), b ->
+                    minecraft.setScreen(new ClanRaidWindowScreen(clanName, raidWindow))
+            ).bounds(cx - 122, top + PANEL_H - 68, 244, 18).build());
+        }
         addRenderableWidget(Button.builder(Component.literal("Leave clan"), b -> confirmLeave())
                 .bounds(cx - 122, top + PANEL_H - 24, 118, 20).build());
         addRenderableWidget(Button.builder(CommonComponents.GUI_BACK, b -> onClose())
@@ -228,7 +235,7 @@ public class ClanRosterScreen extends Screen {
         g.renderOutline(left, top, PANEL_W, PANEL_H, PANEL_BORDER);
 
         g.drawCenteredString(this.font, clanName.toUpperCase() + " CLAN", cx, top + 8, 0xFFFFFF);
-        g.drawCenteredString(this.font, allMembers.size() + " Members", cx, top + 20, 0xA9C7D6);
+        g.drawCenteredString(this.font, allMembers.size() + " Members   -   Raid window: " + raidWindow, cx, top + 20, 0xA9C7D6);
 
         int rowLeft = left + 16;
         int rowRight = left + PANEL_W - 16;

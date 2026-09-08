@@ -341,7 +341,7 @@ public final class ClanActions {
         });
         int viewerRank = clan.getMember(viewer.getUUID()).map(m -> m.getRank().ordinal()).orElse(ClanRank.RECRUIT.ordinal());
         ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> viewer),
-                new OpenClanRosterPacket(clan.getName(), clan.getTag(), clan.getMotd(), viewerRank, rows));
+                new OpenClanRosterPacket(clan.getName(), clan.getTag(), clan.getMotd(), clan.formatRaidWindow(), viewerRank, rows));
     }
 
     // --- leaving ---

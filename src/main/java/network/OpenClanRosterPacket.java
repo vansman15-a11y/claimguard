@@ -22,15 +22,21 @@ public class OpenClanRosterPacket {
     private final String clanName;
     private final String clanTag;
     private final String motd;
+    private final String raidWindow;
     private final int viewerRankOrdinal;
     private final List<MemberRow> members;
 
-    public OpenClanRosterPacket(String clanName, String clanTag, String motd, int viewerRankOrdinal, List<MemberRow> members) {
+    public OpenClanRosterPacket(String clanName, String clanTag, String motd, String raidWindow, int viewerRankOrdinal, List<MemberRow> members) {
         this.clanName = clanName;
         this.clanTag = clanTag;
         this.motd = motd;
+        this.raidWindow = raidWindow;
         this.viewerRankOrdinal = viewerRankOrdinal;
         this.members = members;
+    }
+
+    public String raidWindow() {
+        return raidWindow;
     }
 
     public String clanName() {
@@ -57,6 +63,7 @@ public class OpenClanRosterPacket {
         buf.writeUtf(packet.clanName, 64);
         buf.writeUtf(packet.clanTag, 16);
         buf.writeUtf(packet.motd, 512);
+        buf.writeUtf(packet.raidWindow, 32);
         buf.writeVarInt(packet.viewerRankOrdinal);
         buf.writeVarInt(packet.members.size());
         for (MemberRow row : packet.members) {
@@ -72,13 +79,14 @@ public class OpenClanRosterPacket {
         String name = buf.readUtf(64);
         String tag = buf.readUtf(16);
         String motd = buf.readUtf(512);
+        String raidWindow = buf.readUtf(32);
         int viewerRank = buf.readVarInt();
         int count = buf.readVarInt();
         List<MemberRow> rows = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             rows.add(new MemberRow(buf.readUUID(), buf.readUtf(32), buf.readVarInt(), buf.readBoolean(), buf.readBoolean()));
         }
-        return new OpenClanRosterPacket(name, tag, motd, viewerRank, rows);
+        return new OpenClanRosterPacket(name, tag, motd, raidWindow, viewerRank, rows);
     }
 
     public static void handle(OpenClanRosterPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {

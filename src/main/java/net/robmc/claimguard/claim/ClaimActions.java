@@ -53,8 +53,10 @@ public final class ClaimActions {
         if (maybeClaim.isEmpty()) {
             return;
         }
-        ServerLevel level = player.serverLevel();
-        var bounds = maybeClaim.get().getBounds(level.getMinBuildHeight(), level.getMaxBuildHeight());
+        // The claim protects bedrock-to-sky, but drawing a 384-block-tall cage is
+        // unreadable - show a waist-high "fence" around the player's eye level instead.
+        int centreY = (int) player.getY();
+        var bounds = maybeClaim.get().getBounds(centreY - 6, centreY + 24);
         ClaimGuardNetwork.CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new ShowClaimBorderPacket(

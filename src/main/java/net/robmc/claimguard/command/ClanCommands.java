@@ -56,7 +56,7 @@ public class ClanCommands {
                     return 1;
                 }))
                 .then(Commands.literal("raidwindow")
-                        .then(Commands.argument("time", StringArgumentType.word())
+                        .then(Commands.argument("time", StringArgumentType.greedyString())
                                 .executes(ctx -> {
                                     ClanActions.setRaidWindow(
                                             ctx.getSource().getPlayerOrException(),
