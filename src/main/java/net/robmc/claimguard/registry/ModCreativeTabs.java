@@ -22,6 +22,7 @@ public class ModCreativeTabs {
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.CLAIM_CORE.get());
                         output.accept(ModItems.CLAN_CHARTER.get());
+                        output.accept(ModItems.ADMIN_CORE.get());
                     })
                     .build()
     );

@@ -16,7 +16,8 @@ public class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<ClaimCoreBlockEntity>> CLAIM_CORE =
             BLOCK_ENTITIES.register("claim_core", () -> BlockEntityType.Builder.of(
                     ClaimCoreBlockEntity::new,
-                    ModBlocks.CLAIM_CORE.get()
+                    ModBlocks.CLAIM_CORE.get(),
+                    ModBlocks.ADMIN_CORE.get()
             ).build(null));
             // The `null` above is a DataFixer type argument Mojang uses for very old-world
             // migration - it's safe to leave null for a brand new block type like ours.

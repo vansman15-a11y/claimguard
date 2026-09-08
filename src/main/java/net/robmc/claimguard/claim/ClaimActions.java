@@ -103,8 +103,8 @@ public final class ClaimActions {
             return;
         }
         ClanRank rank = rankInOwningClan(player, maybeClaim.get());
-        if (rank != null && rank != ClanRank.LEADER && rank != ClanRank.OFFICER) {
-            player.displayClientMessage(Component.literal("Only a clan Leader or Officer can remove a claim."), true);
+        if (rank != null && rank != ClanRank.LEADER) {
+            player.displayClientMessage(Component.literal("Only the clan Leader can remove a claim."), true);
             return;
         }
         ServerLevel level = player.serverLevel();

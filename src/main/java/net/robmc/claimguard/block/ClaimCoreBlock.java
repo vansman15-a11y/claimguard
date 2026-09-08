@@ -83,9 +83,10 @@ public class ClaimCoreBlock extends BaseEntityBlock {
         if (tooClose.isPresent()) {
             rollbackPlacement(level, pos, serverPlayer, stack);
             BlockPos other = tooClose.get().getCorePos();
+            // Directional only, no coordinates - don't hand out enemy base locations.
             serverPlayer.displayClientMessage(Component.literal(
-                    "Too close to an existing claim (core at " + other.getX() + ", " + other.getY()
-                            + ", " + other.getZ() + "). Claims must be at least "
+                    "Too close to an existing claim (roughly " + roughDistance(pos, other) + " blocks "
+                            + compassDirection(pos, other) + "). Claims must be at least "
                             + ClaimManager.MIN_CLAIM_SPACING + " blocks apart."
             ), false);
             return;
@@ -101,6 +102,23 @@ public class ClaimCoreBlock extends BaseEntityBlock {
                 Component.literal("Claim created! Protected area: " + describeArea(claim.getTier())),
                 false
         );
+    }
+
+    private static final String[] COMPASS = {"north", "northeast", "east", "southeast",
+            "south", "southwest", "west", "northwest"};
+
+    /** 8-point compass direction from {@code from} toward {@code to} (Minecraft axes). */
+    private static String compassDirection(BlockPos from, BlockPos to) {
+        double dx = to.getX() - from.getX();
+        double dz = to.getZ() - from.getZ();
+        double deg = (Math.toDegrees(Math.atan2(dx, -dz)) + 360) % 360; // 0 = north, 90 = east
+        return COMPASS[(int) Math.round(deg / 45) % 8];
+    }
+
+    /** Horizontal distance, rounded to the nearest 50 so it isn't a pinpoint. */
+    private static long roughDistance(BlockPos a, BlockPos b) {
+        double d = Math.sqrt(Math.pow(a.getX() - b.getX(), 2) + Math.pow(a.getZ() - b.getZ(), 2));
+        return Math.round(d / 50.0) * 50;
     }
 
     /** Pull the just-placed core back out of the world and refund it (survival only). */

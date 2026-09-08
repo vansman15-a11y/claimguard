@@ -29,6 +29,11 @@ public class ModItems {
             () -> new ClanCharterItem(new Item.Properties().stacksTo(1))
     );
 
+    public static final RegistryObject<Item> ADMIN_CORE = ITEMS.register(
+            "admin_core",
+            () -> new BlockItem(ModBlocks.ADMIN_CORE.get(), new Item.Properties())
+    );
+
     public static void register(IEventBus modEventBus) {
         ITEMS.register(modEventBus);
     }

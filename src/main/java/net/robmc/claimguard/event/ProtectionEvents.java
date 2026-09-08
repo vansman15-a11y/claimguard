@@ -3,7 +3,9 @@ package net.robmc.claimguard.event;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.ChunkEvent;
@@ -36,6 +38,29 @@ public class ProtectionEvents {
             return;
         }
         Player player = event.getPlayer();
+
+        // A beacon core is never hand-broken. Operators may (admin cleanup); anyone
+        // else gets pointed at the menu. Enemies bring one down through the siege
+        // hit system, not by mining.
+        if (event.getState().is(net.robmc.claimguard.registry.ModBlocks.CLAIM_CORE.get())
+                || event.getState().is(net.robmc.claimguard.registry.ModBlocks.ADMIN_CORE.get())) {
+            if (player instanceof ServerPlayer op && op.hasPermissions(2)) {
+                return; // operators may break a core (admin cleanup)
+            }
+            event.setCanceled(true);
+            if (player != null) {
+                boolean ownClaim = ClaimManager.get(serverLevel).getClaimByCore(event.getPos())
+                        .filter(c -> c.getClanId() != null)
+                        .map(c -> net.robmc.claimguard.clan.ClanManager.get(serverLevel.getServer())
+                                .getClanOf(player.getUUID()).map(cl -> cl.getId().equals(c.getClanId())).orElse(false))
+                        .orElse(false);
+                player.displayClientMessage(Component.literal(ownClaim
+                        ? "Right-click the beacon - only the Leader can take it down (Remove)."
+                        : "This beacon can't be broken by hand."), true);
+            }
+            return;
+        }
+
         if (isAllowed(serverLevel, event.getPos(), player)) {
             return;
         }
@@ -135,11 +160,30 @@ public class ProtectionEvents {
             return true;
         }
         Claim c = claim.get();
+        if (c.isAdmin()) {
+            return false; // admin zones: only operators (who already returned true above)
+        }
         if (c.getClanId() != null) {
             return net.robmc.claimguard.clan.ClanManager.get(level.getServer())
                     .canBuildInClanClaim(c.getClanId(), player.getUUID());
         }
         return c.isOwnedBy(player.getUUID());
+    }
+
+    /** No player-vs-player damage while the victim is standing in an admin zone. */
+    @SubscribeEvent
+    public static void onLivingAttack(LivingAttackEvent event) {
+        if (!(event.getEntity() instanceof Player victim) || !(victim.level() instanceof ServerLevel level)) {
+            return;
+        }
+        Entity attacker = event.getSource().getEntity();
+        if (!(attacker instanceof Player)) {
+            return; // only cancel player-vs-player
+        }
+        Optional<Claim> claim = ClaimManager.get(level).getClaimAt(victim.blockPosition());
+        if (claim.isPresent() && claim.get().isAdmin()) {
+            event.setCanceled(true);
+        }
     }
 
     private static void sendDenyMessage(Player player) {

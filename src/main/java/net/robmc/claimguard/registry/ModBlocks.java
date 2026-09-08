@@ -9,6 +9,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.robmc.claimguard.ClaimGuard;
+import net.robmc.claimguard.block.AdminCoreBlock;
 import net.robmc.claimguard.block.ClaimCoreBlock;
 
 /**
@@ -37,6 +38,19 @@ public class ModBlocks {
                             // The beacon model is see-through glass. Without noOcclusion the game
                             // culls the touching faces of neighbouring blocks (assuming this cube
                             // hides them), so you end up looking straight through into caves/void.
+                            .noOcclusion()
+                            .isRedstoneConductor((state, level, pos) -> false)
+            )
+    );
+
+    public static final RegistryObject<Block> ADMIN_CORE = BLOCKS.register(
+            "admin_core",
+            () -> new AdminCoreBlock(
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.COLOR_PURPLE)
+                            .strength(50.0f, 3600000.0f) // very blast-resistant; break is op-only via events
+                            .sound(SoundType.NETHERITE_BLOCK)
+                            .lightLevel((state) -> 15)
                             .noOcclusion()
                             .isRedstoneConductor((state, level, pos) -> false)
             )

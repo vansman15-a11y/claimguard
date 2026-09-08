@@ -1,5 +1,6 @@
 {
   "block.claimguard.claim_core": "Claim Core",
+  "block.claimguard.admin_core": "Admin Core",
   "item.claimguard.clan_charter": "Clan Charter",
   "itemGroup.claimguard": "ClaimGuard"
 }

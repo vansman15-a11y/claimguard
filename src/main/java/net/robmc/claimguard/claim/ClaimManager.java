@@ -62,6 +62,15 @@ public class ClaimManager extends SavedData {
         return claim;
     }
 
+    /** An admin protection zone: no clan, largest tier, PvP disabled. */
+    public Claim createAdminClaim(BlockPos corePos) {
+        Claim claim = new Claim(corePos.immutable(), new UUID(0, 0), ClaimTier.LEVEL_6, null);
+        claim.setAdmin(true);
+        claimsByCore.put(claim.getCorePos(), claim);
+        setDirty();
+        return claim;
+    }
+
     public void removeClaim(BlockPos corePos) {
         if (claimsByCore.remove(corePos) != null) {
             setDirty();

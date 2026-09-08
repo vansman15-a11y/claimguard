@@ -86,6 +86,9 @@ public class TerritoryEvents {
      * belongs to a clan, otherwise the founder's player name.
      */
     private static String territoryName(Claim claim, MinecraftServer server) {
+        if (claim.isAdmin()) {
+            return "a protected area";
+        }
         String clanName = ClanManager.get(server).clanNameOrNull(claim.getClanId());
         return clanName != null ? clanName : getOwnerName(server, claim.getOwner());
     }

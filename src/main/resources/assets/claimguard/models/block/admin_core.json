@@ -1,0 +1,5 @@
+{
+  "_comment": "Same beacon look as the Claim Core for now. Reskin (e.g. obsidian shell) later to tell them apart at a glance.",
+  "parent": "minecraft:block/beacon",
+  "render_type": "minecraft:translucent"
+}

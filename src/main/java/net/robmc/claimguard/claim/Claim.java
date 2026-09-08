@@ -23,6 +23,8 @@ public class Claim {
     /** The clan that owns this claim (the founder's clan when the core was placed), or null. */
     @Nullable
     private UUID clanId;
+    /** True for an admin-placed protection zone (no clan, always max size, PvP off). */
+    private boolean admin;
 
     // FUTURE: when bed-style respawn/waypoint is added, this is the natural place to store
     // "this is the claim the player last set as their spawn point" - probably as a flag here,
@@ -50,6 +52,14 @@ public class Claim {
 
     public void setClanId(@Nullable UUID clanId) {
         this.clanId = clanId;
+    }
+
+    public boolean isAdmin() {
+        return admin;
+    }
+
+    public void setAdmin(boolean admin) {
+        this.admin = admin;
     }
 
     public ClaimTier getTier() {
@@ -109,6 +119,9 @@ public class Claim {
         if (clanId != null) {
             tag.putUUID("ClanId", clanId);
         }
+        if (admin) {
+            tag.putBoolean("Admin", true);
+        }
         return tag;
     }
 
@@ -117,6 +130,8 @@ public class Claim {
         UUID owner = tag.getUUID("Owner");
         ClaimTier tier = ClaimTier.byIndex(tag.getInt("Tier"));
         UUID clanId = tag.hasUUID("ClanId") ? tag.getUUID("ClanId") : null;
-        return new Claim(pos, owner, tier, clanId);
+        Claim claim = new Claim(pos, owner, tier, clanId);
+        claim.admin = tag.getBoolean("Admin");
+        return claim;
     }
 }
