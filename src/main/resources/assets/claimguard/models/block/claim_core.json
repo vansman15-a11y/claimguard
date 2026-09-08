@@ -1,8 +1,5 @@
 {
-  "_comment": "Placeholder look reusing vanilla Lodestone textures so the block renders immediately without needing custom art. Swap 'end'/'side' for your own texture files (e.g. claimguard:block/claim_core_top) once you've made real textures matching the altar in your screenshot.",
-  "parent": "minecraft:block/cube_column",
-  "textures": {
-    "end": "minecraft:block/lodestone_top",
-    "side": "minecraft:block/lodestone_side"
-  }
+  "_comment": "Looks like a vanilla beacon (glass shell + glowing core on an obsidian base). The upward beam is drawn by ClaimCoreRenderer, not by this model. render_type must be translucent (Forge 1.20.1) or the glass shell renders opaque/black.",
+  "parent": "minecraft:block/beacon",
+  "render_type": "minecraft:translucent"
 }

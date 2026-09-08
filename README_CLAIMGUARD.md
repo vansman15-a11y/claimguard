@@ -48,9 +48,10 @@ Distant Horizons.
 
 ## Known placeholders
 
-- **Look**: currently reuses vanilla Lodestone textures (`assets/claimguard/models/block/claim_core.json`)
-  so it renders without custom art. Replace with real textures matching your altar
-  screenshot whenever you're ready.
+- **Look**: renders as a vanilla beacon (glass shell + glowing core) with a full-height
+  white beam shooting up, drawn by `client/ClaimCoreRenderer.java`. No custom art yet -
+  swap `models/block/claim_core.json` and/or the beam colour in `ClaimCoreRenderer`
+  for something matching your altar screenshot whenever you're ready.
 - **No trusted-player list yet** — owner-only for now.
 - **Clan ownership / bed-style respawn**: noted with comments in `Claim.java` as the
   planned next steps, not implemented yet.

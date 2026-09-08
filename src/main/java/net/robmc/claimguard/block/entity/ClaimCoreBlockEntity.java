@@ -5,6 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.robmc.claimguard.registry.ModBlockEntities;
 
 import java.util.UUID;
@@ -49,5 +50,18 @@ public class ClaimCoreBlockEntity extends BlockEntity {
         if (tag.hasUUID("Owner")) {
             owner = tag.getUUID("Owner");
         }
+    }
+
+    /**
+     * The beacon beam (drawn by ClaimCoreRenderer) shoots far above this block, so
+     * the render bounding box has to be tall too - otherwise the game culls the beam
+     * the moment the 1x1x1 block itself leaves the screen (e.g. looking straight up).
+     */
+    @Override
+    public AABB getRenderBoundingBox() {
+        return new AABB(
+                worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
+                worldPosition.getX() + 1, worldPosition.getY() + 1024, worldPosition.getZ() + 1
+        );
     }
 }
