@@ -35,14 +35,17 @@ Distant Horizons.
 
 ## What it does right now
 
-- Place a **Claim Core** → protects a full-height column centered on itself:
-  `radius` blocks out on X and Z (starts 8, i.e. 17×17), from bedrock to the
-  build limit.
+- Craft a **Claim Core** — vanilla beacon layout (5 glass, 3 obsidian) with a
+  **diamond block** where the nether star goes. You must be **in a clan** for the
+  recipe to produce anything.
+- Place it → protects a full-height column centered on itself: `radius` blocks
+  out on X and Z (starts 8, i.e. 17×17), from bedrock to the build limit.
 - Other players can't break/place blocks, open containers, or interact with
   anything inside the cube. Server operators always bypass this.
-- Right-click your own core → **Clan Beacon menu** with three actions:
+- Right-click your own core → **Clan Beacon menu**:
   - **Show border (30s)** – outlines the claim in the world; right-click the
     core again (or reopen) to re-trigger.
+  - **Bind / Leave bind** – makes this your respawn point (bindstone). See below.
   - **Upgrade** → a table of every tier, its item cost, and the size it grants,
     with the next step highlighted. *Confirm Upgrade* spends the items (taken
     from anywhere in your inventory) and refreshes the table.
@@ -70,8 +73,17 @@ Distant Horizons.
     to their own rank, never ban). Member / Recruit: whisper + invite only.
 - Roster buttons: **Invite** (`/clan invite <player>` → they `/clan accept`),
   **MOTD** (leader/officer can edit), **Ban list** (leader can unban).
-- Not yet linked to claims — clan membership doesn't affect claim protection or
-  the "Territory of …" message yet.
+- The **"Territory of …"** message shows the owning clan's name (whatever you
+  named your clan). Clan membership doesn't affect claim *protection* yet — still
+  owner-only.
+
+## Bindstone
+
+- In the beacon menu, **Bind** makes that claim core your respawn point.
+- If you're bound and die **with no bed**, you revive at the bindstone.
+- If you're bound **and** have a bed, death shows a **choice screen**: revive at
+  the bindstone or at your bed.
+- **Leave bind** clears it — you go back to the normal bed / world-spawn system.
 
 ## Known placeholders
 
