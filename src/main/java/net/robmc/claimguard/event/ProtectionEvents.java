@@ -4,8 +4,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.ChunkEvent;
@@ -170,18 +172,43 @@ public class ProtectionEvents {
         return c.isOwnedBy(player.getUUID());
     }
 
-    /** No player-vs-player damage while the victim is standing in an admin zone. */
+    /** No natural hostile-mob spawns inside an admin zone. */
+    @SubscribeEvent
+    public static void onMobSpawn(MobSpawnEvent.FinalizeSpawn event) {
+        if (!(event.getEntity() instanceof Enemy)) {
+            return;
+        }
+        if (!(event.getLevel() instanceof ServerLevel level)) {
+            return;
+        }
+        ClaimManager manager = ClaimManager.get(level);
+        if (!manager.hasAdminClaims()) {
+            return;
+        }
+        net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(event.getX(), event.getY(), event.getZ());
+        if (manager.isInAdminClaim(pos)) {
+            event.setSpawnCancelled(true);
+        }
+    }
+
+    /**
+     * No player-vs-player damage when EITHER the victim or the attacker is standing
+     * in an admin zone (stops both spawn-killing and sniping out of a safe zone).
+     */
     @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
         if (!(event.getEntity() instanceof Player victim) || !(victim.level() instanceof ServerLevel level)) {
             return;
         }
         Entity attacker = event.getSource().getEntity();
-        if (!(attacker instanceof Player)) {
+        if (!(attacker instanceof Player attackerPlayer)) {
             return; // only cancel player-vs-player
         }
-        Optional<Claim> claim = ClaimManager.get(level).getClaimAt(victim.blockPosition());
-        if (claim.isPresent() && claim.get().isAdmin()) {
+        ClaimManager manager = ClaimManager.get(level);
+        if (!manager.hasAdminClaims()) {
+            return;
+        }
+        if (manager.isInAdminClaim(victim.blockPosition()) || manager.isInAdminClaim(attackerPlayer.blockPosition())) {
             event.setCanceled(true);
         }
     }

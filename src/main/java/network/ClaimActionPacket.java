@@ -46,6 +46,11 @@ public class ClaimActionPacket {
             if (player == null) {
                 return;
             }
+            // Anti-cheat: these actions come from the beacon menu, so the player must
+            // actually be next to the beacon - not firing packets from across the map.
+            if (player.distanceToSqr(packet.corePos.getX() + 0.5, packet.corePos.getY() + 0.5, packet.corePos.getZ() + 0.5) > 64.0) {
+                return;
+            }
             switch (packet.action) {
                 case SHOW_BORDER -> ClaimActions.showBorder(player, packet.corePos);
                 case UPGRADE -> ClaimActions.tryUpgrade(player, packet.corePos);

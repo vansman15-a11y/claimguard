@@ -9,9 +9,12 @@ version="0.1.0"
 displayName="ClaimGuard"
 authors="robmc"
 description='''
-Lets players place a Claim Core block that protects a cube-shaped area from
-other players breaking/placing blocks or opening containers. Upgrade the core
-by right-clicking with diamonds to expand the protected area.
+Clan land-protection and siege system. Craft a Clan Charter, gather signatures,
+found a clan, and place a Claim Core beacon to protect a full-height column of
+land for your clan. Upgrade it with diamonds and blaze rods, bind your respawn
+to it, ally or war other clans, and siege enemy claims during their chosen raid
+window. Operators can place Admin Cores to protect spawn (PvP off, no mob spawns).
+Install on both the server and every client.
 '''
 
 [[dependencies.claimguard]]

@@ -174,14 +174,14 @@ public final class ClanActions {
             return;
         }
 
-        String cleanName = name.trim();
-        String cleanTag = tag.trim();
-        if (cleanName.length() < 3 || cleanName.length() > 24) {
-            player.displayClientMessage(Component.literal("Clan name must be 3-24 characters."), true);
+        String cleanName = sanitize(name, 24);
+        String cleanTag = sanitize(tag, 5);
+        if (cleanName.length() < 3 || cleanName.length() > 24 || !cleanName.matches("[A-Za-z0-9 '_-]+")) {
+            player.displayClientMessage(Component.literal("Clan name must be 3-24 letters, digits, spaces or - _ '."), true);
             return;
         }
-        if (cleanTag.length() < 2 || cleanTag.length() > 5) {
-            player.displayClientMessage(Component.literal("Clan tag must be 2-5 characters."), true);
+        if (cleanTag.length() < 2 || cleanTag.length() > 5 || !cleanTag.matches("[A-Za-z0-9]+")) {
+            player.displayClientMessage(Component.literal("Clan tag must be 2-5 letters or digits."), true);
             return;
         }
         if (manager.getClanByName(cleanName).isPresent()) {
@@ -190,7 +190,7 @@ public final class ClanActions {
         }
 
         ItemStack charter = maybeCharter.get();
-        Clan clan = manager.createClan(cleanName, cleanTag, motd.trim(), player.getUUID(), player.getGameProfile().getName());
+        Clan clan = manager.createClan(cleanName, cleanTag, sanitize(motd, 120), player.getUUID(), player.getGameProfile().getName());
 
         // Every other signer becomes a founding Member.
         for (Map.Entry<UUID, String> signer : ClanCharterItem.getSignatures(charter).entrySet()) {
@@ -618,7 +618,7 @@ public final class ClanActions {
             denied(player);
             return;
         }
-        clan.setMotd(motd.trim());
+        clan.setMotd(sanitize(motd, 120));
         manager.markDirty();
         player.displayClientMessage(Component.literal("Clan MOTD updated."), false);
         broadcastRosterRefresh(player, clan);
@@ -640,6 +640,20 @@ public final class ClanActions {
     }
 
     // --- helpers ---
+
+    /**
+     * Strips formatting/section signs and control characters, collapses whitespace,
+     * trims, and hard-caps the length. Applied to every player-supplied clan string
+     * so a hacked client can't inject colour codes or newlines into names shown
+     * server-wide.
+     */
+    private static String sanitize(String raw, int maxLength) {
+        if (raw == null) {
+            return "";
+        }
+        String cleaned = raw.replaceAll("[\\u00a7\\p{Cntrl}]", " ").replaceAll("\\s+", " ").trim();
+        return cleaned.length() > maxLength ? cleaned.substring(0, maxLength) : cleaned;
+    }
 
     private static Optional<ItemStack> findOwnedCharter(ServerPlayer player) {
         Inventory inv = player.getInventory();

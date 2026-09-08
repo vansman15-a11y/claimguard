@@ -133,6 +133,26 @@ public class ClaimManager extends SavedData {
         return new ArrayList<>(claimsByCore.values());
     }
 
+    /** True if any admin protection zone exists in this dimension (fast pre-check). */
+    public boolean hasAdminClaims() {
+        for (Claim claim : claimsByCore.values()) {
+            if (claim.isAdmin()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** True if the position is inside an admin protection zone. */
+    public boolean isInAdminClaim(BlockPos pos) {
+        for (Claim claim : claimsByCore.values()) {
+            if (claim.isAdmin() && claim.contains(pos)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Every claim in this dimension owned by the given clan. */
     public List<Claim> claimsOwnedByClan(UUID clanId) {
         List<Claim> out = new ArrayList<>();
