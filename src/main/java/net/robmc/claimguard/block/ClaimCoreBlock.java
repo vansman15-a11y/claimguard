@@ -7,7 +7,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -30,6 +32,8 @@ import net.robmc.claimguard.network.ShowClaimBorderPacket;
 import net.robmc.claimguard.registry.ModBlockEntities;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -141,35 +145,32 @@ public class ClaimCoreBlock extends BaseEntityBlock {
         }
 
         ClaimTier currentTier = claim.getTier();
+        List<ItemStack> cost = currentTier.getUpgradeCost();
 
-        if (currentTier.isMaxTier()) {
+        if (cost.isEmpty()) {
             player.displayClientMessage(Component.literal("This claim is already at maximum size."), true);
             return InteractionResult.FAIL;
         }
 
-        boolean holdingCorrectItem = held.is(currentTier.getUpgradeItem());
-
-        if (!holdingCorrectItem) {
+        // Holding one of the required items is the "try to upgrade" trigger; the rest
+        // of the cost is then checked/consumed from anywhere in the player's inventory.
+        boolean holdingACostItem = cost.stream().anyMatch(c -> held.is(c.getItem()));
+        if (!holdingACostItem) {
             player.displayClientMessage(Component.literal(
                     "Current size: " + describeArea(currentTier)
-                            + ". Hold " + currentTier.getUpgradeCost() + "x "
-                            + currentTier.getUpgradeItem().getDescription().getString()
-                            + " and right-click to upgrade."
+                            + ". Hold " + describeCost(cost) + " and right-click to upgrade."
             ), true);
             return InteractionResult.PASS;
         }
 
-        if (held.getCount() < currentTier.getUpgradeCost()) {
+        if (!hasAll(player, cost)) {
             player.displayClientMessage(Component.literal(
-                    "You need " + currentTier.getUpgradeCost() + "x "
-                            + currentTier.getUpgradeItem().getDescription().getString()
-                            + " to upgrade (you have " + held.getCount() + ")."
+                    "Upgrade costs " + describeCost(cost) + ". " + describeShortfall(player, cost)
             ), true);
             return InteractionResult.FAIL;
         }
 
-        // Consume the items and upgrade.
-        held.shrink(currentTier.getUpgradeCost());
+        consumeAll(player, cost);
         manager.upgrade(pos);
 
         ClaimTier newTier = manager.getClaimByCore(pos).get().getTier();
@@ -178,6 +179,65 @@ public class ClaimCoreBlock extends BaseEntityBlock {
         ), false);
 
         return InteractionResult.CONSUME;
+    }
+
+    // --- multi-item upgrade cost helpers ---
+
+    /** "48x Diamond and 1x Blaze Rod" */
+    private static String describeCost(List<ItemStack> cost) {
+        List<String> parts = new ArrayList<>();
+        for (ItemStack stack : cost) {
+            parts.add(stack.getCount() + "x " + stack.getHoverName().getString());
+        }
+        return String.join(" and ", parts);
+    }
+
+    /** "You have 30 Diamond, 0 Blaze Rod." - only lists the items still short. */
+    private static String describeShortfall(Player player, List<ItemStack> cost) {
+        List<String> parts = new ArrayList<>();
+        for (ItemStack stack : cost) {
+            int have = countItem(player, stack.getItem());
+            if (have < stack.getCount()) {
+                parts.add("you have " + have + " " + stack.getHoverName().getString());
+            }
+        }
+        return parts.isEmpty() ? "" : String.join(", ", parts) + ".";
+    }
+
+    private static boolean hasAll(Player player, List<ItemStack> cost) {
+        for (ItemStack stack : cost) {
+            if (countItem(player, stack.getItem()) < stack.getCount()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static int countItem(Player player, Item item) {
+        Inventory inv = player.getInventory();
+        int total = 0;
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (stack.is(item)) {
+                total += stack.getCount();
+            }
+        }
+        return total;
+    }
+
+    private static void consumeAll(Player player, List<ItemStack> cost) {
+        Inventory inv = player.getInventory();
+        for (ItemStack needed : cost) {
+            int remaining = needed.getCount();
+            for (int i = 0; i < inv.getContainerSize() && remaining > 0; i++) {
+                ItemStack stack = inv.getItem(i);
+                if (stack.is(needed.getItem())) {
+                    int take = Math.min(remaining, stack.getCount());
+                    stack.shrink(take);
+                    remaining -= take;
+                }
+            }
+        }
     }
 
     // --- Breaking: only the owner (or an operator) should be able to remove the core ---

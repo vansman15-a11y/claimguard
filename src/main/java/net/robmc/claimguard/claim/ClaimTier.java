@@ -1,32 +1,41 @@
 package net.robmc.claimguard.claim;
 
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.Item;
+
+import java.util.List;
 
 /**
  * Defines each "level" a claim can be upgraded to.
  *
  * This is a Java enum: think of it like a fixed list of named constants,
- * except each constant here is allowed to carry its own data (radius, cost, item).
- * ClaimTier.LEVEL_1, ClaimTier.LEVEL_2 etc. are the only tiers that will ever exist
- * unless you add a new line below.
+ * except each constant here is allowed to carry its own data (radius + the
+ * item cost to reach the NEXT tier). ClaimTier.LEVEL_1, LEVEL_2 etc. are the
+ * only tiers that will ever exist unless you add a new line below.
+ *
+ * Tiers are saved by their ordinal (see Claim.save/load), so only ever ADD new
+ * tiers at the end - never reorder or remove.
  */
 public enum ClaimTier {
 
-    // name        radius  upgradeCost  upgradeItem
-    LEVEL_1(8, 8, Items.DIAMOND),
-    LEVEL_2(16, 16, Items.DIAMOND),
-    LEVEL_3(24, 32, Items.DIAMOND),
-    LEVEL_4(32, 0, null); // 0 cost / null item = this is the max tier, no further upgrade
+    // radius | cost to upgrade FROM this tier to the next
+    LEVEL_1(8,  cost(Items.DIAMOND, 8)),
+    LEVEL_2(16, cost(Items.DIAMOND, 16)),
+    LEVEL_3(24, cost(Items.DIAMOND, 32)),
+    LEVEL_4(32, cost(Items.DIAMOND, 48, Items.BLAZE_ROD, 1)), // first past the "starter base" size
+    LEVEL_5(42, cost(Items.DIAMOND, 64, Items.BLAZE_ROD, 2)), // second
+    LEVEL_6(52); // max - no cost, no further upgrade
 
     private final int radius;
-    private final int upgradeCost;
-    private final Item upgradeItem;
+    private final List<ItemStack> upgradeCost;
 
-    ClaimTier(int radius, int upgradeCost, Item upgradeItem) {
+    ClaimTier(int radius, List<ItemStack> upgradeCost) {
         this.radius = radius;
         this.upgradeCost = upgradeCost;
-        this.upgradeItem = upgradeItem;
+    }
+
+    ClaimTier(int radius) {
+        this(radius, List.of());
     }
 
     /** Half-width of the protected cube, in blocks, in every direction from the core. */
@@ -34,18 +43,18 @@ public enum ClaimTier {
         return radius;
     }
 
-    /** How many of {@link #getUpgradeItem()} are needed to reach the NEXT tier. */
-    public int getUpgradeCost() {
+    /**
+     * Every item stack (item + amount) the player must have to upgrade FROM this
+     * tier to the next. Empty when this is the max tier.
+     *
+     * The returned stacks are shared constants - read them, never mutate them.
+     */
+    public List<ItemStack> getUpgradeCost() {
         return upgradeCost;
     }
 
-    /** The item consumed to upgrade FROM this tier to the next one. Null if this is the max tier. */
-    public Item getUpgradeItem() {
-        return upgradeItem;
-    }
-
     public boolean isMaxTier() {
-        return this == LEVEL_4;
+        return upgradeCost.isEmpty();
     }
 
     /** Returns the next tier up, or null if this is already the max tier. */
@@ -64,5 +73,16 @@ public enum ClaimTier {
             return LEVEL_1;
         }
         return all[index];
+    }
+
+    // --- helpers for the constant list above ---
+
+    private static List<ItemStack> cost(net.minecraft.world.item.Item item, int amount) {
+        return List.of(new ItemStack(item, amount));
+    }
+
+    private static List<ItemStack> cost(net.minecraft.world.item.Item itemA, int amountA,
+                                        net.minecraft.world.item.Item itemB, int amountB) {
+        return List.of(new ItemStack(itemA, amountA), new ItemStack(itemB, amountB));
     }
 }
