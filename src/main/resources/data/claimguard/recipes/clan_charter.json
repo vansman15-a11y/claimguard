@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "minecraft:paper" },
+    { "item": "minecraft:paper" },
+    { "item": "minecraft:paper" },
+    { "item": "minecraft:ink_sac" },
+    { "tag": "minecraft:banners" }
+  ],
+  "result": {
+    "item": "claimguard:clan_charter"
+  }
+}

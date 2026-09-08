@@ -7,6 +7,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.robmc.claimguard.ClaimGuard;
+import net.robmc.claimguard.item.ClanCharterItem;
 
 /**
  * Every placeable block also needs an Item registered - the Item is what actually
@@ -21,6 +22,11 @@ public class ModItems {
     public static final RegistryObject<Item> CLAIM_CORE = ITEMS.register(
             "claim_core",
             () -> new BlockItem(ModBlocks.CLAIM_CORE.get(), new Item.Properties())
+    );
+
+    public static final RegistryObject<Item> CLAN_CHARTER = ITEMS.register(
+            "clan_charter",
+            () -> new ClanCharterItem(new Item.Properties().stacksTo(1))
     );
 
     public static void register(IEventBus modEventBus) {

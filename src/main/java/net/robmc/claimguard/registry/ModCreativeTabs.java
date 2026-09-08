@@ -21,6 +21,7 @@ public class ModCreativeTabs {
                     .icon(() -> ModItems.CLAIM_CORE.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.CLAIM_CORE.get());
+                        output.accept(ModItems.CLAN_CHARTER.get());
                     })
                     .build()
     );
