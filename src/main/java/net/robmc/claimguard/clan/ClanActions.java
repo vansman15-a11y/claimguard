@@ -9,6 +9,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.robmc.claimguard.item.ClanCharterItem;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.ClanMemberActionPacket;
+import net.robmc.claimguard.network.OpenClanBanListPacket;
 import net.robmc.claimguard.network.OpenClanRosterPacket;
 import net.robmc.claimguard.network.OpenCreateClanScreenPacket;
 import net.robmc.claimguard.registry.ModItems;
@@ -28,6 +29,8 @@ public final class ClanActions {
 
     /** target player id -> the requester whose signature request is waiting for a response. */
     private static final Map<UUID, UUID> pendingSignatureRequests = new HashMap<>();
+    /** invited player id -> the clan id they've been invited to join. */
+    private static final Map<UUID, UUID> pendingClanInvites = new HashMap<>();
 
     private ClanActions() {
     }
@@ -315,6 +318,132 @@ public final class ClanActions {
         int viewerRank = clan.getMember(viewer.getUUID()).map(m -> m.getRank().ordinal()).orElse(ClanRank.RECRUIT.ordinal());
         ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> viewer),
                 new OpenClanRosterPacket(clan.getName(), clan.getTag(), clan.getMotd(), viewerRank, rows));
+    }
+
+    // --- invites ---
+
+    public static void invitePlayer(ServerPlayer inviter, ServerPlayer target) {
+        ClanManager manager = ClanManager.get(inviter.server);
+        Optional<Clan> maybeClan = manager.getClanOf(inviter.getUUID());
+        if (maybeClan.isEmpty()) {
+            inviter.displayClientMessage(Component.literal("You're not in a clan."), true);
+            return;
+        }
+        Clan clan = maybeClan.get();
+        ClanRank rank = clan.getMember(inviter.getUUID()).map(ClanMember::getRank).orElse(ClanRank.RECRUIT);
+        if (!ClanPermissions.canInvite(rank)) {
+            denied(inviter);
+            return;
+        }
+        if (target.getUUID().equals(inviter.getUUID())) {
+            inviter.displayClientMessage(Component.literal("You're already in the clan."), true);
+            return;
+        }
+        if (clan.isFull()) {
+            inviter.displayClientMessage(Component.literal("Your clan is full (" + Clan.MAX_MEMBERS + ")."), true);
+            return;
+        }
+        if (clan.isBanned(target.getUUID())) {
+            inviter.displayClientMessage(Component.literal(target.getGameProfile().getName() + " is banned from the clan."), true);
+            return;
+        }
+        if (manager.getClanOf(target.getUUID()).isPresent()) {
+            inviter.displayClientMessage(Component.literal(target.getGameProfile().getName() + " is already in a clan."), true);
+            return;
+        }
+
+        pendingClanInvites.put(target.getUUID(), clan.getId());
+        inviter.displayClientMessage(Component.literal("Invited " + target.getGameProfile().getName() + " to " + clan.getName() + "."), false);
+        target.sendSystemMessage(Component.literal(
+                inviter.getGameProfile().getName() + " invited you to the clan \"" + clan.getName() + "\". ")
+                .append(Component.literal("/clan accept").withStyle(ChatFormatting.GREEN))
+                .append(Component.literal("  "))
+                .append(Component.literal("/clan decline").withStyle(ChatFormatting.YELLOW)));
+    }
+
+    public static void acceptInvite(ServerPlayer target) {
+        UUID clanId = pendingClanInvites.remove(target.getUUID());
+        if (clanId == null) {
+            target.displayClientMessage(Component.literal("You have no pending clan invite."), true);
+            return;
+        }
+        ClanManager manager = ClanManager.get(target.server);
+        if (manager.getClanOf(target.getUUID()).isPresent()) {
+            target.displayClientMessage(Component.literal("You're already in a clan."), true);
+            return;
+        }
+        Optional<Clan> maybeClan = manager.getClanById(clanId);
+        if (maybeClan.isEmpty()) {
+            target.displayClientMessage(Component.literal("That clan no longer exists."), true);
+            return;
+        }
+        Clan clan = maybeClan.get();
+        if (clan.isFull()) {
+            target.displayClientMessage(Component.literal("That clan is now full."), true);
+            return;
+        }
+        manager.addMember(clan, target.getUUID(), target.getGameProfile().getName(), ClanRank.RECRUIT);
+        target.displayClientMessage(Component.literal("You joined " + clan.getName() + " as a Recruit."), false);
+        broadcastRosterRefresh(target, clan);
+    }
+
+    public static void declineInvite(ServerPlayer target) {
+        if (pendingClanInvites.remove(target.getUUID()) == null) {
+            target.displayClientMessage(Component.literal("You have no pending clan invite."), true);
+            return;
+        }
+        target.displayClientMessage(Component.literal("Invite declined."), false);
+    }
+
+    // --- ban list & motd ---
+
+    public static void openBanList(ServerPlayer player) {
+        Optional<Clan> maybeClan = ClanManager.get(player.server).getClanOf(player.getUUID());
+        if (maybeClan.isEmpty()) {
+            player.displayClientMessage(Component.literal("You're not in a clan."), true);
+            return;
+        }
+        Clan clan = maybeClan.get();
+        boolean canUnban = clan.getMember(player.getUUID()).map(m -> m.getRank() == ClanRank.LEADER).orElse(false);
+        List<OpenClanBanListPacket.BanRow> rows = new ArrayList<>();
+        clan.getBanned().forEach((id, name) -> rows.add(new OpenClanBanListPacket.BanRow(id, name)));
+        ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new OpenClanBanListPacket(clan.getName(), canUnban, rows));
+    }
+
+    public static void unban(ServerPlayer player, UUID targetId) {
+        ClanManager manager = ClanManager.get(player.server);
+        Optional<Clan> maybeClan = manager.getClanOf(player.getUUID());
+        if (maybeClan.isEmpty()) {
+            return;
+        }
+        Clan clan = maybeClan.get();
+        if (!clan.getMember(player.getUUID()).map(m -> m.getRank() == ClanRank.LEADER).orElse(false)) {
+            denied(player);
+            return;
+        }
+        clan.unban(targetId);
+        manager.markDirty();
+        player.displayClientMessage(Component.literal("Unbanned."), false);
+        openBanList(player);
+    }
+
+    public static void setMotd(ServerPlayer player, String motd) {
+        ClanManager manager = ClanManager.get(player.server);
+        Optional<Clan> maybeClan = manager.getClanOf(player.getUUID());
+        if (maybeClan.isEmpty()) {
+            return;
+        }
+        Clan clan = maybeClan.get();
+        ClanRank rank = clan.getMember(player.getUUID()).map(ClanMember::getRank).orElse(ClanRank.RECRUIT);
+        if (rank != ClanRank.LEADER && rank != ClanRank.OFFICER) {
+            denied(player);
+            return;
+        }
+        clan.setMotd(motd.trim());
+        manager.markDirty();
+        player.displayClientMessage(Component.literal("Clan MOTD updated."), false);
+        broadcastRosterRefresh(player, clan);
     }
 
     // --- helpers ---

@@ -24,14 +24,16 @@ import java.util.function.Consumer;
  */
 public class ClanRosterScreen extends Screen {
 
-    private static final int PANEL_W = 300;
-    private static final int PANEL_H = 210;
+    private static final int PANEL_W = 320;
+    private static final int PANEL_H = 232;
     private static final int PANEL_BG = 0xD0100C1A;
     private static final int PANEL_BORDER = 0xFF57C97A;
     private static final int ROW_H = 15;
     private static final int LIST_TOP_OFFSET = 54;
 
     private final String clanName;
+    private final String clanTag;
+    private final String motd;
     private final ClanRank viewerRank;
     private final UUID viewerId;
     private final List<OpenClanRosterPacket.MemberRow> allMembers;
@@ -50,6 +52,8 @@ public class ClanRosterScreen extends Screen {
     public ClanRosterScreen(OpenClanRosterPacket data) {
         super(Component.literal(data.clanName()));
         this.clanName = data.clanName();
+        this.clanTag = data.clanTag();
+        this.motd = data.motd();
         this.viewerRank = ClanRank.byIndex(data.viewerRankOrdinal());
         this.allMembers = data.members();
         this.viewerId = net.minecraft.client.Minecraft.getInstance().player != null
@@ -84,8 +88,26 @@ public class ClanRosterScreen extends Screen {
             ctxItems = null;
         }).bounds(cx + 4, top + 32, 80, 16).build());
 
+        int barY = top + PANEL_H - 46;
+        int barLeft = cx - PANEL_W / 2 + 14;
+        int barW = PANEL_W - 28;
+        int third = barW / 3 - 4;
+        addRenderableWidget(Button.builder(Component.literal("Invite"), b ->
+                minecraft.setScreen(new ClanInviteScreen(clanName))
+        ).bounds(barLeft, barY, third, 18).build());
+        addRenderableWidget(Button.builder(Component.literal("MOTD"), b ->
+                minecraft.setScreen(new ClanMotdScreen(clanName, motd, canEditMotd()))
+        ).bounds(barLeft + third + 6, barY, third, 18).build());
+        addRenderableWidget(Button.builder(Component.literal("Ban list"), b ->
+                ClaimGuardNetwork.CHANNEL.sendToServer(new net.robmc.claimguard.network.OpenClanBanListRequestPacket())
+        ).bounds(barLeft + 2 * (third + 6), barY, third, 18).build());
+
         addRenderableWidget(Button.builder(CommonComponents.GUI_BACK, b -> onClose())
                 .bounds(cx - 60, top + PANEL_H - 24, 120, 20).build());
+    }
+
+    private boolean canEditMotd() {
+        return viewerRank == ClanRank.LEADER || viewerRank == ClanRank.OFFICER;
     }
 
     @Override

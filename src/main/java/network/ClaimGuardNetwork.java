@@ -75,5 +75,40 @@ public class ClaimGuardNetwork {
                 ClanMemberActionPacket::decode,
                 ClanMemberActionPacket::handle
         );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                ClanInvitePacket.class,
+                ClanInvitePacket::encode,
+                ClanInvitePacket::decode,
+                ClanInvitePacket::handle
+        );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                OpenClanBanListRequestPacket.class,
+                OpenClanBanListRequestPacket::encode,
+                OpenClanBanListRequestPacket::decode,
+                OpenClanBanListRequestPacket::handle
+        );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                OpenClanBanListPacket.class,
+                OpenClanBanListPacket::encode,
+                OpenClanBanListPacket::decode,
+                OpenClanBanListPacket::handle
+        );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                ClanUnbanPacket.class,
+                ClanUnbanPacket::encode,
+                ClanUnbanPacket::decode,
+                ClanUnbanPacket::handle
+        );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                SetClanMotdPacket.class,
+                SetClanMotdPacket::encode,
+                SetClanMotdPacket::decode,
+                SetClanMotdPacket::handle
+        );
     }
 }

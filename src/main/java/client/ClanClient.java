@@ -1,6 +1,7 @@
 package net.robmc.claimguard.client;
 
 import net.minecraft.client.Minecraft;
+import net.robmc.claimguard.network.OpenClanBanListPacket;
 import net.robmc.claimguard.network.OpenClanRosterPacket;
 
 /**
@@ -18,5 +19,9 @@ public final class ClanClient {
 
     public static void openRoster(OpenClanRosterPacket data) {
         Minecraft.getInstance().setScreen(new ClanRosterScreen(data));
+    }
+
+    public static void openBanList(OpenClanBanListPacket data) {
+        Minecraft.getInstance().setScreen(new ClanBanListScreen(data));
     }
 }

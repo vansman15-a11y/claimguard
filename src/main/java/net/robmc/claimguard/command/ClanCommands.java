@@ -25,10 +25,31 @@ public class ClanCommands {
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
 
-        dispatcher.register(Commands.literal("clan").executes(ctx -> {
-            ClanActions.openRoster(ctx.getSource().getPlayerOrException());
-            return 1;
-        }));
+        dispatcher.register(Commands.literal("clan")
+                .executes(ctx -> {
+                    ClanActions.openRoster(ctx.getSource().getPlayerOrException());
+                    return 1;
+                })
+                .then(Commands.literal("invite")
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .executes(ctx -> {
+                                    ClanActions.invitePlayer(
+                                            ctx.getSource().getPlayerOrException(),
+                                            EntityArgument.getPlayer(ctx, "player"));
+                                    return 1;
+                                })))
+                .then(Commands.literal("accept").executes(ctx -> {
+                    ClanActions.acceptInvite(ctx.getSource().getPlayerOrException());
+                    return 1;
+                }))
+                .then(Commands.literal("decline").executes(ctx -> {
+                    ClanActions.declineInvite(ctx.getSource().getPlayerOrException());
+                    return 1;
+                }))
+                .then(Commands.literal("bans").executes(ctx -> {
+                    ClanActions.openBanList(ctx.getSource().getPlayerOrException());
+                    return 1;
+                })));
 
         dispatcher.register(Commands.literal("signature")
                 .then(Commands.argument("player", EntityArgument.player())
