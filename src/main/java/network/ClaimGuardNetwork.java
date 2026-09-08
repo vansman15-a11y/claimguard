@@ -124,5 +124,12 @@ public class ClaimGuardNetwork {
                 RespawnChoicePacket::decode,
                 RespawnChoicePacket::handle
         );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                ClanLeavePacket.class,
+                ClanLeavePacket::encode,
+                ClanLeavePacket::decode,
+                ClanLeavePacket::handle
+        );
     }
 }

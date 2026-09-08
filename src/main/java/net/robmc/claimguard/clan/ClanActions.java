@@ -320,6 +320,41 @@ public final class ClanActions {
                 new OpenClanRosterPacket(clan.getName(), clan.getTag(), clan.getMotd(), viewerRank, rows));
     }
 
+    // --- leaving ---
+
+    public static void leaveClan(ServerPlayer player) {
+        ClanManager manager = ClanManager.get(player.server);
+        Optional<Clan> maybeClan = manager.getClanOf(player.getUUID());
+        if (maybeClan.isEmpty()) {
+            player.displayClientMessage(Component.literal("You're not in a clan."), true);
+            return;
+        }
+        Clan clan = maybeClan.get();
+        boolean wasLeader = clan.getMember(player.getUUID()).map(m -> m.getRank() == ClanRank.LEADER).orElse(false);
+
+        manager.removeMember(clan, player.getUUID()); // disbands the clan if that emptied it
+
+        if (clan.getMembers().isEmpty()) {
+            player.displayClientMessage(Component.literal("You left " + clan.getName() + ". The clan is disbanded."), false);
+            return;
+        }
+
+        // Leader left but others remain - hand leadership to the most senior member.
+        if (wasLeader) {
+            ClanMember heir = clan.getMembers().stream()
+                    .min((a, b) -> Integer.compare(a.getRank().ordinal(), b.getRank().ordinal()))
+                    .orElse(null);
+            if (heir != null && heir.getRank() != ClanRank.LEADER) {
+                heir.setRank(ClanRank.LEADER);
+                manager.markDirty();
+                messageMember(player, heir.getId(), "You are now the Leader of " + clan.getName() + ".");
+            }
+        }
+
+        player.displayClientMessage(Component.literal("You left " + clan.getName() + "."), false);
+        broadcastRosterRefresh(player, clan);
+    }
+
     // --- invites ---
 
     public static void invitePlayer(ServerPlayer inviter, ServerPlayer target) {

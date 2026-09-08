@@ -1,14 +1,17 @@
 package net.robmc.claimguard.client;
 
+import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.robmc.claimguard.clan.ClanPermissions;
 import net.robmc.claimguard.clan.ClanRank;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
+import net.robmc.claimguard.network.ClanLeavePacket;
 import net.robmc.claimguard.network.ClanMemberActionPacket;
 import net.robmc.claimguard.network.OpenClanRosterPacket;
 
@@ -102,8 +105,31 @@ public class ClanRosterScreen extends Screen {
                 ClaimGuardNetwork.CHANNEL.sendToServer(new net.robmc.claimguard.network.OpenClanBanListRequestPacket())
         ).bounds(barLeft + 2 * (third + 6), barY, third, 18).build());
 
+        addRenderableWidget(Button.builder(Component.literal("Leave clan"), b -> confirmLeave())
+                .bounds(cx - 122, top + PANEL_H - 24, 118, 20).build());
         addRenderableWidget(Button.builder(CommonComponents.GUI_BACK, b -> onClose())
-                .bounds(cx - 60, top + PANEL_H - 24, 120, 20).build());
+                .bounds(cx + 4, top + PANEL_H - 24, 118, 20).build());
+    }
+
+    private void confirmLeave() {
+        BooleanConsumer onChoice = confirmed -> {
+            if (confirmed) {
+                ClaimGuardNetwork.CHANNEL.sendToServer(new ClanLeavePacket());
+                onClose();
+            } else {
+                minecraft.setScreen(this);
+            }
+        };
+        boolean lastOne = allMembers.size() <= 1;
+        minecraft.setScreen(new ConfirmScreen(
+                onChoice,
+                Component.literal("Leave " + clanName + "?"),
+                Component.literal(lastOne
+                        ? "You're the last member - the clan will be disbanded."
+                        : "You'll lose your rank and have to be re-invited to rejoin."),
+                Component.literal("Leave"),
+                CommonComponents.GUI_CANCEL
+        ));
     }
 
     private boolean canEditMotd() {
