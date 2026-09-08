@@ -54,19 +54,22 @@ public class ClaimCoreBlock extends BaseEntityBlock {
 
         ClaimManager manager = ClaimManager.get((ServerLevel) level);
 
+        // Claim Cores are a clan thing - you must be in a clan to place one.
+        Optional<net.robmc.claimguard.clan.Clan> clan =
+                net.robmc.claimguard.clan.ClanManager.get(serverPlayer.server).getClanOf(serverPlayer.getUUID());
+        if (clan.isEmpty()) {
+            rollbackPlacement(level, pos, serverPlayer, stack);
+            serverPlayer.displayClientMessage(Component.literal(
+                    "You must be in a clan to place a Claim Core. Found a Clan Charter to start one."), false);
+            return;
+        }
+
         // Minimum-spacing rule: refuse the placement if another claim's core is
         // within MIN_CLAIM_SPACING blocks. This has to happen BEFORE createClaim,
         // otherwise the check would find the claim we just made and reject it.
         Optional<Claim> tooClose = manager.findClaimTooCloseTo(pos);
         if (tooClose.isPresent()) {
-            level.removeBlock(pos, false); // pull the block back out of the world
-            if (!serverPlayer.isCreative()) {
-                // Survival: the item was already spent placing the block - hand it back.
-                ItemStack refund = new ItemStack(stack.getItem());
-                if (!serverPlayer.getInventory().add(refund)) {
-                    serverPlayer.drop(refund, false);
-                }
-            }
+            rollbackPlacement(level, pos, serverPlayer, stack);
             BlockPos other = tooClose.get().getCorePos();
             serverPlayer.displayClientMessage(Component.literal(
                     "Too close to an existing claim (core at " + other.getX() + ", " + other.getY()
@@ -76,11 +79,7 @@ public class ClaimCoreBlock extends BaseEntityBlock {
             return;
         }
 
-        java.util.UUID clanId = net.robmc.claimguard.clan.ClanManager.get(serverPlayer.server)
-                .getClanOf(serverPlayer.getUUID())
-                .map(net.robmc.claimguard.clan.Clan::getId)
-                .orElse(null);
-        Claim claim = manager.createClaim(pos, serverPlayer.getUUID(), clanId);
+        Claim claim = manager.createClaim(pos, serverPlayer.getUUID(), clan.get().getId());
 
         if (level.getBlockEntity(pos) instanceof ClaimCoreBlockEntity blockEntity) {
             blockEntity.setOwner(serverPlayer.getUUID());
@@ -90,6 +89,17 @@ public class ClaimCoreBlock extends BaseEntityBlock {
                 Component.literal("Claim created! Protected area: " + describeArea(claim.getTier())),
                 false
         );
+    }
+
+    /** Pull the just-placed core back out of the world and refund it (survival only). */
+    private static void rollbackPlacement(Level level, BlockPos pos, ServerPlayer player, ItemStack stack) {
+        level.removeBlock(pos, false);
+        if (!player.isCreative()) {
+            ItemStack refund = new ItemStack(stack.getItem());
+            if (!player.getInventory().add(refund)) {
+                player.drop(refund, false);
+            }
+        }
     }
 
     // --- Right-click: opens the claim menu for the owner ---
