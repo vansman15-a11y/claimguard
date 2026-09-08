@@ -64,6 +64,18 @@ public class ClaimCoreBlock extends BaseEntityBlock {
             return;
         }
 
+        // Post-conquest lockout: no re-claiming an area for a few minutes after its beacon falls.
+        net.robmc.claimguard.siege.SiegeManager sieges =
+                net.robmc.claimguard.siege.SiegeManager.get(serverPlayer.server);
+        long now = serverPlayer.server.overworld().getGameTime();
+        if (sieges.isLockedOut(((ServerLevel) level).dimension(), pos, now)) {
+            rollbackPlacement(level, pos, serverPlayer, stack);
+            serverPlayer.displayClientMessage(Component.literal(
+                    "This area was just conquered - locked for another "
+                            + sieges.lockoutSecondsLeft(((ServerLevel) level).dimension(), pos, now) + "s."), false);
+            return;
+        }
+
         // Minimum-spacing rule: refuse the placement if another claim's core is
         // within MIN_CLAIM_SPACING blocks. This has to happen BEFORE createClaim,
         // otherwise the check would find the claim we just made and reject it.

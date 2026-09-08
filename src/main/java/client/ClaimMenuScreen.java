@@ -27,13 +27,15 @@ public class ClaimMenuScreen extends Screen {
     private final ClaimTier tier;
     private final String claimName;
     private final boolean boundHere;
+    private final boolean canManage;
 
-    public ClaimMenuScreen(BlockPos corePos, int tierOrdinal, String claimName, boolean boundHere) {
+    public ClaimMenuScreen(BlockPos corePos, int tierOrdinal, String claimName, boolean boundHere, boolean canManage) {
         super(Component.literal("Clan Beacon"));
         this.corePos = corePos;
         this.tier = ClaimTier.byIndex(tierOrdinal);
         this.claimName = claimName;
         this.boundHere = boundHere;
+        this.canManage = canManage;
     }
 
     @Override
@@ -59,12 +61,14 @@ public class ClaimMenuScreen extends Screen {
                 }
         ).bounds(btnLeft, y, btnW, 20).build());
 
-        y += 24;
-        addRenderableWidget(Button.builder(Component.literal("Upgrade"), b ->
-                minecraft.setScreen(new ClaimUpgradeScreen(corePos, tier.ordinal(), claimName, boundHere))
-        ).bounds(btnLeft, y, btnW / 2 - 2, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Remove"), b -> confirmRemove())
-                .bounds(btnLeft + btnW / 2 + 2, y, btnW / 2 - 2, 20).build());
+        if (canManage) {
+            y += 24;
+            addRenderableWidget(Button.builder(Component.literal("Upgrade"), b ->
+                    minecraft.setScreen(new ClaimUpgradeScreen(corePos, tier.ordinal(), claimName, boundHere))
+            ).bounds(btnLeft, y, btnW / 2 - 2, 20).build());
+            addRenderableWidget(Button.builder(Component.literal("Remove"), b -> confirmRemove())
+                    .bounds(btnLeft + btnW / 2 + 2, y, btnW / 2 - 2, 20).build());
+        }
 
         y += 24;
         addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, b -> onClose())

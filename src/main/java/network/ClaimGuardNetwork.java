@@ -131,5 +131,40 @@ public class ClaimGuardNetwork {
                 ClanLeavePacket::decode,
                 ClanLeavePacket::handle
         );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                OpenClanBrowseRequestPacket.class,
+                OpenClanBrowseRequestPacket::encode,
+                OpenClanBrowseRequestPacket::decode,
+                OpenClanBrowseRequestPacket::handle
+        );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                OpenClanBrowsePacket.class,
+                OpenClanBrowsePacket::encode,
+                OpenClanBrowsePacket::decode,
+                OpenClanBrowsePacket::handle
+        );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                SetClanRelationPacket.class,
+                SetClanRelationPacket::encode,
+                SetClanRelationPacket::decode,
+                SetClanRelationPacket::handle
+        );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                StartSiegePacket.class,
+                StartSiegePacket::encode,
+                StartSiegePacket::decode,
+                StartSiegePacket::handle
+        );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                SyncAlliesPacket.class,
+                SyncAlliesPacket::encode,
+                SyncAlliesPacket::decode,
+                SyncAlliesPacket::handle
+        );
     }
 }

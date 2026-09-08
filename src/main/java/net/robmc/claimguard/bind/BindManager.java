@@ -56,6 +56,13 @@ public class BindManager extends SavedData {
         }
     }
 
+    /** Drop every player's bind that points at this core (used when a beacon is destroyed). */
+    public void clearBindsTo(BlockPos corePos) {
+        if (binds.values().removeIf(b -> b.pos().equals(corePos))) {
+            setDirty();
+        }
+    }
+
     public void setRespawnChoice(UUID playerId, boolean atBind) {
         pendingRespawnChoice.put(playerId, atBind);
     }

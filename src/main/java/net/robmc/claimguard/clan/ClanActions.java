@@ -14,15 +14,20 @@ import net.robmc.claimguard.item.ClanCharterItem;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.ClanMemberActionPacket;
 import net.robmc.claimguard.network.OpenClanBanListPacket;
+import net.robmc.claimguard.network.OpenClanBrowsePacket;
 import net.robmc.claimguard.network.OpenClanRosterPacket;
 import net.robmc.claimguard.network.OpenCreateClanScreenPacket;
+import net.robmc.claimguard.network.SyncAlliesPacket;
 import net.robmc.claimguard.registry.ModItems;
+import net.robmc.claimguard.siege.SiegeManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -449,6 +454,123 @@ public final class ClanActions {
             return;
         }
         target.displayClientMessage(Component.literal("Invite declined."), false);
+    }
+
+    // --- browse & relations ---
+
+    public static void openBrowse(ServerPlayer player) {
+        ClanManager clans = ClanManager.get(player.server);
+        Optional<Clan> myClan = clans.getClanOf(player.getUUID());
+        if (myClan.isEmpty()) {
+            player.displayClientMessage(Component.literal("You're not in a clan."), true);
+            return;
+        }
+        SiegeManager sieges = SiegeManager.get(player.server);
+        Set<UUID> defendingClans = new HashSet<>();
+        sieges.activeSieges().forEach(s -> defendingClans.add(s.defenderClan));
+
+        List<OpenClanBrowsePacket.ClanRow> rows = new ArrayList<>();
+        for (Clan c : clans.getAllClans()) {
+            if (c.getId().equals(myClan.get().getId())) {
+                continue;
+            }
+            ClanRelation rel = myClan.get().getRelation(c.getId());
+            rows.add(new OpenClanBrowsePacket.ClanRow(
+                    c.getId(), c.getName(), c.getTag(), c.getMembers().size(),
+                    c.formatRaidWindow(), c.isRaidWindowOpenNow(),
+                    rel == null ? -1 : rel.ordinal(), defendingClans.contains(c.getId())));
+        }
+        rows.sort((a, b) -> a.name().compareToIgnoreCase(b.name()));
+
+        int viewerRank = myClan.get().getMember(player.getUUID()).map(m -> m.getRank().ordinal()).orElse(ClanRank.RECRUIT.ordinal());
+        ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new OpenClanBrowsePacket(viewerRank, rows));
+    }
+
+    public static void setRelation(ServerPlayer player, UUID targetClanId, ClanRelation relation) {
+        ClanManager manager = ClanManager.get(player.server);
+        Optional<Clan> myClan = manager.getClanOf(player.getUUID());
+        if (myClan.isEmpty() || myClan.get().getId().equals(targetClanId)) {
+            return;
+        }
+        ClanRank rank = myClan.get().getMember(player.getUUID()).map(ClanMember::getRank).orElse(ClanRank.RECRUIT);
+        if (rank != ClanRank.LEADER && rank != ClanRank.OFFICER) {
+            denied(player);
+            return;
+        }
+        if (manager.getClanById(targetClanId).isEmpty()) {
+            return;
+        }
+        myClan.get().setRelation(targetClanId, relation);
+        manager.markDirty();
+        String name = manager.clanNameOrNull(targetClanId);
+        player.displayClientMessage(Component.literal(relation == null
+                ? "Cleared relation with " + name + "."
+                : "Set " + name + " as " + relation.displayName() + "."), false);
+        // refresh browse + ally tags for every online member of our clan
+        for (ClanMember member : myClan.get().getMembers()) {
+            ServerPlayer online = player.server.getPlayerList().getPlayer(member.getId());
+            if (online != null) {
+                openBrowse(online);
+                syncAllies(online);
+            }
+        }
+    }
+
+    public static void setRaidWindow(ServerPlayer player, String hhmm) {
+        ClanManager manager = ClanManager.get(player.server);
+        Optional<Clan> myClan = manager.getClanOf(player.getUUID());
+        if (myClan.isEmpty()) {
+            player.displayClientMessage(Component.literal("You're not in a clan."), true);
+            return;
+        }
+        if (myClan.get().getMember(player.getUUID()).map(ClanMember::getRank).orElse(ClanRank.RECRUIT) != ClanRank.LEADER) {
+            player.displayClientMessage(Component.literal("Only the clan Leader can set the raid window."), true);
+            return;
+        }
+        int minutes;
+        try {
+            String[] parts = hhmm.trim().split(":");
+            int h = Integer.parseInt(parts[0]);
+            int m = parts.length > 1 ? Integer.parseInt(parts[1]) : 0;
+            if (h < 0 || h > 23 || m < 0 || m > 59) {
+                throw new NumberFormatException();
+            }
+            minutes = h * 60 + m;
+        } catch (RuntimeException e) {
+            player.displayClientMessage(Component.literal("Use 24-hour time, e.g. /clan raidwindow 19:00"), true);
+            return;
+        }
+        myClan.get().setRaidWindowStart(minutes);
+        manager.markDirty();
+        player.displayClientMessage(Component.literal(
+                "Raid window set to " + myClan.get().formatRaidWindow() + " (server time). "
+                        + "Your claims can only be sieged during this 3-hour window."), false);
+    }
+
+    public static void syncAllies(ServerPlayer player) {
+        ClanManager clans = ClanManager.get(player.server);
+        Set<UUID> allied = new HashSet<>();
+        clans.getClanOf(player.getUUID()).ifPresent(myClan ->
+                myClan.getRelations().forEach((clanId, rel) -> {
+                    if (rel == ClanRelation.ALLY) {
+                        clans.getClanById(clanId).ifPresent(ally ->
+                                ally.getMembers().forEach(m -> allied.add(m.getId())));
+                    }
+                }));
+        ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new SyncAlliesPacket(new ArrayList<>(allied)));
+    }
+
+    /** True if 'playerId' is in a clan that 'ownerClanId' considers an ally. */
+    public static boolean isAllyOf(net.minecraft.server.MinecraftServer server, UUID ownerClanId, UUID playerId) {
+        ClanManager clans = ClanManager.get(server);
+        Clan owner = clans.getClanById(ownerClanId).orElse(null);
+        if (owner == null) {
+            return false;
+        }
+        UUID theirClan = clans.getClanOf(playerId).map(Clan::getId).orElse(null);
+        return theirClan != null && owner.getRelation(theirClan) == ClanRelation.ALLY;
     }
 
     // --- ban list & motd ---

@@ -23,6 +23,7 @@ public final class ClaimMenuClient {
             mc.setScreen(new ClaimUpgradeScreen(packet.corePos(), packet.tierOrdinal(), packet.claimName(), packet.boundHere()));
             return;
         }
-        mc.setScreen(new ClaimMenuScreen(packet.corePos(), packet.tierOrdinal(), packet.claimName(), packet.boundHere()));
+        mc.setScreen(new ClaimMenuScreen(packet.corePos(), packet.tierOrdinal(), packet.claimName(),
+                packet.boundHere(), packet.canManage()));
     }
 }

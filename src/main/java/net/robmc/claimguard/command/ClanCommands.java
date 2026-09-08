@@ -1,6 +1,7 @@
 package net.robmc.claimguard.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -49,7 +50,19 @@ public class ClanCommands {
                 .then(Commands.literal("bans").executes(ctx -> {
                     ClanActions.openBanList(ctx.getSource().getPlayerOrException());
                     return 1;
-                })));
+                }))
+                .then(Commands.literal("browse").executes(ctx -> {
+                    ClanActions.openBrowse(ctx.getSource().getPlayerOrException());
+                    return 1;
+                }))
+                .then(Commands.literal("raidwindow")
+                        .then(Commands.argument("time", StringArgumentType.word())
+                                .executes(ctx -> {
+                                    ClanActions.setRaidWindow(
+                                            ctx.getSource().getPlayerOrException(),
+                                            StringArgumentType.getString(ctx, "time"));
+                                    return 1;
+                                }))));
 
         dispatcher.register(Commands.literal("signature")
                 .then(Commands.argument("player", EntityArgument.player())

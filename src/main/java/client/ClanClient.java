@@ -2,6 +2,7 @@ package net.robmc.claimguard.client;
 
 import net.minecraft.client.Minecraft;
 import net.robmc.claimguard.network.OpenClanBanListPacket;
+import net.robmc.claimguard.network.OpenClanBrowsePacket;
 import net.robmc.claimguard.network.OpenClanRosterPacket;
 
 /**
@@ -23,5 +24,9 @@ public final class ClanClient {
 
     public static void openBanList(OpenClanBanListPacket data) {
         Minecraft.getInstance().setScreen(new ClanBanListScreen(data));
+    }
+
+    public static void openBrowse(OpenClanBrowsePacket data) {
+        Minecraft.getInstance().setScreen(new ClanBrowseScreen(data));
     }
 }

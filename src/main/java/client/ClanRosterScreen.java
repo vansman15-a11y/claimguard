@@ -94,16 +94,19 @@ public class ClanRosterScreen extends Screen {
         int barY = top + PANEL_H - 46;
         int barLeft = cx - PANEL_W / 2 + 14;
         int barW = PANEL_W - 28;
-        int third = barW / 3 - 4;
+        int quarter = barW / 4 - 4;
         addRenderableWidget(Button.builder(Component.literal("Invite"), b ->
                 minecraft.setScreen(new ClanInviteScreen(clanName))
-        ).bounds(barLeft, barY, third, 18).build());
+        ).bounds(barLeft, barY, quarter, 18).build());
         addRenderableWidget(Button.builder(Component.literal("MOTD"), b ->
                 minecraft.setScreen(new ClanMotdScreen(clanName, motd, canEditMotd()))
-        ).bounds(barLeft + third + 6, barY, third, 18).build());
-        addRenderableWidget(Button.builder(Component.literal("Ban list"), b ->
+        ).bounds(barLeft + quarter + 5, barY, quarter, 18).build());
+        addRenderableWidget(Button.builder(Component.literal("Bans"), b ->
                 ClaimGuardNetwork.CHANNEL.sendToServer(new net.robmc.claimguard.network.OpenClanBanListRequestPacket())
-        ).bounds(barLeft + 2 * (third + 6), barY, third, 18).build());
+        ).bounds(barLeft + 2 * (quarter + 5), barY, quarter, 18).build());
+        addRenderableWidget(Button.builder(Component.literal("Browse"), b ->
+                ClaimGuardNetwork.CHANNEL.sendToServer(new net.robmc.claimguard.network.OpenClanBrowseRequestPacket())
+        ).bounds(barLeft + 3 * (quarter + 5), barY, quarter, 18).build());
 
         addRenderableWidget(Button.builder(Component.literal("Leave clan"), b -> confirmLeave())
                 .bounds(cx - 122, top + PANEL_H - 24, 118, 20).build());

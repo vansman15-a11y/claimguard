@@ -90,14 +90,31 @@ public class ProtectionEvents {
         }
     }
 
-    /** Stops explosions (TNT, creepers, etc.) from destroying blocks inside a claim. */
+    /**
+     * Stops explosions from destroying blocks inside a claim - EXCEPT a claim
+     * that's currently under siege, where TNT is the only way through the walls.
+     * The beacon block itself stays explosion-proof even during a siege (it can
+     * only be brought down by pickaxe hits).
+     */
     @SubscribeEvent
     public static void onExplosionDetonate(ExplosionEvent.Detonate event) {
         if (!(event.getLevel() instanceof ServerLevel serverLevel)) {
             return;
         }
         ClaimManager manager = ClaimManager.get(serverLevel);
-        event.getAffectedBlocks().removeIf(pos -> manager.getClaimAt(pos).isPresent());
+        net.robmc.claimguard.siege.SiegeManager sieges =
+                net.robmc.claimguard.siege.SiegeManager.get(serverLevel.getServer());
+        event.getAffectedBlocks().removeIf(pos -> {
+            Optional<Claim> claim = manager.getClaimAt(pos);
+            if (claim.isEmpty()) {
+                return false;
+            }
+            net.minecraft.core.BlockPos core = claim.get().getCorePos();
+            if (pos.equals(core)) {
+                return true; // beacon is always explosion-proof
+            }
+            return !sieges.isUnderSiege(core); // sieged claim: let TNT through
+        });
     }
 
     /**

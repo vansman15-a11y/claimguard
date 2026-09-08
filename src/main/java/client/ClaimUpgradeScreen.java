@@ -57,7 +57,7 @@ public class ClaimUpgradeScreen extends Screen {
         addRenderableWidget(confirm);
 
         addRenderableWidget(Button.builder(Component.literal("Back"), b ->
-                minecraft.setScreen(new ClaimMenuScreen(corePos, current.ordinal(), claimName, boundHere))
+                minecraft.setScreen(new ClaimMenuScreen(corePos, current.ordinal(), claimName, boundHere, true))
         ).bounds(cx + 2, y, btnW / 2 - 2, 20).build());
     }
 

@@ -10,7 +10,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.PacketDistributor;
 import net.robmc.claimguard.bind.BindManager;
 import net.robmc.claimguard.clan.Clan;
+import net.robmc.claimguard.clan.ClanActions;
 import net.robmc.claimguard.clan.ClanManager;
+import net.robmc.claimguard.clan.ClanMember;
 import net.robmc.claimguard.clan.ClanRank;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.OpenClaimMenuPacket;
@@ -37,9 +39,9 @@ public final class ClaimActions {
     private ClaimActions() {
     }
 
-    /** Right-click entry point: open the menu for the owner, or tell others whose it is. */
+    /** Right-click entry point: open the menu for a clan member or an allied player. */
     public static void openMenu(ServerPlayer player, BlockPos corePos) {
-        Optional<Claim> claim = ownedClaim(player, corePos);
+        Optional<Claim> claim = accessibleClaim(player, corePos);
         if (claim.isEmpty()) {
             return;
         }
@@ -47,7 +49,7 @@ public final class ClaimActions {
     }
 
     public static void showBorder(ServerPlayer player, BlockPos corePos) {
-        Optional<Claim> maybeClaim = ownedClaim(player, corePos);
+        Optional<Claim> maybeClaim = accessibleClaim(player, corePos);
         if (maybeClaim.isEmpty()) {
             return;
         }
@@ -64,7 +66,7 @@ public final class ClaimActions {
     }
 
     public static void tryUpgrade(ServerPlayer player, BlockPos corePos) {
-        Optional<Claim> maybeClaim = ownedClaim(player, corePos);
+        Optional<Claim> maybeClaim = memberClaim(player, corePos);
         if (maybeClaim.isEmpty()) {
             return;
         }
@@ -96,7 +98,7 @@ public final class ClaimActions {
     }
 
     public static void remove(ServerPlayer player, BlockPos corePos) {
-        Optional<Claim> maybeClaim = ownedClaim(player, corePos);
+        Optional<Claim> maybeClaim = memberClaim(player, corePos);
         if (maybeClaim.isEmpty()) {
             return;
         }
@@ -114,47 +116,61 @@ public final class ClaimActions {
 
     // --- helpers ---
 
-    /**
-     * The claim at this core if the player may interact with it: a member of the
-     * owning clan, or (for a legacy clan-less claim) the founder.
-     */
-    private static Optional<Claim> ownedClaim(ServerPlayer player, BlockPos corePos) {
+    private static boolean isMemberOfOwningClan(ServerPlayer player, Claim claim) {
+        if (claim.getClanId() != null) {
+            return ClanManager.get(player.server).getClanOf(player.getUUID())
+                    .map(cl -> cl.getId().equals(claim.getClanId())).orElse(false);
+        }
+        return claim.isOwnedBy(player.getUUID());
+    }
+
+    /** Claim at this core if the player is a member of the owning clan (or the legacy owner). */
+    private static Optional<Claim> memberClaim(ServerPlayer player, BlockPos corePos) {
         Optional<Claim> claim = ClaimManager.get(player.serverLevel()).getClaimByCore(corePos);
         if (claim.isEmpty()) {
             return Optional.empty();
         }
-        Claim c = claim.get();
-        if (c.getClanId() != null) {
-            boolean member = ClanManager.get(player.server).getClanOf(player.getUUID())
-                    .map(cl -> cl.getId().equals(c.getClanId())).orElse(false);
-            if (!member) {
-                player.displayClientMessage(Component.literal("This claim belongs to another clan."), true);
-                return Optional.empty();
-            }
-            return claim;
-        }
-        if (!c.isOwnedBy(player.getUUID())) {
-            player.displayClientMessage(Component.literal("This claim belongs to someone else."), true);
+        if (!isMemberOfOwningClan(player, claim.get())) {
+            player.displayClientMessage(Component.literal("This claim belongs to another clan."), true);
             return Optional.empty();
         }
         return claim;
     }
 
-    /** The player's rank in the clan that owns this claim, or null if not clan-owned. */
+    /** Claim at this core if the player is a member OR in an allied clan. */
+    private static Optional<Claim> accessibleClaim(ServerPlayer player, BlockPos corePos) {
+        Optional<Claim> claim = ClaimManager.get(player.serverLevel()).getClaimByCore(corePos);
+        if (claim.isEmpty()) {
+            return Optional.empty();
+        }
+        Claim c = claim.get();
+        if (isMemberOfOwningClan(player, c)) {
+            return claim;
+        }
+        if (c.getClanId() != null
+                && ClanActions.isAllyOf(player.server, c.getClanId(), player.getUUID())) {
+            return claim;
+        }
+        player.displayClientMessage(Component.literal("This claim belongs to another clan."), true);
+        return Optional.empty();
+    }
+
+    /** The player's rank in the clan that owns this claim, or null if not a clan member of it. */
     private static ClanRank rankInOwningClan(ServerPlayer player, Claim claim) {
         if (claim.getClanId() == null) {
             return null;
         }
         return ClanManager.get(player.server).getClanOf(player.getUUID())
+                .filter(c -> c.getId().equals(claim.getClanId()))
                 .flatMap(c -> c.getMember(player.getUUID()))
-                .map(m -> m.getRank())
+                .map(ClanMember::getRank)
                 .orElse(null);
     }
 
     // --- bindstone ---
 
     public static void bind(ServerPlayer player, BlockPos corePos) {
-        Optional<Claim> claim = ownedClaim(player, corePos);
+        Optional<Claim> claim = accessibleClaim(player, corePos); // members AND allies may bind
         if (claim.isEmpty()) {
             return;
         }
@@ -183,7 +199,7 @@ public final class ClaimActions {
     }
 
     public static void unbind(ServerPlayer player, BlockPos corePos) {
-        Optional<Claim> claim = ownedClaim(player, corePos);
+        Optional<Claim> claim = accessibleClaim(player, corePos);
         if (claim.isEmpty()) {
             return;
         }
@@ -196,9 +212,10 @@ public final class ClaimActions {
         String clanName = ClanManager.get(player.server).clanNameOrNull(claim.getClanId());
         String name = clanName != null ? clanName : player.getGameProfile().getName();
         boolean boundHere = BindManager.get(player.server).isBoundTo(player.getUUID(), claim.getCorePos());
+        boolean canManage = isMemberOfOwningClan(player, claim);
         ClaimGuardNetwork.CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
-                new OpenClaimMenuPacket(claim.getCorePos(), claim.getTier().ordinal(), name, boundHere)
+                new OpenClaimMenuPacket(claim.getCorePos(), claim.getTier().ordinal(), name, boundHere, canManage)
         );
     }
 

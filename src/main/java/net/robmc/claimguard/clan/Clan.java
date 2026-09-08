@@ -35,6 +35,8 @@ public class Clan {
     private final List<ClanMember> members = new ArrayList<>();
     /** Banned player id -> last known name, so the ban list can show something readable. */
     private final Map<UUID, String> banned = new LinkedHashMap<>();
+    /** How this clan regards other clans (other clan id -> relation). No entry = neutral. */
+    private final Map<UUID, ClanRelation> relations = new LinkedHashMap<>();
 
     public Clan(UUID id, String name, String tag, String motd) {
         this.id = id;
@@ -71,6 +73,9 @@ public class Clan {
         this.motd = motd;
     }
 
+    /** Length of the daily raid window, in minutes. */
+    public static final int RAID_WINDOW_MINUTES = 180;
+
     /** Minute-of-day the raid window opens (server local time), or -1 if never set. */
     public int getRaidWindowStart() {
         return raidWindowStart;
@@ -78,6 +83,30 @@ public class Clan {
 
     public void setRaidWindowStart(int minuteOfDay) {
         this.raidWindowStart = minuteOfDay;
+    }
+
+    /** True if the current server local time is inside this clan's 3h raid window. */
+    public boolean isRaidWindowOpenNow() {
+        if (raidWindowStart < 0) {
+            return false;
+        }
+        java.time.LocalTime now = java.time.LocalTime.now();
+        int nowMin = now.getHour() * 60 + now.getMinute();
+        int end = (raidWindowStart + RAID_WINDOW_MINUTES) % 1440;
+        if (raidWindowStart < end) {
+            return nowMin >= raidWindowStart && nowMin < end;
+        }
+        return nowMin >= raidWindowStart || nowMin < end; // window wraps past midnight
+    }
+
+    /** e.g. "19:00-22:00", or "not set". */
+    public String formatRaidWindow() {
+        if (raidWindowStart < 0) {
+            return "not set";
+        }
+        int end = (raidWindowStart + RAID_WINDOW_MINUTES) % 1440;
+        return String.format("%02d:%02d-%02d:%02d",
+                raidWindowStart / 60, raidWindowStart % 60, end / 60, end % 60);
     }
 
     public List<ClanMember> getMembers() {
@@ -108,6 +137,22 @@ public class Clan {
 
     public void removeMember(UUID playerId) {
         members.removeIf(m -> m.getId().equals(playerId));
+    }
+
+    public Map<UUID, ClanRelation> getRelations() {
+        return relations;
+    }
+
+    public ClanRelation getRelation(UUID otherClanId) {
+        return relations.get(otherClanId);
+    }
+
+    public void setRelation(UUID otherClanId, ClanRelation relation) {
+        if (relation == null) {
+            relations.remove(otherClanId);
+        } else {
+            relations.put(otherClanId, relation);
+        }
     }
 
     public Map<UUID, String> getBanned() {
@@ -150,6 +195,15 @@ public class Clan {
             banList.add(b);
         }
         tag.put("Banned", banList);
+
+        ListTag relList = new ListTag();
+        for (Map.Entry<UUID, ClanRelation> entry : relations.entrySet()) {
+            CompoundTag r = new CompoundTag();
+            r.putUUID("Clan", entry.getKey());
+            r.putInt("Relation", entry.getValue().ordinal());
+            relList.add(r);
+        }
+        tag.put("Relations", relList);
         return tag;
     }
 
@@ -169,6 +223,14 @@ public class Clan {
         for (int i = 0; i < banList.size(); i++) {
             CompoundTag b = banList.getCompound(i);
             clan.banned.put(b.getUUID("Id"), b.getString("Name"));
+        }
+        ListTag relList = tag.getList("Relations", Tag.TAG_COMPOUND);
+        for (int i = 0; i < relList.size(); i++) {
+            CompoundTag r = relList.getCompound(i);
+            ClanRelation rel = ClanRelation.byIndexOrNull(r.getInt("Relation"));
+            if (rel != null) {
+                clan.relations.put(r.getUUID("Clan"), rel);
+            }
         }
         return clan;
     }

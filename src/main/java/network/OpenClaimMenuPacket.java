@@ -21,12 +21,19 @@ public class OpenClaimMenuPacket {
     private final int tierOrdinal;
     private final String claimName;
     private final boolean boundHere;
+    /** true for a clan member (Upgrade/Remove shown); false for an allied visitor (Bind/Border only). */
+    private final boolean canManage;
 
-    public OpenClaimMenuPacket(BlockPos corePos, int tierOrdinal, String claimName, boolean boundHere) {
+    public OpenClaimMenuPacket(BlockPos corePos, int tierOrdinal, String claimName, boolean boundHere, boolean canManage) {
         this.corePos = corePos;
         this.tierOrdinal = tierOrdinal;
         this.claimName = claimName;
         this.boundHere = boundHere;
+        this.canManage = canManage;
+    }
+
+    public boolean canManage() {
+        return canManage;
     }
 
     public BlockPos corePos() {
@@ -50,10 +57,11 @@ public class OpenClaimMenuPacket {
         buf.writeVarInt(packet.tierOrdinal);
         buf.writeUtf(packet.claimName);
         buf.writeBoolean(packet.boundHere);
+        buf.writeBoolean(packet.canManage);
     }
 
     public static OpenClaimMenuPacket decode(FriendlyByteBuf buf) {
-        return new OpenClaimMenuPacket(buf.readBlockPos(), buf.readVarInt(), buf.readUtf(), buf.readBoolean());
+        return new OpenClaimMenuPacket(buf.readBlockPos(), buf.readVarInt(), buf.readUtf(), buf.readBoolean(), buf.readBoolean());
     }
 
     public static void handle(OpenClaimMenuPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
