@@ -7,7 +7,12 @@ import net.robmc.claimguard.ClaimGuard;
 
 public class ClaimGuardNetwork {
 
-    private static final String PROTOCOL_VERSION = "1";
+    /**
+     * Bump this whenever a packet's fields change. A client and server on different
+     * versions then fail the connection with a clear "incompatible" message instead
+     * of mis-parsing a packet and crashing mid-game.
+     */
+    private static final String PROTOCOL_VERSION = "2";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(ClaimGuard.MOD_ID, "main"),

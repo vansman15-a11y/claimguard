@@ -35,7 +35,6 @@ public class ClanRaidWindowScreen extends Screen {
 
         timeBox = new EditBox(this.font, cx - fieldW / 2, top + 50, fieldW, 18, Component.literal("HH:MM"));
         timeBox.setMaxLength(5);
-        timeBox.setHint(Component.literal("19:00"));
         if (currentWindow != null && currentWindow.contains("-")) {
             timeBox.setValue(currentWindow.substring(0, currentWindow.indexOf('-')));
         }

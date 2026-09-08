@@ -78,15 +78,22 @@ public class ClaimBorderClient {
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+        // AFTER_WEATHER is a main-pass-only stage: shader mods (Iris/OptiFine) don't
+        // run it during the shadow-map pass, so the box is drawn exactly once.
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_WEATHER) {
             return;
         }
         if (border == null || ticksRemaining <= 0) {
             return;
         }
 
-        // World coordinates are relative to the camera, so shift everything by -camera.
+        // Extra guard: only draw for the real player camera, never a secondary pass.
         Vec3 cam = event.getCamera().getPosition();
+        Vec3 mainCam = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+        if (cam.distanceToSqr(mainCam) > 1.0) {
+            return;
+        }
+
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource buffers = Minecraft.getInstance().renderBuffers().bufferSource();
         VertexConsumer lines = buffers.getBuffer(RenderType.lines());
