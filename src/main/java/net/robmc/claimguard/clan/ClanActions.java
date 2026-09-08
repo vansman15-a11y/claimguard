@@ -8,10 +8,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.PacketDistributor;
 import net.robmc.claimguard.item.ClanCharterItem;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
+import net.robmc.claimguard.network.ClanMemberActionPacket;
+import net.robmc.claimguard.network.OpenClanRosterPacket;
 import net.robmc.claimguard.network.OpenCreateClanScreenPacket;
 import net.robmc.claimguard.registry.ModItems;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -187,6 +191,130 @@ public final class ClanActions {
         player.displayClientMessage(Component.literal(
                 "Clan \"" + clan.getName() + "\" [" + clan.getTag() + "] founded with "
                         + clan.getMembers().size() + " member(s)."), false);
+    }
+
+    // --- roster & member management ---
+
+    public static void openRoster(ServerPlayer player) {
+        Optional<Clan> maybeClan = ClanManager.get(player.server).getClanOf(player.getUUID());
+        if (maybeClan.isEmpty()) {
+            player.displayClientMessage(Component.literal("You're not in a clan. Craft a Clan Charter to start one."), true);
+            return;
+        }
+        sendRoster(player, maybeClan.get());
+    }
+
+    public static void memberAction(ServerPlayer actor, UUID targetId, ClanMemberActionPacket.Action action) {
+        ClanManager manager = ClanManager.get(actor.server);
+        Optional<Clan> maybeClan = manager.getClanOf(actor.getUUID());
+        if (maybeClan.isEmpty()) {
+            return;
+        }
+        Clan clan = maybeClan.get();
+
+        Optional<ClanMember> maybeActorMember = clan.getMember(actor.getUUID());
+        Optional<ClanMember> maybeTarget = clan.getMember(targetId);
+        if (maybeActorMember.isEmpty() || maybeTarget.isEmpty()) {
+            return;
+        }
+        ClanMember actorMember = maybeActorMember.get();
+        ClanMember target = maybeTarget.get();
+
+        if (target.getId().equals(actor.getUUID())) {
+            actor.displayClientMessage(Component.literal("You can't do that to yourself."), true);
+            return;
+        }
+
+        ClanRank a = actorMember.getRank();
+        ClanRank t = target.getRank();
+
+        switch (action) {
+            case PROMOTE -> {
+                if (!ClanPermissions.canPromote(a, t)) {
+                    denied(actor);
+                    return;
+                }
+                target.setRank(t.promoted());
+                manager.markDirty();
+                notifyRankChange(actor, clan, target, "promoted");
+            }
+            case DEMOTE -> {
+                if (!ClanPermissions.canDemote(a, t)) {
+                    denied(actor);
+                    return;
+                }
+                target.setRank(t.demoted());
+                manager.markDirty();
+                notifyRankChange(actor, clan, target, "demoted");
+            }
+            case KICK -> {
+                if (!ClanPermissions.canKick(a, t)) {
+                    denied(actor);
+                    return;
+                }
+                manager.removeMember(clan, targetId);
+                messageMember(actor, targetId, "You were removed from " + clan.getName() + ".");
+                actor.displayClientMessage(Component.literal("Removed " + target.getName() + " from the clan."), false);
+            }
+            case BAN -> {
+                if (!ClanPermissions.canBan(a, t)) {
+                    denied(actor);
+                    return;
+                }
+                clan.ban(targetId, target.getName());
+                manager.removeMember(clan, targetId);
+                messageMember(actor, targetId, "You were banned from " + clan.getName() + ".");
+                actor.displayClientMessage(Component.literal("Banned " + target.getName() + " from the clan."), false);
+            }
+        }
+
+        // Refresh the roster for everyone in the clan who has it open (cheap: just online members).
+        broadcastRosterRefresh(actor, clan);
+    }
+
+    private static void notifyRankChange(ServerPlayer actor, Clan clan, ClanMember target, String verb) {
+        actor.displayClientMessage(Component.literal(
+                verb.substring(0, 1).toUpperCase() + verb.substring(1) + " " + target.getName()
+                        + " to " + target.getRank().displayName() + "."), false);
+        messageMember(actor, target.getId(), "You were " + verb + " to " + target.getRank().displayName()
+                + " in " + clan.getName() + ".");
+    }
+
+    private static void denied(ServerPlayer actor) {
+        actor.displayClientMessage(Component.literal("You don't have permission to do that."), true);
+    }
+
+    private static void messageMember(ServerPlayer actor, UUID memberId, String message) {
+        ServerPlayer member = actor.server.getPlayerList().getPlayer(memberId);
+        if (member != null) {
+            member.displayClientMessage(Component.literal(message), false);
+        }
+    }
+
+    private static void broadcastRosterRefresh(ServerPlayer actor, Clan clan) {
+        for (ClanMember member : clan.getMembers()) {
+            ServerPlayer online = actor.server.getPlayerList().getPlayer(member.getId());
+            if (online != null) {
+                sendRoster(online, clan);
+            }
+        }
+    }
+
+    private static void sendRoster(ServerPlayer viewer, Clan clan) {
+        List<OpenClanRosterPacket.MemberRow> rows = new ArrayList<>();
+        for (ClanMember member : clan.getMembers()) {
+            boolean online = viewer.server.getPlayerList().getPlayer(member.getId()) != null;
+            rows.add(new OpenClanRosterPacket.MemberRow(member.getId(), member.getName(), member.getRank().ordinal(), online));
+        }
+        rows.sort((x, y) -> {
+            if (x.rankOrdinal() != y.rankOrdinal()) {
+                return Integer.compare(x.rankOrdinal(), y.rankOrdinal());
+            }
+            return x.name().compareToIgnoreCase(y.name());
+        });
+        int viewerRank = clan.getMember(viewer.getUUID()).map(m -> m.getRank().ordinal()).orElse(ClanRank.RECRUIT.ordinal());
+        ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> viewer),
+                new OpenClanRosterPacket(clan.getName(), clan.getTag(), clan.getMotd(), viewerRank, rows));
     }
 
     // --- helpers ---

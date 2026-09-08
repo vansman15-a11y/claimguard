@@ -61,5 +61,19 @@ public class ClaimGuardNetwork {
                 CreateClanPacket::decode,
                 CreateClanPacket::handle
         );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                OpenClanRosterPacket.class,
+                OpenClanRosterPacket::encode,
+                OpenClanRosterPacket::decode,
+                OpenClanRosterPacket::handle
+        );
+        CHANNEL.registerMessage(
+                nextPacketId++,
+                ClanMemberActionPacket.class,
+                ClanMemberActionPacket::encode,
+                ClanMemberActionPacket::decode,
+                ClanMemberActionPacket::handle
+        );
     }
 }

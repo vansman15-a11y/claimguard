@@ -12,7 +12,8 @@ import net.robmc.claimguard.ClaimGuard;
 import net.robmc.claimguard.clan.ClanActions;
 
 /**
- * The charter-signature commands:
+ * Clan commands:
+ *   /clan                - open your clan's roster screen
  *   /signature <player>  - (charter owner) ask a player to sign
  *   /accept /deny /block - (target) respond to a pending request; /block also
  *                          stops that requester from asking again
@@ -23,6 +24,11 @@ public class ClanCommands {
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
+
+        dispatcher.register(Commands.literal("clan").executes(ctx -> {
+            ClanActions.openRoster(ctx.getSource().getPlayerOrException());
+            return 1;
+        }));
 
         dispatcher.register(Commands.literal("signature")
                 .then(Commands.argument("player", EntityArgument.player())
