@@ -40,8 +40,11 @@ import java.util.Optional;
  */
 public class ClaimCoreBlock extends BaseEntityBlock {
 
-    /** How long the claim-border outline stays on screen after an owner right-clicks the core. */
-    private static final int BORDER_DISPLAY_TICKS = 200; // 10 seconds
+    /**
+     * How long the claim-border outline stays on screen after an owner right-clicks
+     * the core. Right-clicking the core again before this elapses hides it early.
+     */
+    private static final int BORDER_DISPLAY_TICKS = 600; // 30 seconds
 
     public ClaimCoreBlock(Properties properties) {
         super(properties);

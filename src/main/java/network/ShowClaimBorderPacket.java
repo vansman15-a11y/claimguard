@@ -53,7 +53,7 @@ public class ShowClaimBorderPacket {
 
     public static void handle(ShowClaimBorderPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
-        context.enqueueWork(() -> ClaimBorderClient.show(
+        context.enqueueWork(() -> ClaimBorderClient.toggle(
                 packet.minX, packet.minY, packet.minZ,
                 packet.maxX, packet.maxY, packet.maxZ,
                 packet.durationTicks

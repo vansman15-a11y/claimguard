@@ -14,6 +14,7 @@ public class ClientModEvents {
     @SubscribeEvent
     public static void onRegisterOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAboveAll("territory", TerritoryOverlayClient.OVERLAY);
+        event.registerAboveAll("claim_border_status", ClaimBorderClient.STATUS_OVERLAY);
     }
 
     @SubscribeEvent
