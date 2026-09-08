@@ -1,0 +1,40 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# Forge / MDK run files
+run/
+runs/
+run-data/
+logs/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# VS Code
+.vscode/
+
+# Forge / ForgeGradle generated
+*.launch
+.metadata/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Keep generated data resources tracked? By default ForgeGradle regenerates them.
+# Uncomment to ignore:
+# src/generated/
+
+# Stray nested clone (empty repo)
+minecraft/

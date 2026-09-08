@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "claimguard:block/claim_core" }
+  }
+}

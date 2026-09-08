@@ -1,0 +1,29 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="All rights reserved"
+issueTrackerURL="https://example.com"
+
+[[mods]]
+modId="claimguard"
+version="0.1.0"
+displayName="ClaimGuard"
+authors="robmc"
+description='''
+Lets players place a Claim Core block that protects a cube-shaped area from
+other players breaking/placing blocks or opening containers. Upgrade the core
+by right-clicking with diamonds to expand the protected area.
+'''
+
+[[dependencies.claimguard]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.claimguard]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"
