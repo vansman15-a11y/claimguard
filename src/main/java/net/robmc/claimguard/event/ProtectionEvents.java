@@ -102,8 +102,9 @@ public class ProtectionEvents {
 
     /**
      * Central rule: is this player allowed to affect this position?
-     * True if there's no claim here at all, OR the player owns the claim that's here,
-     * OR the player is a server operator (so admins can always intervene).
+     * Allowed if there's no claim here, the player is an operator, or the player is
+     * a member (with build access) of the clan that owns the claim. Claims with no
+     * clan (legacy) fall back to the single owner UUID.
      */
     private static boolean isAllowed(ServerLevel level, net.minecraft.core.BlockPos pos, Player player) {
         if (player == null) {
@@ -112,9 +113,16 @@ public class ProtectionEvents {
         if (player instanceof ServerPlayer serverPlayer && serverPlayer.hasPermissions(2)) {
             return true; // operators bypass claim protection
         }
-        ClaimManager manager = ClaimManager.get(level);
-        Optional<Claim> claim = manager.getClaimAt(pos);
-        return claim.isEmpty() || claim.get().isOwnedBy(player.getUUID());
+        Optional<Claim> claim = ClaimManager.get(level).getClaimAt(pos);
+        if (claim.isEmpty()) {
+            return true;
+        }
+        Claim c = claim.get();
+        if (c.getClanId() != null) {
+            return net.robmc.claimguard.clan.ClanManager.get(level.getServer())
+                    .canBuildInClanClaim(c.getClanId(), player.getUUID());
+        }
+        return c.isOwnedBy(player.getUUID());
     }
 
     private static void sendDenyMessage(Player player) {

@@ -16,7 +16,7 @@ import java.util.function.Supplier;
  */
 public class OpenClanRosterPacket {
 
-    public record MemberRow(UUID id, String name, int rankOrdinal, boolean online) {
+    public record MemberRow(UUID id, String name, int rankOrdinal, boolean online, boolean canBuild) {
     }
 
     private final String clanName;
@@ -64,6 +64,7 @@ public class OpenClanRosterPacket {
             buf.writeUtf(row.name(), 32);
             buf.writeVarInt(row.rankOrdinal());
             buf.writeBoolean(row.online());
+            buf.writeBoolean(row.canBuild());
         }
     }
 
@@ -75,7 +76,7 @@ public class OpenClanRosterPacket {
         int count = buf.readVarInt();
         List<MemberRow> rows = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            rows.add(new MemberRow(buf.readUUID(), buf.readUtf(32), buf.readVarInt(), buf.readBoolean()));
+            rows.add(new MemberRow(buf.readUUID(), buf.readUtf(32), buf.readVarInt(), buf.readBoolean(), buf.readBoolean()));
         }
         return new OpenClanRosterPacket(name, tag, motd, viewerRank, rows);
     }

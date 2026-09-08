@@ -1,11 +1,15 @@
 package net.robmc.claimguard.clan;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.PacketDistributor;
+import net.robmc.claimguard.claim.Claim;
+import net.robmc.claimguard.claim.ClaimManager;
 import net.robmc.claimguard.item.ClanCharterItem;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.ClanMemberActionPacket;
@@ -269,6 +273,20 @@ public final class ClanActions {
                 messageMember(actor, targetId, "You were banned from " + clan.getName() + ".");
                 actor.displayClientMessage(Component.literal("Banned " + target.getName() + " from the clan."), false);
             }
+            case TOGGLE_BUILD -> {
+                if (!ClanPermissions.canKick(a, t)) { // same "manages this member" gate as kick
+                    denied(actor);
+                    return;
+                }
+                target.setCanBuild(!target.canBuild());
+                manager.markDirty();
+                String state = target.canBuild() ? "granted" : "revoked";
+                actor.displayClientMessage(Component.literal(
+                        "Building access " + state + " for " + target.getName() + "."), false);
+                messageMember(actor, targetId, "Your building access in " + clan.getName()
+                        + "'s claims was " + state + ".");
+                return; // leave the actor on the Permissions screen; no roster refresh
+            }
         }
 
         // Refresh the roster for everyone in the clan who has it open (cheap: just online members).
@@ -307,7 +325,8 @@ public final class ClanActions {
         List<OpenClanRosterPacket.MemberRow> rows = new ArrayList<>();
         for (ClanMember member : clan.getMembers()) {
             boolean online = viewer.server.getPlayerList().getPlayer(member.getId()) != null;
-            rows.add(new OpenClanRosterPacket.MemberRow(member.getId(), member.getName(), member.getRank().ordinal(), online));
+            rows.add(new OpenClanRosterPacket.MemberRow(
+                    member.getId(), member.getName(), member.getRank().ordinal(), online, member.canBuild()));
         }
         rows.sort((x, y) -> {
             if (x.rankOrdinal() != y.rankOrdinal()) {
@@ -331,11 +350,13 @@ public final class ClanActions {
         }
         Clan clan = maybeClan.get();
         boolean wasLeader = clan.getMember(player.getUUID()).map(m -> m.getRank() == ClanRank.LEADER).orElse(false);
+        java.util.UUID clanId = clan.getId();
 
         manager.removeMember(clan, player.getUUID()); // disbands the clan if that emptied it
 
         if (clan.getMembers().isEmpty()) {
-            player.displayClientMessage(Component.literal("You left " + clan.getName() + ". The clan is disbanded."), false);
+            destroyClanBeacons(player.server, clanId);
+            player.displayClientMessage(Component.literal("You left " + clan.getName() + ". The clan is disbanded and its beacons removed."), false);
             return;
         }
 
@@ -479,6 +500,21 @@ public final class ClanActions {
         manager.markDirty();
         player.displayClientMessage(Component.literal("Clan MOTD updated."), false);
         broadcastRosterRefresh(player, clan);
+    }
+
+    /**
+     * Removes every Claim Core owned by a (now disbanded) clan, in every dimension:
+     * deletes the claim data and breaks the block in the world.
+     */
+    private static void destroyClanBeacons(net.minecraft.server.MinecraftServer server, java.util.UUID clanId) {
+        for (ServerLevel level : server.getAllLevels()) {
+            ClaimManager claims = ClaimManager.get(level);
+            for (Claim claim : claims.claimsOwnedByClan(clanId)) {
+                BlockPos core = claim.getCorePos();
+                claims.removeClaim(core);
+                level.destroyBlock(core, false);
+            }
+        }
     }
 
     // --- helpers ---

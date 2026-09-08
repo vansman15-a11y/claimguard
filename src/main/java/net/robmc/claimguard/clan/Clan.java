@@ -21,6 +21,7 @@ import java.util.UUID;
 public class Clan {
 
     public static final int MAX_MEMBERS = 8;
+    public static final int MAX_BINDSTONES = 3;
     /** Signatures needed on a charter to found a clan. TESTING VALUE - real value is 3. */
     public static final int REQUIRED_SIGNATURES = 1;
 
@@ -28,6 +29,8 @@ public class Clan {
     private String name;
     private String tag;
     private String motd;
+    /** Minute-of-day (0-1439, server local time) the 3h raid window opens, or -1 if unset. */
+    private int raidWindowStart = -1;
 
     private final List<ClanMember> members = new ArrayList<>();
     /** Banned player id -> last known name, so the ban list can show something readable. */
@@ -66,6 +69,15 @@ public class Clan {
 
     public void setMotd(String motd) {
         this.motd = motd;
+    }
+
+    /** Minute-of-day the raid window opens (server local time), or -1 if never set. */
+    public int getRaidWindowStart() {
+        return raidWindowStart;
+    }
+
+    public void setRaidWindowStart(int minuteOfDay) {
+        this.raidWindowStart = minuteOfDay;
     }
 
     public List<ClanMember> getMembers() {
@@ -122,6 +134,7 @@ public class Clan {
         tag.putString("Name", name);
         tag.putString("Tag", this.tag);
         tag.putString("Motd", motd);
+        tag.putInt("RaidWindowStart", raidWindowStart);
 
         ListTag memberList = new ListTag();
         for (ClanMember member : members) {
@@ -147,6 +160,7 @@ public class Clan {
                 tag.getString("Tag"),
                 tag.getString("Motd")
         );
+        clan.raidWindowStart = tag.contains("RaidWindowStart") ? tag.getInt("RaidWindowStart") : -1;
         ListTag memberList = tag.getList("Members", Tag.TAG_COMPOUND);
         for (int i = 0; i < memberList.size(); i++) {
             clan.members.add(ClanMember.load(memberList.getCompound(i)));

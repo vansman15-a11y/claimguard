@@ -84,6 +84,15 @@ public class ClanManager extends SavedData {
         return Optional.ofNullable(clansById.get(clanId));
     }
 
+    /**
+     * Can this player edit blocks inside a claim owned by the given clan?
+     * True only for a current member whose build access hasn't been revoked.
+     */
+    public boolean canBuildInClanClaim(UUID clanId, UUID playerId) {
+        Clan clan = clansById.get(clanId);
+        return clan != null && clan.getMember(playerId).map(ClanMember::canBuild).orElse(false);
+    }
+
     /** Clan name for an id, or null if the id is null / unknown. */
     public String clanNameOrNull(UUID clanId) {
         if (clanId == null) {

@@ -185,6 +185,8 @@ public class ClanRosterScreen extends Screen {
             items.add(new CtxItem("Demote", () -> sendAction(row.id(), ClanMemberActionPacket.Action.DEMOTE)));
         }
         if (ClanPermissions.canKick(viewerRank, targetRank)) {
+            items.add(new CtxItem("Permissions", () ->
+                    minecraft.setScreen(new ClanPermissionsScreen(row.id(), row.name(), row.canBuild()))));
             items.add(new CtxItem("Kick", () -> sendAction(row.id(), ClanMemberActionPacket.Action.KICK)));
         }
         if (ClanPermissions.canBan(viewerRank, targetRank)) {
@@ -234,6 +236,10 @@ public class ClanRosterScreen extends Screen {
 
             int nameColor = row.id().equals(viewerId) ? 0xFFF0C24B : 0xFFFFFFFF;
             g.drawString(this.font, row.name(), rowLeft + 12, y + 2, nameColor, false);
+            if (!row.canBuild()) {
+                int nameEnd = rowLeft + 12 + this.font.width(row.name());
+                g.drawString(this.font, "(no build)", nameEnd + 6, y + 2, 0xFFCC6666, false);
+            }
 
             String rank = ClanRank.byIndex(row.rankOrdinal()).displayName();
             int rankColor = rankColor(row.rankOrdinal());

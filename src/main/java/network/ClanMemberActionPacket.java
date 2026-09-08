@@ -18,7 +18,8 @@ public class ClanMemberActionPacket {
         PROMOTE,
         DEMOTE,
         KICK,
-        BAN
+        BAN,
+        TOGGLE_BUILD
     }
 
     private final UUID target;

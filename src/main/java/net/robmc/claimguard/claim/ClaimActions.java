@@ -9,13 +9,17 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.PacketDistributor;
 import net.robmc.claimguard.bind.BindManager;
+import net.robmc.claimguard.clan.Clan;
 import net.robmc.claimguard.clan.ClanManager;
+import net.robmc.claimguard.clan.ClanRank;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.OpenClaimMenuPacket;
 import net.robmc.claimguard.network.ShowClaimBorderPacket;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Server-side logic behind the claim menu: opening it, upgrading, removing, and
@@ -96,6 +100,11 @@ public final class ClaimActions {
         if (maybeClaim.isEmpty()) {
             return;
         }
+        ClanRank rank = rankInOwningClan(player, maybeClaim.get());
+        if (rank != null && rank != ClanRank.LEADER && rank != ClanRank.OFFICER) {
+            player.displayClientMessage(Component.literal("Only a clan Leader or Officer can remove a claim."), true);
+            return;
+        }
         ServerLevel level = player.serverLevel();
         ClaimManager.get(level).removeClaim(corePos);
         // Drop the core in survival so it can be re-placed elsewhere; creative just deletes it.
@@ -105,16 +114,41 @@ public final class ClaimActions {
 
     // --- helpers ---
 
+    /**
+     * The claim at this core if the player may interact with it: a member of the
+     * owning clan, or (for a legacy clan-less claim) the founder.
+     */
     private static Optional<Claim> ownedClaim(ServerPlayer player, BlockPos corePos) {
         Optional<Claim> claim = ClaimManager.get(player.serverLevel()).getClaimByCore(corePos);
         if (claim.isEmpty()) {
             return Optional.empty();
         }
-        if (!claim.get().isOwnedBy(player.getUUID())) {
+        Claim c = claim.get();
+        if (c.getClanId() != null) {
+            boolean member = ClanManager.get(player.server).getClanOf(player.getUUID())
+                    .map(cl -> cl.getId().equals(c.getClanId())).orElse(false);
+            if (!member) {
+                player.displayClientMessage(Component.literal("This claim belongs to another clan."), true);
+                return Optional.empty();
+            }
+            return claim;
+        }
+        if (!c.isOwnedBy(player.getUUID())) {
             player.displayClientMessage(Component.literal("This claim belongs to someone else."), true);
             return Optional.empty();
         }
         return claim;
+    }
+
+    /** The player's rank in the clan that owns this claim, or null if not clan-owned. */
+    private static ClanRank rankInOwningClan(ServerPlayer player, Claim claim) {
+        if (claim.getClanId() == null) {
+            return null;
+        }
+        return ClanManager.get(player.server).getClanOf(player.getUUID())
+                .flatMap(c -> c.getMember(player.getUUID()))
+                .map(m -> m.getRank())
+                .orElse(null);
     }
 
     // --- bindstone ---
@@ -124,9 +158,28 @@ public final class ClaimActions {
         if (claim.isEmpty()) {
             return;
         }
-        BindManager.get(player.server).setBind(player.getUUID(), corePos, player.serverLevel().dimension());
+
+        BindManager binds = BindManager.get(player.server);
+        if (!binds.isBoundTo(player.getUUID(), corePos) && exceedsClanBindstoneCap(player, corePos, binds)) {
+            player.displayClientMessage(Component.literal(
+                    "Your clan already has " + Clan.MAX_BINDSTONES
+                            + " bindstones. Someone needs to Leave bind first."), true);
+            return;
+        }
+
+        binds.setBind(player.getUUID(), corePos, player.serverLevel().dimension());
         player.displayClientMessage(Component.literal("Bound to this claim. You'll revive here when you die."), false);
         sendMenu(player, claim.get());
+    }
+
+    private static boolean exceedsClanBindstoneCap(ServerPlayer player, BlockPos corePos, BindManager binds) {
+        Optional<Clan> clan = ClanManager.get(player.server).getClanOf(player.getUUID());
+        if (clan.isEmpty()) {
+            return false;
+        }
+        Set<BlockPos> used = new HashSet<>();
+        clan.get().getMembers().forEach(m -> binds.getBind(m.getId()).ifPresent(b -> used.add(b.pos())));
+        return !used.contains(corePos) && used.size() >= Clan.MAX_BINDSTONES;
     }
 
     public static void unbind(ServerPlayer player, BlockPos corePos) {

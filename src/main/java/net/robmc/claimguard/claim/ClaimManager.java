@@ -124,6 +124,17 @@ public class ClaimManager extends SavedData {
         return new ArrayList<>(claimsByCore.values());
     }
 
+    /** Every claim in this dimension owned by the given clan. */
+    public List<Claim> claimsOwnedByClan(UUID clanId) {
+        List<Claim> out = new ArrayList<>();
+        for (Claim claim : claimsByCore.values()) {
+            if (clanId.equals(claim.getClanId())) {
+                out.add(claim);
+            }
+        }
+        return out;
+    }
+
     /**
      * Removes any claim whose core block is no longer present in the given chunk.
      *
