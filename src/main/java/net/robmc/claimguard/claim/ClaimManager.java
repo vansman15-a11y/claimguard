@@ -177,9 +177,15 @@ public class ClaimManager extends SavedData {
     public void forgetClaimsWithMissingCore(ChunkAccess chunk) {
         ChunkPos chunkPos = chunk.getPos();
         List<BlockPos> stale = new ArrayList<>();
-        for (BlockPos core : claimsByCore.keySet()) {
+        for (Claim claim : claimsByCore.values()) {
+            BlockPos core = claim.getCorePos();
             boolean inThisChunk = (core.getX() >> 4) == chunkPos.x && (core.getZ() >> 4) == chunkPos.z;
-            if (inThisChunk && !chunk.getBlockState(core).is(ModBlocks.CLAIM_CORE.get())) {
+            if (!inThisChunk) {
+                continue;
+            }
+            // Admin claims use ADMIN_CORE, everyone else uses CLAIM_CORE.
+            var expected = claim.isAdmin() ? ModBlocks.ADMIN_CORE.get() : ModBlocks.CLAIM_CORE.get();
+            if (!chunk.getBlockState(core).is(expected)) {
                 stale.add(core);
             }
         }

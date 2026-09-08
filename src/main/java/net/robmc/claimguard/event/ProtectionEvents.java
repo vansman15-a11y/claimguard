@@ -1,17 +1,22 @@
 package net.robmc.claimguard.event;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.AABB;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.ExplosionEvent;
+import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.robmc.claimguard.ClaimGuard;
@@ -172,23 +177,53 @@ public class ProtectionEvents {
         return c.isOwnedBy(player.getUUID());
     }
 
-    /** No natural hostile-mob spawns inside an admin zone. */
+    /**
+     * No hostile-mob spawns inside an admin zone. PositionCheck is the earliest,
+     * most reliable hook (before the mob entity is even built), covering natural
+     * spawns and spawners; FinalizeSpawn is a backstop for anything that slips past.
+     */
     @SubscribeEvent
-    public static void onMobSpawn(MobSpawnEvent.FinalizeSpawn event) {
-        if (!(event.getEntity() instanceof Enemy)) {
+    public static void onMobPositionCheck(MobSpawnEvent.PositionCheck event) {
+        if (event.getEntity() instanceof Enemy && inAdminZone(event.getLevel(), event.getX(), event.getY(), event.getZ())) {
+            event.setResult(Event.Result.DENY);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onMobFinalizeSpawn(MobSpawnEvent.FinalizeSpawn event) {
+        if (event.getEntity() instanceof Enemy && inAdminZone(event.getLevel(), event.getX(), event.getY(), event.getZ())) {
+            event.setSpawnCancelled(true);
+        }
+    }
+
+    /** Sweeps hostile mobs out of admin zones a few times a minute (catches strays and pre-existing mobs). */
+    @SubscribeEvent
+    public static void onLevelTick(TickEvent.LevelTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || !(event.level instanceof ServerLevel level)) {
             return;
         }
-        if (!(event.getLevel() instanceof ServerLevel level)) {
+        if (level.getGameTime() % 60L != 0L) { // every 3 seconds
             return;
         }
         ClaimManager manager = ClaimManager.get(level);
         if (!manager.hasAdminClaims()) {
             return;
         }
-        net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(event.getX(), event.getY(), event.getZ());
-        if (manager.isInAdminClaim(pos)) {
-            event.setSpawnCancelled(true);
+        for (Claim claim : manager.getAllClaims()) {
+            if (!claim.isAdmin()) {
+                continue;
+            }
+            AABB box = claim.getBounds(level.getMinBuildHeight(), level.getMaxBuildHeight());
+            for (Entity entity : level.getEntitiesOfClass(Entity.class, box, e -> e instanceof Enemy)) {
+                entity.discard();
+            }
         }
+    }
+
+    private static boolean inAdminZone(ServerLevelAccessor levelAccessor, double x, double y, double z) {
+        ServerLevel level = levelAccessor.getLevel();
+        ClaimManager manager = ClaimManager.get(level);
+        return manager.hasAdminClaims() && manager.isInAdminClaim(BlockPos.containing(x, y, z));
     }
 
     /**
