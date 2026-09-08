@@ -132,7 +132,7 @@ public class ClaimCoreBlock extends BaseEntityBlock {
         // Bare-handed right-click by the owner: flash the claim's borders in the world
         // for a few seconds so they can see exactly what's protected. Works at any tier.
         if (held.isEmpty() && player instanceof ServerPlayer serverPlayer) {
-            AABB bounds = claim.getBounds();
+            AABB bounds = claim.getBounds(level.getMinBuildHeight(), level.getMaxBuildHeight());
             ClaimGuardNetwork.CHANNEL.send(
                     PacketDistributor.PLAYER.with(() -> serverPlayer),
                     new ShowClaimBorderPacket(
@@ -257,7 +257,7 @@ public class ClaimCoreBlock extends BaseEntityBlock {
 
     private static String describeArea(ClaimTier tier) {
         int size = tier.getRadius() * 2 + 1;
-        return size + "x" + size + "x" + size + " blocks";
+        return size + "x" + size + " blocks, bedrock to sky";
     }
 
     // --- Boilerplate required because this block has a BlockEntity ---

@@ -52,20 +52,33 @@ public class Claim {
         return owner.equals(playerId);
     }
 
-    /**
-     * The protected cube as an AABB (axis-aligned bounding box), centered on the core,
-     * extending `radius` blocks in every direction (a true cube, per your earlier choice).
-     */
-    public AABB getBounds() {
-        int r = tier.getRadius();
-        return new AABB(
-                corePos.getX() - r, corePos.getY() - r, corePos.getZ() - r,
-                corePos.getX() + r + 1, corePos.getY() + r + 1, corePos.getZ() + r + 1
-        );
+    /** Horizontal half-width (X and Z) of the protected column, in blocks. */
+    public int getRadius() {
+        return tier.getRadius();
     }
 
+    /**
+     * True if the position is inside this claim. The claim is a full-height column:
+     * it protects everything from bedrock to the build limit within `radius` blocks
+     * of the core on X and Z, so Y is not checked here.
+     */
     public boolean contains(BlockPos pos) {
-        return getBounds().contains(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+        int r = tier.getRadius();
+        return Math.abs(pos.getX() - corePos.getX()) <= r
+                && Math.abs(pos.getZ() - corePos.getZ()) <= r;
+    }
+
+    /**
+     * The protected volume as an AABB for the visual border - the X/Z column around
+     * the core, running from {@code minY} to {@code maxY} (pass the level's build
+     * limits, e.g. level.getMinBuildHeight() / level.getMaxBuildHeight()).
+     */
+    public AABB getBounds(int minY, int maxY) {
+        int r = tier.getRadius();
+        return new AABB(
+                corePos.getX() - r, minY, corePos.getZ() - r,
+                corePos.getX() + r + 1, maxY, corePos.getZ() + r + 1
+        );
     }
 
     // --- Saving/loading to NBT (Minecraft's binary save-file format) ---

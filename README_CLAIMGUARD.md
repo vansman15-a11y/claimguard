@@ -35,17 +35,18 @@ Distant Horizons.
 
 ## What it does right now
 
-- Place a **Claim Core** → protects a cube centered on itself (starts 17×17×17,
-  i.e. 8 blocks in every direction).
+- Place a **Claim Core** → protects a full-height column centered on itself:
+  `radius` blocks out on X and Z (starts 8, i.e. 17×17), from bedrock to the
+  build limit.
 - Other players can't break/place blocks, open containers, or interact with
   anything inside the cube. Server operators always bypass this.
 - Right-click your own core holding one of the upgrade items (the full cost is
   taken from anywhere in your inventory):
   - Level 1→2: 8 diamonds, radius 8→16
   - Level 2→3: 16 diamonds, radius 16→24
-  - Level 3→4: 32 diamonds, radius 24→32  *(good "starter base" size, 65×65×65)*
+  - Level 3→4: 32 diamonds, radius 24→32  *(good "starter base" size, 65×65 footprint)*
   - Level 4→5: 48 diamonds + 1 blaze rod, radius 32→42
-  - Level 5→6 (max): 64 diamonds + 2 blaze rods, radius 42→52  *(105×105×105)*
+  - Level 5→6 (max): 64 diamonds + 2 blaze rods, radius 42→52  *(105×105 footprint)*
 - Right-click your own core **bare-handed** to flash the claim border in the
   world for 30s; right-click again to hide it.
 - Only the owner can break the core (which deletes the claim).
