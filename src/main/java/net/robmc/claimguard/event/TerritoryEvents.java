@@ -68,8 +68,7 @@ public class TerritoryEvents {
 
         if (currentCore != null) {
             lastClaimCore.put(player.getUUID(), currentCore);
-            String ownerName = getOwnerName(player.getServer(), currentClaim.get().getOwner());
-            showTitle(player, "Territory of " + ownerName);
+            showTitle(player, "Territory of " + territoryName(currentClaim.get(), player.getServer()));
         } else {
             // They left a claim and aren't in a new one - go quiet, no message for now.
             lastClaimCore.remove(player.getUUID());
@@ -77,10 +76,28 @@ public class TerritoryEvents {
     }
 
     /**
+     * The name shown in the "Territory of ___" message.
+     *
+     * Right now every claim is treated as belonging to the "Rangers" clan, so this
+     * always returns that. FUTURE: once the clan system exists, read the owning clan
+     * off the claim (see the clanId note in Claim) and return its name here, falling
+     * back to {@link #getOwnerName} for any claim that isn't attached to a clan.
+     */
+    private static final String PLACEHOLDER_CLAN_NAME = "Rangers";
+
+    private static String territoryName(Claim claim, MinecraftServer server) {
+        return PLACEHOLDER_CLAN_NAME;
+    }
+
+    /**
      * Looks up a player's current name from their UUID. Names can change, but UUIDs
      * can't, which is why we always store the UUID (in Claim) and only look up the
      * display name at the moment we need to show it.
+     *
+     * Currently unused - kept as the intended per-owner fallback for {@link #territoryName}
+     * once claims can belong to a clan.
      */
+    @SuppressWarnings("unused")
     private static String getOwnerName(MinecraftServer server, UUID owner) {
         // If the owner is online right now, this is the simplest and most up-to-date source.
         ServerPlayer onlineOwner = server.getPlayerList().getPlayer(owner);

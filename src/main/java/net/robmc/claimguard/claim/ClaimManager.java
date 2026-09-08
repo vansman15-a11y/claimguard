@@ -26,6 +26,13 @@ public class ClaimManager extends SavedData {
 
     private static final String DATA_NAME = "claimguard";
 
+    /**
+     * Minimum gap between two claim cores, in blocks, measured as a square
+     * (Chebyshev) distance on the X/Z plane - height is ignored. A new core may
+     * only be placed if every existing core is at least this far away.
+     */
+    public static final int MIN_CLAIM_SPACING = 500;
+
     // Keyed by the claim core's block position so lookups/removals by core are O(1)-ish.
     private final Map<BlockPos, Claim> claimsByCore = new HashMap<>();
 
@@ -71,6 +78,25 @@ public class ClaimManager extends SavedData {
     public Optional<Claim> getClaimAt(BlockPos pos) {
         for (Claim claim : claimsByCore.values()) {
             if (claim.contains(pos)) {
+                return Optional.of(claim);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Returns an existing claim whose core sits within {@link #MIN_CLAIM_SPACING}
+     * blocks of {@code pos} (square distance on X/Z, height ignored), or empty if
+     * the spot is far enough from every claim to place a new core there.
+     *
+     * Linear scan, same as {@link #getClaimAt} - fine for hundreds of claims.
+     */
+    public Optional<Claim> findClaimTooCloseTo(BlockPos pos) {
+        for (Claim claim : claimsByCore.values()) {
+            BlockPos core = claim.getCorePos();
+            int dx = Math.abs(core.getX() - pos.getX());
+            int dz = Math.abs(core.getZ() - pos.getZ());
+            if (Math.max(dx, dz) < MIN_CLAIM_SPACING) {
                 return Optional.of(claim);
             }
         }
