@@ -73,9 +73,26 @@ Distant Horizons.
     to their own rank, never ban). Member / Recruit: whisper + invite only.
 - Roster buttons: **Invite** (`/clan invite <player>` → they `/clan accept`),
   **MOTD** (leader/officer can edit), **Ban list** (leader can unban).
-- The **"Territory of …"** message shows the owning clan's name (whatever you
-  named your clan). Clan membership doesn't affect claim *protection* yet — still
-  owner-only.
+- The **"Territory of …"** message shows the owning clan's name.
+- **Protection is clan-wide**: any clan member (with build access) can edit blocks
+  in the clan's claims; a member's build access can be revoked in Permissions.
+- **Browse** button on the roster: see other clans, their raid windows, and set
+  **Ally / Enemy**. Allies show green name tags, can bind at your bindstones, but
+  still can't build (friendly fire stays on). Enemy is required to siege.
+- Disbanding a clan destroys all its beacons.
+
+## Sieges
+
+- Leader sets a daily raid window: `/clan raidwindow 19:00` (server local time,
+  fixed 3-hour window).
+- During an enemy's window, stand inside their claim → Browse → right-click them →
+  **Siege**.
+- While a claim is under siege: enemies still can't hand-place/break blocks — use
+  **TNT / creepers / end crystals** to blow through the walls. The beacon core is
+  explosion-proof; the attackers destroy it with **50 pickaxe hits**.
+- Beacon falls → claim gone, area unprotected, **5-minute lockout**, then anyone
+  can place a fresh tier-1 core to take the ground.
+- Siege fails if the window closes or the attackers stop hitting for 2 minutes.
 
 ## Bindstone
 
