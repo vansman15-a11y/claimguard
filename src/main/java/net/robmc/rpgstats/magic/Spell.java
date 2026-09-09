@@ -8,9 +8,9 @@ package net.robmc.rpgstats.magic;
 public enum Spell {
 
     // --- Weak Magic (tiers 1-4, all usable from the start) ---
-    MANA_TO_STAMINA("Transfer: Mana → Stamina", School.WEAK, 1, Kind.TRANSFER, Pool.MANA, Pool.STAMINA, 0, 14, 100),
-    STAMINA_TO_HEALTH("Transfer: Stamina → Health", School.WEAK, 2, Kind.TRANSFER, Pool.STAMINA, Pool.HEALTH, 0, 14, 100),
-    HEALTH_TO_MANA("Transfer: Health → Mana", School.WEAK, 3, Kind.TRANSFER, Pool.HEALTH, Pool.MANA, 0, 14, 100),
+    MANA_TO_STAMINA("Transfer: Mana → Stamina", School.WEAK, 1, Kind.TRANSFER, Pool.MANA, Pool.STAMINA, 0, 40, 120),
+    STAMINA_TO_HEALTH("Transfer: Stamina → Health", School.WEAK, 2, Kind.TRANSFER, Pool.STAMINA, Pool.HEALTH, 0, 40, 120),
+    HEALTH_TO_MANA("Transfer: Health → Mana", School.WEAK, 3, Kind.TRANSFER, Pool.HEALTH, Pool.MANA, 0, 40, 120),
     MAGIC_BOLT("Magic Bolt", School.WEAK, 4, Kind.MAGIC_BOLT, Pool.MANA, null, 20, 36, 30),
 
     // --- Adept Magic ---
