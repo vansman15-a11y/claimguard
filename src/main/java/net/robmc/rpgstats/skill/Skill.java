@@ -7,7 +7,8 @@ package net.robmc.rpgstats.skill;
  */
 public enum Skill {
 
-    REST("Rest", "hunker down, recover faster - not for combat");
+    REST("Rest", "hunker down, recover faster - not for combat"),
+    RECALL("Recall", "channel 1 min, then teleport to your bindstone");
 
     private final String displayName;
     private final String blurb;

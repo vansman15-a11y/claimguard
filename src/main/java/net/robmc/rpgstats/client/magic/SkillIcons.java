@@ -9,6 +9,7 @@ import net.robmc.rpgstats.skill.Skill;
 public final class SkillIcons {
 
     private static final ItemStack REST = new ItemStack(Items.CAMPFIRE);
+    private static final ItemStack RECALL = new ItemStack(Items.ENDER_PEARL);
 
     private SkillIcons() {
     }
@@ -16,6 +17,7 @@ public final class SkillIcons {
     public static ItemStack stack(Skill skill) {
         return switch (skill) {
             case REST -> REST;
+            case RECALL -> RECALL;
         };
     }
 

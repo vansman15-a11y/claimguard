@@ -44,6 +44,11 @@ public class SpellBarOverlay {
         int x = defaultLeft() + HudLayout.offX(HudLayout.SPELL_BAR);
         int y = defaultTop(screenH) + HudLayout.offY(HudLayout.SPELL_BAR);
         render(g, mc.font, x, y);
+
+        if (ClientRecall.isRecalling()) {
+            g.drawCenteredString(mc.font, "Recalling  " + ClientRecall.secondsLeft() + "s",
+                    screenW / 2, screenH / 2 + 24, 0xFF66D9FF);
+        }
     };
 
     public static void render(GuiGraphics g, Font font, int x, int y) {
@@ -89,6 +94,11 @@ public class SpellBarOverlay {
                 if (skill == Skill.REST && RpgHudOverlay.resting) {
                     g.fill(x + 1, y + 1, x + SLOT - 1, y + SLOT - 1, 0x4033DD33);
                     g.renderOutline(x, y, SLOT, SLOT, 0xFF66FF66);
+                }
+                if (skill == Skill.RECALL && ClientRecall.isRecalling()) {
+                    int h = (int) (SLOT * ClientRecall.progress());
+                    g.fill(x, y + SLOT - h, x + SLOT, y + SLOT, 0x8033C0FF);
+                    g.renderOutline(x, y, SLOT, SLOT, 0xFF55D0FF);
                 }
                 cornerLevel(g, font, x, y, ClientSpells.skillLevel(skill), 0xFF9BE7A0);
             }

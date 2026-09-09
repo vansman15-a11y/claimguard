@@ -14,6 +14,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.robmc.rpgstats.magic.SpellCasting;
+import net.robmc.rpgstats.skill.RecallManager;
 import net.robmc.rpgstats.skill.RestManager;
 import net.minecraftforge.event.entity.player.ItemFishedEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -125,6 +126,7 @@ public class RpgEvents {
         }
 
         RestManager.tick(player);
+        RecallManager.tick(player);
 
         // Resting runs its own (faster) regen; skip the normal pass so they don't stack.
         if (!RestManager.isResting(player.getUUID())
@@ -136,6 +138,7 @@ public class RpgEvents {
     @SubscribeEvent
     public static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         RestManager.clear(event.getEntity().getUUID());
+        RecallManager.clear(event.getEntity().getUUID());
     }
 
     @SubscribeEvent
@@ -185,6 +188,7 @@ public class RpgEvents {
             }
             SpellCasting.interrupt(victim); // taking a hit breaks your cast
             RestManager.stop(victim, "Knocked out of your rest!");
+            RecallManager.cancel(victim, "Recall interrupted!");
 
             // A slice of any hit from a mob or player also bleeds your other pools.
             if (fromAttacker && amount > 0) {

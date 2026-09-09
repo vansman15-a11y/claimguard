@@ -81,7 +81,7 @@ public class BindEvents {
      * ring of offsets around the core for two-air-over-solid-ground; falls back to
      * just beside the core if nothing clean is found.
      */
-    private static BlockPos safeSpawnNear(ServerLevel level, BlockPos core) {
+    public static BlockPos safeSpawnNear(ServerLevel level, BlockPos core) {
         int[][] offsets = {
                 {2, 0}, {-2, 0}, {0, 2}, {0, -2},
                 {2, 2}, {-2, -2}, {2, -2}, {-2, 2},

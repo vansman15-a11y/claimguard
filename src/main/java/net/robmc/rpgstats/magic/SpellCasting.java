@@ -19,6 +19,7 @@ import net.robmc.rpgstats.PlayerStats;
 import net.robmc.rpgstats.Stat;
 import net.robmc.rpgstats.StatFormulas;
 import net.robmc.rpgstats.registry.RpgSounds;
+import net.robmc.rpgstats.skill.RecallManager;
 import net.robmc.rpgstats.skill.RestManager;
 import net.robmc.rpgstats.skill.Skill;
 
@@ -68,8 +69,9 @@ public final class SpellCasting {
         String name = (slot >= 0 && slot < 8) ? RpgManager.stats(player).getSpellBar()[slot] : "";
         Skill skill = Skill.byName(name);
         if (skill != null) {
-            if (skill == Skill.REST) {
-                RestManager.toggle(player);
+            switch (skill) {
+                case REST -> RestManager.toggle(player);
+                case RECALL -> RecallManager.toggle(player);
             }
             return;
         }
