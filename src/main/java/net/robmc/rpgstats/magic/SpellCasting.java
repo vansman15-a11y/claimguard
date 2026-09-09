@@ -32,11 +32,17 @@ import java.util.UUID;
 /** Server-side spellcasting: start a cast, finish it after its cast time, apply the effect. */
 public final class SpellCasting {
 
-    /** A cast in progress: charges until {@code endTick}, then holds (charged) until the key is released. */
+    /**
+     * A cast in progress. It charges until {@code endTick}, then fires - unless the
+     * key is still held, in which case it holds at full ({@code charged}) so you can
+     * aim, and fires when you release ({@code released}) or the max hold runs out.
+     * Letting go early doesn't cancel it; the cast just finishes on its own.
+     */
     private static final class Pending {
         final Spell spell;
         final long endTick;
         boolean charged;
+        boolean released;
         long chargedAt;
 
         Pending(Spell spell, long endTick) {
@@ -160,7 +166,7 @@ public final class SpellCasting {
         }
     }
 
-    /** The key was released: fire a fully-charged cast, or cancel one that hadn't finished. */
+    /** The key was released: fire a fully-charged cast now, or just let a still-charging one finish. */
     public static void releaseCast(ServerPlayer player, int slot) {
         Pending p = casting.get(player.getUUID());
         if (p == null) {
@@ -170,7 +176,7 @@ public final class SpellCasting {
             casting.remove(player.getUUID());
             complete(player, p.spell);
         } else {
-            interrupt(player); // let go too early
+            p.released = true; // finish charging and fire on its own - no cancel
         }
     }
 
@@ -186,6 +192,13 @@ public final class SpellCasting {
                 if (!p.charged) {
                     if (now < p.endTick) {
                         return false; // still charging
+                    }
+                    if (p.released) {
+                        // key was let go while charging - fire as soon as it's done
+                        if (player != null && player.isAlive()) {
+                            complete(player, p.spell);
+                        }
+                        return true;
                     }
                     p.charged = true;
                     p.chargedAt = now;
