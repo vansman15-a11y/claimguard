@@ -5,9 +5,12 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.TridentItem;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.robmc.rpgstats.magic.SpellCasting;
 import net.minecraftforge.event.entity.player.ItemFishedEvent;
@@ -94,8 +97,32 @@ public class RpgEvents {
         }
         lastPos.put(player.getUUID(), new double[]{x, y, z});
 
+        // Sprinting burns stamina; it cuts out when you're empty.
+        if (player.isSprinting()) {
+            PlayerStats s = RpgManager.stats(player);
+            if (s.getStamina() <= 0) {
+                player.setSprinting(false);
+            } else {
+                s.setStamina(s.getStamina() - StatFormulas.STAMINA_SPRINT_PER_TICK);
+                if (player.tickCount % 3 == 0) {
+                    RpgManager.sync(player);
+                }
+            }
+        }
+
         if (player.tickCount % StatFormulas.REGEN_INTERVAL_TICKS == 0) {
             RpgManager.regenTick(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onJump(LivingEvent.LivingJumpEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            PlayerStats s = RpgManager.stats(player);
+            if (s.getStamina() > 0) {
+                s.setStamina(s.getStamina() - StatFormulas.STAMINA_JUMP);
+                RpgManager.sync(player);
+            }
         }
     }
 
@@ -117,6 +144,11 @@ public class RpgEvents {
                 amount *= (float) StatFormulas.meleeDamageMultiplier(as);
                 RpgManager.addXp(attacker, Stat.STRENGTH, StatFormulas.XP_MELEE_HIT);
                 RpgManager.addXp(attacker, Stat.VITALITY, StatFormulas.XP_MELEE_HIT * 0.6);
+                var weapon = attacker.getMainHandItem().getItem();
+                if (weapon instanceof SwordItem || weapon instanceof AxeItem || weapon instanceof TridentItem) {
+                    as.setStamina(as.getStamina() - StatFormulas.STAMINA_MELEE_SWING);
+                    RpgManager.sync(attacker);
+                }
             }
         }
 

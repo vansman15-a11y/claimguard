@@ -16,7 +16,9 @@ import net.robmc.rpgstats.PlayerStats;
 import net.robmc.rpgstats.Stat;
 import net.robmc.rpgstats.StatFormulas;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,8 +28,22 @@ public final class SpellCasting {
     private record Pending(Spell spell, long endTick) {
     }
 
+    /** A transfer's gain, paid out a little each tick instead of all at once. */
+    private static final class TransferGain {
+        final Spell.Pool pool;
+        final double perTick;
+        long ticksLeft;
+
+        TransferGain(Spell.Pool pool, double perTick, long ticksLeft) {
+            this.pool = pool;
+            this.perTick = perTick;
+            this.ticksLeft = ticksLeft;
+        }
+    }
+
     private static final Map<UUID, Pending> casting = new HashMap<>();
     private static final Map<UUID, Map<Spell, Long>> cooldowns = new HashMap<>();
+    private static final Map<UUID, List<TransferGain>> transferGains = new HashMap<>();
 
     private SpellCasting() {
     }
@@ -73,34 +89,54 @@ public final class SpellCasting {
 
     /** Called every server tick from RpgEvents. */
     public static void tick(MinecraftServer server) {
-        if (casting.isEmpty()) {
-            return;
-        }
         long now = server.overworld().getGameTime();
-        casting.entrySet().removeIf(entry -> {
-            if (now < entry.getValue().endTick()) {
-                return false;
-            }
-            ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
-            if (player != null && player.isAlive()) {
-                complete(player, entry.getValue().spell());
-            }
-            return true;
-        });
+
+        if (!casting.isEmpty()) {
+            casting.entrySet().removeIf(entry -> {
+                if (now < entry.getValue().endTick()) {
+                    return false;
+                }
+                ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+                if (player != null && player.isAlive()) {
+                    complete(player, entry.getValue().spell());
+                }
+                return true;
+            });
+        }
+
+        if (!transferGains.isEmpty()) {
+            transferGains.entrySet().removeIf(entry -> {
+                ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+                if (player == null || !player.isAlive()) {
+                    return true;
+                }
+                PlayerStats s = RpgManager.stats(player);
+                List<TransferGain> list = entry.getValue();
+                list.removeIf(g -> {
+                    gain(player, s, g.pool, g.perTick); // pool clamps; overflow is discarded
+                    return --g.ticksLeft <= 0;
+                });
+                RpgManager.sync(player);
+                return list.isEmpty();
+            });
+        }
     }
 
     private static void complete(ServerPlayer player, Spell spell) {
         PlayerStats s = RpgManager.stats(player);
 
         if (spell.isTransfer()) {
+            // Only the source pool has to have something in it - a full target pool
+            // is fine, the overflow is simply wasted.
             double input = Math.min(StatFormulas.TRANSFER_AMOUNT, available(player, s, spell.costPool()));
-            double headroom = headroom(player, s, spell.gainPool());
-            input = Math.min(input, headroom / 2.0);
             if (input <= 0) {
                 player.displayClientMessage(Component.literal("Nothing to transfer.").withStyle(ChatFormatting.GRAY), true);
             } else {
                 spend(player, s, spell.costPool(), input);
-                gain(player, s, spell.gainPool(), input * 2.0);
+                double total = input * StatFormulas.TRANSFER_RATIO;
+                int ticks = StatFormulas.TRANSFER_DURATION_TICKS;
+                transferGains.computeIfAbsent(player.getUUID(), k -> new ArrayList<>())
+                        .add(new TransferGain(spell.gainPool(), total / ticks, ticks));
             }
         } else { // Magic Bolt
             spend(player, s, spell.costPool(), spell.flatCost());
@@ -144,14 +180,6 @@ public final class SpellCasting {
             case HEALTH -> player.getHealth() - 1.0; // never self-kill
             case STAMINA -> s.getStamina();
             case MANA -> s.getMana();
-        };
-    }
-
-    private static double headroom(ServerPlayer player, PlayerStats s, Spell.Pool pool) {
-        return switch (pool) {
-            case HEALTH -> player.getMaxHealth() - player.getHealth();
-            case STAMINA -> StatFormulas.maxStamina(s) - s.getStamina();
-            case MANA -> StatFormulas.maxMana(s) - s.getMana();
         };
     }
 

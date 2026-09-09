@@ -13,8 +13,10 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.robmc.rpgstats.StatFormulas;
 import net.robmc.rpgstats.registry.RpgEntities;
 import org.joml.Vector3f;
 
@@ -62,10 +64,29 @@ public class MagicBoltEntity extends ThrowableProjectile {
         if (this.level().isClientSide()) {
             return;
         }
-        if (result instanceof EntityHitResult ehr && ehr.getEntity() instanceof LivingEntity target && target != getOwner()) {
-            target.hurt(this.damageSources().indirectMagic(this, getOwner()), this.entityData.get(DAMAGE));
-        }
         ServerLevel level = (ServerLevel) this.level();
+        float direct = this.entityData.get(DAMAGE);
+        Entity directHit = null;
+        if (result instanceof EntityHitResult ehr && ehr.getEntity() instanceof LivingEntity target && target != getOwner()) {
+            directHit = target;
+            target.hurt(this.damageSources().indirectMagic(this, getOwner()), direct);
+        }
+
+        // Splash: nearby living things take a fraction of a direct hit.
+        float splash = (float) (direct * StatFormulas.MAGIC_BOLT_SPLASH_FRACTION);
+        double radius = StatFormulas.MAGIC_BOLT_SPLASH_RADIUS;
+        if (splash > 0.0f) {
+            AABB box = this.getBoundingBox().inflate(radius);
+            for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, box)) {
+                if (le == getOwner() || le == directHit || !le.isAlive()) {
+                    continue;
+                }
+                if (le.distanceToSqr(this) <= radius * radius) {
+                    le.hurt(this.damageSources().indirectMagic(this, getOwner()), splash);
+                }
+            }
+        }
+
         level.sendParticles(new DustParticleOptions(BLUE, 2.0f), getX(), getY(), getZ(), 18, 0.3, 0.3, 0.3, 0.02);
         level.sendParticles(ParticleTypes.ENCHANTED_HIT, getX(), getY(), getZ(), 10, 0.2, 0.2, 0.2, 0.1);
         level.playSound(null, blockPosition(), SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.PLAYERS, 0.7f, 1.4f);

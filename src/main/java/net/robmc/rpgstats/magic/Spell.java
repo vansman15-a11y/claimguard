@@ -10,9 +10,9 @@ package net.robmc.rpgstats.magic;
  */
 public enum Spell {
 
-    MANA_TO_STAMINA("Transfer: Mana → Stamina", Pool.MANA, Pool.STAMINA, 8, 20, 0, "Weak Magic"),
-    STAMINA_TO_HEALTH("Transfer: Stamina → Health", Pool.STAMINA, Pool.HEALTH, 8, 20, 0, "Weak Magic"),
-    HEALTH_TO_MANA("Transfer: Health → Mana", Pool.HEALTH, Pool.MANA, 8, 20, 0, "Weak Magic"),
+    MANA_TO_STAMINA("Transfer: Mana → Stamina", Pool.MANA, Pool.STAMINA, 8, 100, 0, "Weak Magic"),
+    STAMINA_TO_HEALTH("Transfer: Stamina → Health", Pool.STAMINA, Pool.HEALTH, 8, 100, 0, "Weak Magic"),
+    HEALTH_TO_MANA("Transfer: Health → Mana", Pool.HEALTH, Pool.MANA, 8, 100, 0, "Weak Magic"),
     MAGIC_BOLT("Magic Bolt", Pool.MANA, null, 16, 30, 20, "Weak Magic");
 
     public enum Pool { HEALTH, STAMINA, MANA }

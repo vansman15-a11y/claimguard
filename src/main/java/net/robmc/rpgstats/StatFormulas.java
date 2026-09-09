@@ -100,9 +100,18 @@ public final class StatFormulas {
     }
 
     // --- spells (see magic/) ---
-    public static final double TRANSFER_AMOUNT = 40.0;   // per cast: spend up to this, gain 2x
-    public static final double MAGIC_BOLT_BASE_DAMAGE = 3.0;  // raw (pre-DAMAGE_SCALE) - deliberately weak
+    public static final double TRANSFER_AMOUNT = 40.0;         // per cast: spend up to this from the source
+    public static final double TRANSFER_RATIO = 1.5;           // gain 1.5x what you spent
+    public static final int TRANSFER_DURATION_TICKS = 40;      // the gain is applied over ~2 seconds
+    public static final double MAGIC_BOLT_BASE_DAMAGE = 3.0;   // raw (pre-DAMAGE_SCALE) - deliberately weak
     public static final double MAGIC_BOLT_RANGE = 24.0;
+    public static final double MAGIC_BOLT_SPLASH_RADIUS = 3.0;    // blocks around the impact
+    public static final double MAGIC_BOLT_SPLASH_FRACTION = 0.4;  // splash victims take 40% of a direct hit
+
+    // --- stamina cost of physical actions (raw pool points) ---
+    public static final double STAMINA_SPRINT_PER_TICK = 0.35;   // ~7 / second while sprinting
+    public static final double STAMINA_JUMP = 3.0;               // per jump
+    public static final double STAMINA_MELEE_SWING = 6.0;        // per landed hit with a weapon
 
     // XP granted per action (tune freely)
     public static final double XP_MINE_BLOCK = 1.0;
