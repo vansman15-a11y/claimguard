@@ -13,6 +13,7 @@ import org.joml.Vector3f;
 import net.minecraftforge.network.PacketDistributor;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.CastStatePacket;
+import net.robmc.claimguard.network.SpellCooldownPacket;
 import net.robmc.rpgstats.RpgManager;
 import net.robmc.rpgstats.PlayerStats;
 import net.robmc.rpgstats.Stat;
@@ -64,6 +65,12 @@ public final class SpellCasting {
         PlayerStats s = RpgManager.stats(player);
         Spell spell = Spell.byName(slot >= 0 && slot < 8 ? s.getSpellBar()[slot] : "");
         if (spell == null) {
+            return;
+        }
+        // Spells need a free hand (a staff item will be allowed here later).
+        if (!player.getMainHandItem().isEmpty()) {
+            player.displayClientMessage(
+                    Component.literal("You need an empty hand to cast.").withStyle(ChatFormatting.GRAY), true);
             return;
         }
         long now = player.serverLevel().getGameTime();
@@ -159,6 +166,8 @@ public final class SpellCasting {
                 ? StatFormulas.XP_CAST_TRANSFER : StatFormulas.XP_CAST_SPELL);
         cooldowns.computeIfAbsent(player.getUUID(), k -> new HashMap<>())
                 .put(spell, player.serverLevel().getGameTime() + spell.cooldownTicks());
+        ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new SpellCooldownPacket(spell.name(), spell.cooldownTicks()));
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 RpgSounds.forSpell(spell), SoundSource.PLAYERS, 1.0f, 1.0f);
         RpgManager.sync(player);

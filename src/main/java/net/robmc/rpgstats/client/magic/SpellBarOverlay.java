@@ -58,10 +58,27 @@ public class SpellBarOverlay {
         Spell spell = ClientSpells.slot(index);
         if (spell != null) {
             SpellIcons.draw(g, spell, x + 2, y + 2, SLOT - 4);
+
+            // On cooldown: the slot sits "lit" just after the cast and fades back to normal as it recharges.
+            float cdp = ClientSpells.cooldownProgress(spell);
+            if (cdp < 1.0f) {
+                int a = (int) (0x8C * (1.0f - cdp));
+                g.fill(x + 1, y + 1, x + SLOT - 1, y + SLOT - 1, (a << 24) | 0x00FFE2A6);
+            }
+
+            // Off cooldown: a very short, subtle flash to say "ready".
+            float flash = ClientSpells.readyFlash(spell);
+            if (flash > 0.0f) {
+                g.fill(x, y, x + SLOT, y + SLOT, ((int) (0x3C * flash) << 24) | 0x00FFFFFF);
+                g.renderOutline(x, y, SLOT, SLOT, ((int) (0xC0 * flash) << 24) | 0x00FFFFFF);
+            }
+
+            // Casting now: a fill that rises from the bottom.
             if (ClientSpells.isCasting() && ClientSpells.castingSpell() == spell) {
                 int h = (int) (SLOT * ClientSpells.castProgress());
                 g.fill(x, y + SLOT - h, x + SLOT, y + SLOT, 0x8055C9FF);
             }
+
             // spell level, small, tucked into the top-left corner
             String lvl = Integer.toString(ClientSpells.spellLevel(spell));
             g.pose().pushPose();

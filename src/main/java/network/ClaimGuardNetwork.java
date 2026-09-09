@@ -12,7 +12,7 @@ public class ClaimGuardNetwork {
      * versions then fail the connection with a clear "incompatible" message instead
      * of mis-parsing a packet and crashing mid-game.
      */
-    private static final String PROTOCOL_VERSION = "5";
+    private static final String PROTOCOL_VERSION = "6";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(ClaimGuard.MOD_ID, "main"),
@@ -186,5 +186,7 @@ public class ClaimGuardNetwork {
                 CastStatePacket::encode, CastStatePacket::decode, CastStatePacket::handle);
         CHANNEL.registerMessage(nextPacketId++, SyncSpellBarPacket.class,
                 SyncSpellBarPacket::encode, SyncSpellBarPacket::decode, SyncSpellBarPacket::handle);
+        CHANNEL.registerMessage(nextPacketId++, SpellCooldownPacket.class,
+                SpellCooldownPacket::encode, SpellCooldownPacket::decode, SpellCooldownPacket::handle);
     }
 }
