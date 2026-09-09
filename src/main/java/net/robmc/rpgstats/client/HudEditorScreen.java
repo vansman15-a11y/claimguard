@@ -241,7 +241,8 @@ public class HudEditorScreen extends Screen {
                 mc.options.keyInventory, mc.options.keyDrop, mc.options.keyJump, mc.options.keyShift,
                 mc.options.keySprint, mc.options.keyChat, mc.options.keyCommand, mc.options.keySwapOffhand,
                 mc.options.keyPickItem, mc.options.keyPlayerList, mc.options.keyAttack, mc.options.keyUse,
-                mc.options.keyScreenshot, mc.options.keyTogglePerspective
+                mc.options.keyScreenshot, mc.options.keyTogglePerspective,
+                RpgKeybinds.HUD_EDITOR, RpgKeybinds.SPELLBOOK
         };
         for (KeyMapping k : important) {
             if (k != capturing && k.getKey().equals(key) && k.getKeyModifier() == mod) {
@@ -252,11 +253,10 @@ public class HudEditorScreen extends Screen {
     }
 
     private void clearOurBindingsUsing(InputConstants.Key key, KeyModifier mod) {
+        // Not the menu keys (J/U) - those are protected by importantClash and self-heal on restart.
         java.util.List<KeyMapping> ours = new java.util.ArrayList<>();
         java.util.Collections.addAll(ours, minecraft.options.keyHotbarSlots);
         java.util.Collections.addAll(ours, RpgKeybinds.CAST);
-        ours.add(RpgKeybinds.SPELLBOOK);
-        ours.add(RpgKeybinds.HUD_EDITOR);
         for (KeyMapping k : ours) {
             if (k != capturing && k.getKey().equals(key) && k.getKeyModifier() == mod) {
                 k.setKeyModifierAndCode(KeyModifier.NONE, InputConstants.UNKNOWN);

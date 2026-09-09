@@ -9,13 +9,14 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.robmc.rpgstats.RpgStats;
+import net.robmc.rpgstats.StatFormulas;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Moves the vanilla hotbar select keys to SHIFT + 1..9 so that plain 1..8 are
- * free for the spell bar. Runs once per session, and only touches a slot key
- * that's still at its vanilla default (plain digit, no modifier) - a player who
- * rebound it themselves is left alone.
+ * Runs once per session:
+ *  - moves the vanilla hotbar select keys to SHIFT + 1..9 so plain 1..9 are free
+ *    for the spell bar (only touches keys still at their vanilla default);
+ *  - recovers the J / U menu keys if a spell-slot rebind stole them (menu keys win).
  */
 @Mod.EventBusSubscriber(modid = RpgStats.MOD_ID, value = Dist.CLIENT)
 public class HotbarRemap {
@@ -42,9 +43,32 @@ public class HotbarRemap {
                 changed = true;
             }
         }
+
+        changed |= restoreMenuKey(RpgKeybinds.HUD_EDITOR, GLFW.GLFW_KEY_J);
+        changed |= restoreMenuKey(RpgKeybinds.SPELLBOOK, GLFW.GLFW_KEY_U);
+
         if (changed) {
             KeyMapping.resetMapping();
             mc.options.save();
         }
+    }
+
+    /** If a menu key got unbound (a slot rebind grabbed it), put it back and clear the thief. */
+    private static boolean restoreMenuKey(KeyMapping menu, int glfwCode) {
+        if (menu.getKey() != InputConstants.UNKNOWN) {
+            return false; // still bound - either the default or the player's own choice
+        }
+        InputConstants.Key want = InputConstants.Type.KEYSYM.getOrCreate(glfwCode);
+        menu.setKeyModifierAndCode(KeyModifier.NONE, want);
+        for (int i = 0; i < RpgKeybinds.CAST.length; i++) {
+            KeyMapping cast = RpgKeybinds.CAST[i];
+            if (cast.getKeyModifier() == KeyModifier.NONE && cast.getKey().equals(want)) {
+                // the slot that stole the menu key goes back to its default
+                int digit = GLFW.GLFW_KEY_1 + (i % StatFormulas.BAR_SLOTS);
+                KeyModifier mod = i < StatFormulas.BAR_SLOTS ? KeyModifier.NONE : KeyModifier.ALT;
+                cast.setKeyModifierAndCode(mod, InputConstants.Type.KEYSYM.getOrCreate(digit));
+            }
+        }
+        return true;
     }
 }
