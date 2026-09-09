@@ -232,11 +232,14 @@ public final class StatFormulas {
     public static final int AWAY_SELF_BUFF_TICKS = 100;          // 5 s
     public static final double AWAY_SELF_RANGE = 3.5;            // impact within this of the caster = self-buff
 
-    // Scatter: pop a target (or yourself) up a couple of blocks
-    public static final double SCATTER_SPEED = 0.9;
-    public static final double SCATTER_IMPACT_DAMAGE = 0.5;
-    public static final double SCATTER_LAUNCH = 0.62;            // upward velocity added
-    public static final double SCATTER_SELF_RANGE = 3.5;
+    // Ward: instant self-cast damage shield (vanilla Absorption)
+    public static final int WARD_DURATION_TICKS = 160;           // the shield lingers up to 8 s
+    private static final int WARD_ABS_AMP_MIN = 3;               // Absorption IV  ~= 16 HP at spell level 1
+    private static final int WARD_ABS_AMP_MAX = 11;              // Absorption XII ~= 48 HP at the cap
+
+    public static int wardAbsorptionAmplifier(int spellLevel) {
+        return (int) Math.round(WARD_ABS_AMP_MIN + (WARD_ABS_AMP_MAX - WARD_ABS_AMP_MIN) * effectiveness(spellLevel));
+    }
 
     // Bright Light: detonates and blinds anyone facing the blast
     public static final double BRIGHT_LIGHT_SPEED = 0.9;

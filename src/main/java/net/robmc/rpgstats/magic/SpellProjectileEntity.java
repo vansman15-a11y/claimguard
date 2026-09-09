@@ -63,7 +63,6 @@ public class SpellProjectileEntity extends ThrowableProjectile {
         return switch (spell()) {
             case HEAL_OTHER -> new Vector3f(1.0f, 0.35f, 0.4f);
             case AWAY -> new Vector3f(0.55f, 0.85f, 1.0f);
-            case SCATTER -> new Vector3f(0.7f, 1.0f, 0.6f);
             case BRIGHT_LIGHT -> new Vector3f(1.0f, 1.0f, 0.85f);
             default -> new Vector3f(1.0f, 0.2f, 0.15f); // Sunder red
         };
@@ -147,20 +146,6 @@ public class SpellProjectileEntity extends ThrowableProjectile {
                     }
                 }
                 maybeSelfBuff(level, owner, at);
-            }
-            case SCATTER -> {
-                if (hit != null) {
-                    hit.hurt(damageSources().indirectMagic(this, owner), (float) StatFormulas.SCATTER_IMPACT_DAMAGE);
-                    hit.push(0, StatFormulas.SCATTER_LAUNCH, 0);
-                    hit.hurtMarked = true;
-                    if (isEnemy(hit, owner)) {
-                        enemiesHit++;
-                    }
-                } else if (owner != null && at.distanceToSqr(owner.position()) <= sq(StatFormulas.SCATTER_SELF_RANGE)) {
-                    owner.push(0, StatFormulas.SCATTER_LAUNCH, 0);
-                    owner.hurtMarked = true;
-                }
-                level.sendParticles(ParticleTypes.CLOUD, at.x, at.y, at.z, 12, 0.2, 0.1, 0.2, 0.05);
             }
             case BRIGHT_LIGHT -> {
                 double r = StatFormulas.BRIGHT_LIGHT_RADIUS;

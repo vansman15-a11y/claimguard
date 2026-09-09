@@ -32,10 +32,6 @@ public final class SpellProjectiles {
                 damage = (float) (StatFormulas.AWAY_IMPACT_DAMAGE * spellMult);
                 speed = (float) StatFormulas.AWAY_SPEED;
             }
-            case SCATTER -> {
-                damage = (float) (StatFormulas.SCATTER_IMPACT_DAMAGE * spellMult);
-                speed = (float) StatFormulas.SCATTER_SPEED;
-            }
             case BRIGHT_LIGHT -> {
                 damage = 0.0f;
                 speed = (float) StatFormulas.BRIGHT_LIGHT_SPEED;

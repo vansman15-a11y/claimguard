@@ -295,7 +295,7 @@ public class SpellbookScreen extends Screen {
             case SUNDER -> "slow bolt, makes them bleed";
             case HEAL_OTHER -> "fast bolt, heals what it hits";
             case AWAY -> "knock back / self speed buff at feet";
-            case SCATTER -> "pop a target (or you) into the air";
+            case WARD -> "instant 15+ HP damage shield on you";
             case BRIGHT_LIGHT -> "blinds anyone facing the blast";
         };
     }

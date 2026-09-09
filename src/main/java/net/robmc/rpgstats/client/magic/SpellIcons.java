@@ -26,7 +26,7 @@ public final class SpellIcons {
             case SUNDER -> tex("sunder");
             case HEAL_OTHER -> tex("heal_other");
             case AWAY -> tex("away");
-            case SCATTER -> tex("scatter");
+            case WARD -> tex("ward");
             case BRIGHT_LIGHT -> tex("bright_light");
         };
     }

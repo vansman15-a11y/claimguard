@@ -34,10 +34,10 @@
     "subtitle": "rpgstats.subtitle.spell.away",
     "sounds": [ "rpgstats:spell/away" ]
   },
-  "spell.scatter": {
+  "spell.ward": {
     "category": "player",
-    "subtitle": "rpgstats.subtitle.spell.scatter",
-    "sounds": [ "rpgstats:spell/scatter" ]
+    "subtitle": "rpgstats.subtitle.spell.ward",
+    "sounds": [ "rpgstats:spell/ward" ]
   },
   "spell.bright_light": {
     "category": "player",

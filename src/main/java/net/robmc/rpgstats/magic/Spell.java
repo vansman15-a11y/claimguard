@@ -15,15 +15,15 @@ public enum Spell {
 
     // --- Adept Magic ---
     SUNDER("Sunder", School.ADEPT, 1, Kind.SUNDER, Pool.MANA, null, 16, 16, 70),
-    HEAL_OTHER("Heal Other", School.ADEPT, 2, Kind.HEAL_OTHER, Pool.MANA, null, 34, 30, 90),
-    AWAY("Away", School.ADEPT, 3, Kind.AWAY, Pool.MANA, null, 16, 14, 120),
-    SCATTER("Scatter", School.ADEPT, 4, Kind.SCATTER, Pool.MANA, null, 14, 12, 140),
+    HEAL_OTHER("Heal Other", School.ADEPT, 2, Kind.HEAL_OTHER, Pool.MANA, null, 34, 30, 80),
+    AWAY("Away", School.ADEPT, 3, Kind.AWAY, Pool.MANA, null, 16, 14, 400),
+    WARD("Ward", School.ADEPT, 4, Kind.WARD, Pool.MANA, null, 20, 2, 300),
     BRIGHT_LIGHT("Bright Light", School.ADEPT, 5, Kind.BRIGHT_LIGHT, Pool.MANA, null, 40, 24, 300);
 
     public enum Pool { HEALTH, STAMINA, MANA }
 
     /** How SpellCasting resolves the spell when the cast finishes. */
-    public enum Kind { TRANSFER, MAGIC_BOLT, SUNDER, HEAL_OTHER, AWAY, SCATTER, BRIGHT_LIGHT }
+    public enum Kind { TRANSFER, MAGIC_BOLT, SUNDER, HEAL_OTHER, AWAY, WARD, BRIGHT_LIGHT }
 
     private final String displayName;
     private final School school;

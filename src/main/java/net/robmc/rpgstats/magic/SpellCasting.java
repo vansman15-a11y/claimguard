@@ -260,6 +260,10 @@ public final class SpellCasting {
                 spend(player, s, spell.costPool(), spell.flatCost());
                 castMagicBolt(player, s, lvl);
             }
+            case WARD -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castWard(player, lvl);
+            }
             default -> { // every Adept projectile
                 spend(player, s, spell.costPool(), spell.flatCost());
                 SpellProjectiles.launch(player, spell, lvl);
@@ -310,6 +314,17 @@ public final class SpellCasting {
         bolt.setDeltaMovement(dir.scale(speed));
         bolt.shoot(dir.x, dir.y, dir.z, speed, 0.0f);
         level.addFreshEntity(bolt);
+    }
+
+    /** Ward: instant self-cast damage shield via vanilla Absorption. */
+    private static void castWard(ServerPlayer player, int spellLevel) {
+        int amp = StatFormulas.wardAbsorptionAmplifier(spellLevel);
+        player.removeEffect(net.minecraft.world.effect.MobEffects.ABSORPTION);
+        player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.ABSORPTION,
+                StatFormulas.WARD_DURATION_TICKS, amp, false, false, true));
+        player.serverLevel().sendParticles(new DustParticleOptions(new Vector3f(0.55f, 0.8f, 1.0f), 1.2f),
+                player.getX(), player.getY() + 1.0, player.getZ(), 24, 0.45, 0.7, 0.45, 0.02);
     }
 
     // --- pool helpers ---

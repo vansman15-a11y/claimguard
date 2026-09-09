@@ -22,7 +22,7 @@ public final class RpgSounds {
     public static final RegistryObject<SoundEvent> SUNDER = reg("spell.sunder");
     public static final RegistryObject<SoundEvent> HEAL_OTHER = reg("spell.heal_other");
     public static final RegistryObject<SoundEvent> AWAY = reg("spell.away");
-    public static final RegistryObject<SoundEvent> SCATTER = reg("spell.scatter");
+    public static final RegistryObject<SoundEvent> WARD = reg("spell.ward");
     public static final RegistryObject<SoundEvent> BRIGHT_LIGHT = reg("spell.bright_light");
 
     private RpgSounds() {
@@ -42,7 +42,7 @@ public final class RpgSounds {
             case SUNDER -> SUNDER.get();
             case HEAL_OTHER -> HEAL_OTHER.get();
             case AWAY -> AWAY.get();
-            case SCATTER -> SCATTER.get();
+            case WARD -> WARD.get();
             case BRIGHT_LIGHT -> BRIGHT_LIGHT.get();
         };
     }
