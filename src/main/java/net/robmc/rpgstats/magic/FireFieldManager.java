@@ -4,6 +4,9 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
@@ -86,6 +89,9 @@ public final class FireFieldManager {
 
             while (now >= f.nextDamageTick) {
                 f.nextDamageTick += StatFormulas.CINDER_FIELD_DAMAGE_INTERVAL;
+                // a fire crackle for as long as the field burns (~1 s clip, replayed each field tick)
+                level.playSound(null, BlockPos.containing(f.center), SoundEvents.FIRE_AMBIENT,
+                        SoundSource.PLAYERS, 3.0f, 0.85f);
                 ServerPlayer owner = server.getPlayerList().getPlayer(f.owner);
                 DamageSource src = owner != null
                         ? owner.damageSources().indirectMagic(owner, owner)

@@ -63,10 +63,5 @@
     "category": "player",
     "subtitle": "rpgstats.subtitle.spell.pyroclasm",
     "sounds": [ "rpgstats:spell/pyroclasm" ]
-  },
-  "spell.cinder_maelstrom": {
-    "category": "player",
-    "subtitle": "rpgstats.subtitle.spell.cinder_maelstrom",
-    "sounds": [ "rpgstats:spell/cinder_maelstrom" ]
   }
 }
