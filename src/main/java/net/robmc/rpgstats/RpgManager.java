@@ -82,19 +82,31 @@ public final class RpgManager {
     public static void syncSpellBar(ServerPlayer player) {
         PlayerStats s = stats(player);
         ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new SyncSpellBarPacket(s.getSpellBar().clone(), s.spellLevelArray(), s.skillLevelArray()));
+                new SyncSpellBarPacket(s.getSpellBar().clone(), s.schoolLevelArray(), s.skillLevelArray()));
     }
 
-    /** Train one spell; announce a level-up and re-sync the bar. */
+    /** Casting a spell trains its whole school; announce a level-up (which may unlock a tier). */
     public static void addSpellXp(ServerPlayer player, Spell spell, double amount) {
         PlayerStats s = stats(player);
-        int gained = s.addSpellXp(spell, amount);
+        int before = s.getSchoolLevel(spell.school());
+        int gained = s.addSchoolXp(spell.school(), amount);
         RpgData.get(player.server).markDirty();
         if (gained > 0) {
+            int now = s.getSchoolLevel(spell.school());
             player.displayClientMessage(Component.literal(
-                    spell.displayName() + "  ->  Lv " + s.getSpellLevel(spell)
-                            + "  (" + StatFormulas.effectivenessPercent(s.getSpellLevel(spell)) + "%)")
+                    spell.school().displayName() + "  ->  Lv " + now
+                            + "  (" + StatFormulas.effectivenessPercent(now) + "%)")
                     .withStyle(ChatFormatting.LIGHT_PURPLE), true);
+            for (int t = 2; t <= net.robmc.rpgstats.magic.School.MAX_TIERS; t++) {
+                int unlock = spell.school().unlockLevel(t);
+                if (before < unlock && now >= unlock) {
+                    net.robmc.rpgstats.magic.Spell unlocked = net.robmc.rpgstats.magic.Spell.of(spell.school(), t);
+                    if (unlocked != null) {
+                        player.displayClientMessage(Component.literal(
+                                "Unlocked: " + unlocked.displayName()).withStyle(ChatFormatting.AQUA), false);
+                    }
+                }
+            }
         }
         syncSpellBar(player);
     }

@@ -27,13 +27,14 @@ public final class RpgSounds {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(RpgStats.MOD_ID, name)));
     }
 
-    /** The effect sound that plays when the given spell resolves. */
+    /** The effect sound that plays when the given spell resolves (null = let the caller pick a vanilla one). */
     public static SoundEvent forSpell(Spell spell) {
         return switch (spell) {
             case MANA_TO_STAMINA -> MANA_TO_STAMINA.get();
             case STAMINA_TO_HEALTH -> STAMINA_TO_HEALTH.get();
             case HEALTH_TO_MANA -> HEALTH_TO_MANA.get();
             case MAGIC_BOLT -> MAGIC_BOLT.get();
+            default -> MAGIC_BOLT.get();
         };
     }
 

@@ -72,6 +72,12 @@ public final class SpellCasting {
         if (spell == null) {
             return;
         }
+        if (s.getSchoolLevel(spell.school()) < spell.unlockLevel()) {
+            player.displayClientMessage(Component.literal(spell.displayName() + " needs "
+                    + spell.school().displayName() + " level " + spell.unlockLevel() + ".")
+                    .withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
         // Transfers can be cast bare-handed or with a staff. Everything else needs a staff.
         ItemStack hand = player.getMainHandItem();
         boolean staff = Weapons.isStaff(hand);
@@ -184,24 +190,31 @@ public final class SpellCasting {
         PlayerStats s = RpgManager.stats(player);
         int lvl = s.getSpellLevel(spell);
 
-        if (spell.isTransfer()) {
-            // Only the source pool has to have something in it - a full target pool
-            // is fine, the overflow is simply wasted. How much moves and the return
-            // rate both scale with this spell's level.
-            double input = Math.min(StatFormulas.transferAmount(lvl), available(player, s, spell.costPool()));
-            if (input <= 0) {
-                player.displayClientMessage(Component.literal("Nothing to transfer.").withStyle(ChatFormatting.GRAY), true);
-            } else {
-                spend(player, s, spell.costPool(), input);
-                double total = input * StatFormulas.transferRatio(lvl);
-                int ticks = StatFormulas.TRANSFER_DURATION_TICKS;
-                transferGains.computeIfAbsent(player.getUUID(), k -> new ArrayList<>())
-                        .add(new TransferGain(spell.gainPool(), total / ticks, ticks));
-                spawnTransferFx(player, spell);
+        switch (spell.kind()) {
+            case TRANSFER -> {
+                // Only the source pool has to have something in it - a full target pool is
+                // fine, the overflow is wasted. How much moves and the return rate scale
+                // with the school level.
+                double input = Math.min(StatFormulas.transferAmount(lvl), available(player, s, spell.costPool()));
+                if (input <= 0) {
+                    player.displayClientMessage(Component.literal("Nothing to transfer.").withStyle(ChatFormatting.GRAY), true);
+                } else {
+                    spend(player, s, spell.costPool(), input);
+                    double total = input * StatFormulas.transferRatio(lvl);
+                    int ticks = StatFormulas.TRANSFER_DURATION_TICKS;
+                    transferGains.computeIfAbsent(player.getUUID(), k -> new ArrayList<>())
+                            .add(new TransferGain(spell.gainPool(), total / ticks, ticks));
+                    spawnTransferFx(player, spell);
+                }
             }
-        } else { // Magic Bolt
-            spend(player, s, spell.costPool(), spell.flatCost());
-            castMagicBolt(player, s, lvl);
+            case MAGIC_BOLT -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castMagicBolt(player, s, lvl);
+            }
+            default -> { // every Adept projectile
+                spend(player, s, spell.costPool(), spell.flatCost());
+                SpellProjectiles.launch(player, spell, lvl);
+            }
         }
 
         RpgManager.addXp(player, Stat.INTELLIGENCE, StatFormulas.XP_CAST_SPELL);

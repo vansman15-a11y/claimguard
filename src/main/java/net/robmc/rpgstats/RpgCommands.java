@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.robmc.rpgstats.magic.School;
 import net.robmc.rpgstats.magic.Spell;
 import net.robmc.rpgstats.skill.Skill;
 
@@ -30,14 +31,20 @@ public class RpgCommands {
                         s.getXp(stat), StatFormulas.xpForNextLevel(lvl), stat.trainedBy())));
             }
 
-            player.sendSystemMessage(Component.literal("--- Your Spells ---").withStyle(ChatFormatting.LIGHT_PURPLE));
-            for (Spell spell : Spell.values()) {
-                int lvl = s.getSpellLevel(spell);
+            player.sendSystemMessage(Component.literal("--- Your Magic ---").withStyle(ChatFormatting.LIGHT_PURPLE));
+            for (School school : School.values()) {
+                int lvl = s.getSchoolLevel(school);
+                int tiers = 0;
+                for (int t = 1; t <= School.MAX_TIERS; t++) {
+                    if (Spell.of(school, t) != null && lvl >= school.unlockLevel(t)) {
+                        tiers++;
+                    }
+                }
                 player.sendSystemMessage(Component.literal(String.format(
-                        "%-26s %3d/%d  %3d%% power  (%.0f / %.0f xp)",
-                        spell.displayName(), lvl, StatFormulas.LEVEL_CAP,
-                        StatFormulas.effectivenessPercent(lvl),
-                        s.getSpellXp(spell), StatFormulas.xpForNextLevel(lvl))));
+                        "%-18s %3d/%d  %3d%% power  %d spells  (%.0f / %.0f xp)",
+                        school.displayName(), lvl, StatFormulas.LEVEL_CAP,
+                        StatFormulas.effectivenessPercent(lvl), tiers,
+                        s.getSchoolXp(school), StatFormulas.xpForNextLevel(lvl))));
             }
 
             player.sendSystemMessage(Component.literal("--- Your Skills ---").withStyle(ChatFormatting.GREEN));

@@ -8,6 +8,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.robmc.rpgstats.RpgStats;
 import net.robmc.rpgstats.magic.MagicBoltEntity;
+import net.robmc.rpgstats.magic.SpellProjectileEntity;
 
 public class RpgEntities {
 
@@ -21,6 +22,14 @@ public class RpgEntities {
                     .clientTrackingRange(6)
                     .updateInterval(1)
                     .build("magic_bolt"));
+
+    public static final RegistryObject<EntityType<SpellProjectileEntity>> SPELL_PROJECTILE = ENTITIES.register(
+            "spell_projectile",
+            () -> EntityType.Builder.<SpellProjectileEntity>of(SpellProjectileEntity::new, MobCategory.MISC)
+                    .sized(0.4f, 0.4f)
+                    .clientTrackingRange(8)
+                    .updateInterval(1)
+                    .build("spell_projectile"));
 
     public static void register(IEventBus modEventBus) {
         ENTITIES.register(modEventBus);

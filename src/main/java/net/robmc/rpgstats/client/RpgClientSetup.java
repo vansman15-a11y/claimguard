@@ -11,6 +11,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.robmc.rpgstats.RpgStats;
 import net.robmc.rpgstats.client.magic.ClientSpells;
 import net.robmc.rpgstats.client.magic.MagicBoltRenderer;
+import net.robmc.rpgstats.client.magic.SpellProjectileRenderer;
 import net.robmc.rpgstats.registry.RpgEntities;
 import net.robmc.rpgstats.registry.RpgItems;
 
@@ -20,6 +21,7 @@ public class RpgClientSetup {
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(RpgEntities.MAGIC_BOLT.get(), MagicBoltRenderer::new);
+        event.registerEntityRenderer(RpgEntities.SPELL_PROJECTILE.get(), SpellProjectileRenderer::new);
     }
 
     @SubscribeEvent

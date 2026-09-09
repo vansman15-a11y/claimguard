@@ -84,6 +84,7 @@ public class RpgEvents {
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
             SpellCasting.tick(event.getServer());
+            net.robmc.rpgstats.magic.BleedManager.tick(event.getServer());
         }
     }
 

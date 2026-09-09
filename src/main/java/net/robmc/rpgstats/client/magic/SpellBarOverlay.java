@@ -77,6 +77,10 @@ public class SpellBarOverlay {
         if (spell != null) {
             SpellIcons.draw(g, spell, x + 2, y + 2, SLOT - 4);
 
+            if (!ClientSpells.unlocked(spell)) {
+                g.fill(x + 1, y + 1, x + SLOT - 1, y + SLOT - 1, 0xB0101014); // locked - dimmed
+            }
+
             // On cooldown: the slot sits "lit" just after the cast and fades back to normal as it recharges.
             float cdp = ClientSpells.cooldownProgress(spell);
             if (cdp < 1.0f) {

@@ -1,6 +1,7 @@
 package net.robmc.rpgstats;
 
 import net.minecraft.nbt.CompoundTag;
+import net.robmc.rpgstats.magic.School;
 import net.robmc.rpgstats.magic.Spell;
 import net.robmc.rpgstats.skill.Skill;
 
@@ -21,8 +22,8 @@ public class PlayerStats {
     private final Map<Stat, Integer> levels = new EnumMap<>(Stat.class);
     private final Map<Stat, Double> xp = new EnumMap<>(Stat.class);
 
-    private final Map<Spell, Integer> spellLevels = new EnumMap<>(Spell.class);
-    private final Map<Spell, Double> spellXp = new EnumMap<>(Spell.class);
+    private final Map<School, Integer> schoolLevels = new EnumMap<>(School.class);
+    private final Map<School, Double> schoolXp = new EnumMap<>(School.class);
 
     private final Map<Skill, Integer> skillLevels = new EnumMap<>(Skill.class);
     private final Map<Skill, Double> skillXp = new EnumMap<>(Skill.class);
@@ -39,9 +40,9 @@ public class PlayerStats {
             levels.put(stat, 0);
             xp.put(stat, 0.0);
         }
-        for (Spell spell : Spell.values()) {
-            spellLevels.put(spell, 0);
-            spellXp.put(spell, 0.0);
+        for (School school : School.values()) {
+            schoolLevels.put(school, 0);
+            schoolXp.put(school, 0.0);
         }
         for (Skill skill : Skill.values()) {
             skillLevels.put(skill, 0);
@@ -84,26 +85,31 @@ public class PlayerStats {
         return gained;
     }
 
-    // --- spells ---
+    // --- magic schools ---
 
+    public int getSchoolLevel(School school) {
+        return schoolLevels.getOrDefault(school, 0);
+    }
+
+    /** Convenience: the caster's level in this spell's school. */
     public int getSpellLevel(Spell spell) {
-        return spellLevels.getOrDefault(spell, 0);
+        return getSchoolLevel(spell.school());
     }
 
-    public double getSpellXp(Spell spell) {
-        return spellXp.getOrDefault(spell, 0.0);
+    public double getSchoolXp(School school) {
+        return schoolXp.getOrDefault(school, 0.0);
     }
 
-    /** Adds XP to one spell and returns how many levels it gained. Stops at LEVEL_CAP. */
-    public int addSpellXp(Spell spell, double amount) {
+    /** Adds XP to a school and returns how many levels it gained. Stops at LEVEL_CAP. */
+    public int addSchoolXp(School school, double amount) {
         if (amount <= 0) {
             return 0;
         }
-        int level = spellLevels.getOrDefault(spell, 0);
+        int level = schoolLevels.getOrDefault(school, 0);
         if (level >= StatFormulas.LEVEL_CAP) {
             return 0;
         }
-        double have = spellXp.getOrDefault(spell, 0.0) + amount;
+        double have = schoolXp.getOrDefault(school, 0.0) + amount;
         int gained = 0;
         while (level < StatFormulas.LEVEL_CAP && have >= StatFormulas.xpForNextLevel(level)) {
             have -= StatFormulas.xpForNextLevel(level);
@@ -113,17 +119,17 @@ public class PlayerStats {
         if (level >= StatFormulas.LEVEL_CAP) {
             have = 0;
         }
-        spellLevels.put(spell, level);
-        spellXp.put(spell, have);
+        schoolLevels.put(school, level);
+        schoolXp.put(school, have);
         return gained;
     }
 
-    /** Spell levels indexed by Spell.ordinal(), for the sync packet. */
-    public int[] spellLevelArray() {
-        Spell[] all = Spell.values();
+    /** School levels indexed by School.ordinal(), for the sync packet. */
+    public int[] schoolLevelArray() {
+        School[] all = School.values();
         int[] out = new int[all.length];
         for (int i = 0; i < all.length; i++) {
-            out[i] = spellLevels.getOrDefault(all[i], 0);
+            out[i] = schoolLevels.getOrDefault(all[i], 0);
         }
         return out;
     }
@@ -224,9 +230,9 @@ public class PlayerStats {
             tag.putInt(stat.name() + "_lvl", levels.get(stat));
             tag.putDouble(stat.name() + "_xp", xp.get(stat));
         }
-        for (Spell spell : Spell.values()) {
-            tag.putInt("SpellLvl_" + spell.name(), spellLevels.getOrDefault(spell, 0));
-            tag.putDouble("SpellXp_" + spell.name(), spellXp.getOrDefault(spell, 0.0));
+        for (School school : School.values()) {
+            tag.putInt("SchoolLvl_" + school.name(), schoolLevels.getOrDefault(school, 0));
+            tag.putDouble("SchoolXp_" + school.name(), schoolXp.getOrDefault(school, 0.0));
         }
         for (Skill skill : Skill.values()) {
             tag.putInt("SkillLvl_" + skill.name(), skillLevels.getOrDefault(skill, 0));
@@ -247,9 +253,9 @@ public class PlayerStats {
             stats.levels.put(stat, clampLevel(tag.getInt(stat.name() + "_lvl")));
             stats.xp.put(stat, tag.getDouble(stat.name() + "_xp"));
         }
-        for (Spell spell : Spell.values()) {
-            stats.spellLevels.put(spell, clampLevel(tag.getInt("SpellLvl_" + spell.name())));
-            stats.spellXp.put(spell, tag.getDouble("SpellXp_" + spell.name()));
+        for (School school : School.values()) {
+            stats.schoolLevels.put(school, clampLevel(tag.getInt("SchoolLvl_" + school.name())));
+            stats.schoolXp.put(school, tag.getDouble("SchoolXp_" + school.name()));
         }
         for (Skill skill : Skill.values()) {
             stats.skillLevels.put(skill, clampLevel(tag.getInt("SkillLvl_" + skill.name())));

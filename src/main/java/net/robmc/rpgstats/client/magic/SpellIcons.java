@@ -10,11 +10,6 @@ public final class SpellIcons {
 
     private static final int TEX = 32;
 
-    private static final ResourceLocation MANA_TO_STAMINA = tex("mana_to_stamina");
-    private static final ResourceLocation STAMINA_TO_HEALTH = tex("stamina_to_health");
-    private static final ResourceLocation HEALTH_TO_MANA = tex("health_to_mana");
-    private static final ResourceLocation MAGIC_BOLT = tex("magic_bolt");
-
     private SpellIcons() {
     }
 
@@ -24,10 +19,15 @@ public final class SpellIcons {
 
     public static ResourceLocation of(Spell spell) {
         return switch (spell) {
-            case MANA_TO_STAMINA -> MANA_TO_STAMINA;
-            case STAMINA_TO_HEALTH -> STAMINA_TO_HEALTH;
-            case HEALTH_TO_MANA -> HEALTH_TO_MANA;
-            case MAGIC_BOLT -> MAGIC_BOLT;
+            case MANA_TO_STAMINA -> tex("mana_to_stamina");
+            case STAMINA_TO_HEALTH -> tex("stamina_to_health");
+            case HEALTH_TO_MANA -> tex("health_to_mana");
+            case MAGIC_BOLT -> tex("magic_bolt");
+            case SUNDER -> tex("sunder");
+            case HEAL_OTHER -> tex("heal_other");
+            case AWAY -> tex("away");
+            case SCATTER -> tex("scatter");
+            case BRIGHT_LIGHT -> tex("bright_light");
         };
     }
 

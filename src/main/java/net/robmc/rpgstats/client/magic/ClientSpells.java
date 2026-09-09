@@ -5,6 +5,7 @@ import net.robmc.claimguard.network.CastStatePacket;
 import net.robmc.claimguard.network.SpellCooldownPacket;
 import net.robmc.claimguard.network.SyncSpellBarPacket;
 import net.robmc.rpgstats.StatFormulas;
+import net.robmc.rpgstats.magic.School;
 import net.robmc.rpgstats.magic.Spell;
 import net.robmc.rpgstats.skill.Skill;
 
@@ -16,7 +17,7 @@ public final class ClientSpells {
 
     private static final int SLOT_COUNT = StatFormulas.TOTAL_BAR_SLOTS;
     private static final String[] SLOTS = new String[SLOT_COUNT];
-    private static int[] spellLevels = new int[Spell.values().length];
+    private static int[] schoolLevels = new int[School.values().length];
     private static int[] skillLevels = new int[Skill.values().length];
 
     private static Spell castingSpell;
@@ -33,8 +34,8 @@ public final class ClientSpells {
         for (int i = 0; i < SLOT_COUNT; i++) {
             SLOTS[i] = i < p.slots.length ? p.slots[i] : "";
         }
-        if (p.spellLevels != null && p.spellLevels.length == spellLevels.length) {
-            spellLevels = p.spellLevels;
+        if (p.schoolLevels != null && p.schoolLevels.length == schoolLevels.length) {
+            schoolLevels = p.schoolLevels;
         }
         if (p.skillLevels != null && p.skillLevels.length == skillLevels.length) {
             skillLevels = p.skillLevels;
@@ -104,8 +105,18 @@ public final class ClientSpells {
         return (i >= 0 && i < SLOT_COUNT && SLOTS[i] != null) ? SLOTS[i] : "";
     }
 
+    /** The viewer's level in this spell's school. */
     public static int spellLevel(Spell spell) {
-        return spell == null ? 0 : spellLevels[spell.ordinal()];
+        return spell == null ? 0 : schoolLevel(spell.school());
+    }
+
+    public static int schoolLevel(School school) {
+        return school == null ? 0 : schoolLevels[school.ordinal()];
+    }
+
+    /** Whether the viewer has unlocked this spell's tier. */
+    public static boolean unlocked(Spell spell) {
+        return spell != null && schoolLevel(spell.school()) >= spell.unlockLevel();
     }
 
     public static int skillLevel(Skill skill) {

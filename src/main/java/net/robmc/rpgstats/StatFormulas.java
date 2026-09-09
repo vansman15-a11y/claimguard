@@ -197,6 +197,49 @@ public final class StatFormulas {
         return MAGIC_BOLT_SPEED_MIN + (MAGIC_BOLT_SPEED_MAX - MAGIC_BOLT_SPEED_MIN) * effectiveness(spellLevel);
     }
 
+    // --- Adept Magic ---
+
+    // Sunder: a slow bolt that makes the target bleed
+    public static final double SUNDER_SPEED = 0.55;               // magic-bolt slow
+    public static final double SUNDER_IMPACT_DAMAGE = 2.0;        // raw, small
+    public static final int SUNDER_BLEED_TICKS = 100;             // 5 s
+    public static final int SUNDER_BLEED_INTERVAL = 10;           // damage every 0.5 s
+    private static final double SUNDER_BLEED_MIN = 1.5;          // raw per tick at school level 1
+    private static final double SUNDER_BLEED_MAX = 4.0;          // ... at the cap
+
+    public static double sunderBleedPerTick(int schoolLevel) {
+        return SUNDER_BLEED_MIN + (SUNDER_BLEED_MAX - SUNDER_BLEED_MIN) * effectiveness(schoolLevel);
+    }
+
+    // Heal Other: near-hitscan, heals what it hits, costs the caster mana
+    public static final double HEAL_OTHER_SPEED = 2.6;
+    private static final double HEAL_OTHER_MIN = 18.0;           // healed at school level 1
+    private static final double HEAL_OTHER_MAX = 45.0;          // ... at the cap
+
+    public static double healOtherAmount(int schoolLevel) {
+        return HEAL_OTHER_MIN + (HEAL_OTHER_MAX - HEAL_OTHER_MIN) * effectiveness(schoolLevel);
+    }
+
+    // Away: knock the target back; cast at your feet for a short speed/hop buff
+    public static final double AWAY_SPEED = 0.75;                 // a touch quicker than magic bolt
+    public static final double AWAY_IMPACT_DAMAGE = 1.0;
+    public static final double AWAY_KNOCKBACK = 1.4;
+    public static final int AWAY_SELF_BUFF_TICKS = 100;          // 5 s
+    public static final double AWAY_SELF_RANGE = 3.5;            // impact within this of the caster = self-buff
+
+    // Scatter: pop a target (or yourself) up a couple of blocks
+    public static final double SCATTER_SPEED = 0.9;
+    public static final double SCATTER_IMPACT_DAMAGE = 0.5;
+    public static final double SCATTER_LAUNCH = 0.62;            // upward velocity added
+    public static final double SCATTER_SELF_RANGE = 3.5;
+
+    // Bright Light: detonates and blinds anyone facing the blast
+    public static final double BRIGHT_LIGHT_SPEED = 0.9;
+    public static final double BRIGHT_LIGHT_RADIUS = 9.0;
+    public static final int BRIGHT_LIGHT_BLIND_TICKS = 40;       // 2 s
+    public static final int BRIGHT_LIGHT_FLASH_TICKS = 40;
+    public static final double BRIGHT_LIGHT_FACING_DOT = 0.15;   // how "toward" the blast a look vector must be
+
     // --- Rest skill (a semi-AFK downtime action; deliberately mild) ---
 
     public static final int REST_REGEN_INTERVAL_TICKS = 20;      // rest tops your pools up every ~1s
