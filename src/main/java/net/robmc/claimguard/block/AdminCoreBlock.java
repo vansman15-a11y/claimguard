@@ -4,6 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -14,7 +16,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.robmc.claimguard.block.entity.ClaimCoreBlockEntity;
+import net.robmc.claimguard.claim.ClaimActions;
 import net.robmc.claimguard.claim.ClaimManager;
 
 import javax.annotation.Nullable;
@@ -50,6 +54,18 @@ public class AdminCoreBlock extends BaseEntityBlock {
         ClaimManager.get((ServerLevel) level).createAdminClaim(pos);
         player.displayClientMessage(Component.literal(
                 "Admin protection zone created - maximum size, PvP disabled inside."), false);
+    }
+
+    /** Right-click: bind your respawn here, or leave the bind if already bound. */
+    @Override
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (level.isClientSide()) {
+            return InteractionResult.SUCCESS;
+        }
+        if (player instanceof ServerPlayer serverPlayer) {
+            ClaimActions.toggleAdminBind(serverPlayer, pos);
+        }
+        return InteractionResult.CONSUME;
     }
 
     @Override

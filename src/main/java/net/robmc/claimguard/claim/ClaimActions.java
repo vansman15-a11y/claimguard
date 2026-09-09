@@ -195,9 +195,32 @@ public final class ClaimActions {
         if (clan.isEmpty()) {
             return false;
         }
+        ClaimManager claims = ClaimManager.get(player.serverLevel());
         Set<BlockPos> used = new HashSet<>();
-        clan.get().getMembers().forEach(m -> binds.getBind(m.getId()).ifPresent(b -> used.add(b.pos())));
+        clan.get().getMembers().forEach(m -> binds.getBind(m.getId()).ifPresent(b -> {
+            // Admin safe-zone binds are public, not a clan asset - they don't count.
+            if (claims.getClaimByCore(b.pos()).map(c -> !c.isAdmin()).orElse(true)) {
+                used.add(b.pos());
+            }
+        }));
         return !used.contains(corePos) && used.size() >= Clan.MAX_BINDSTONES;
+    }
+
+    /** Right-clicking an Admin Core: toggle your respawn point there. Open to everyone, no cap. */
+    public static void toggleAdminBind(ServerPlayer player, BlockPos corePos) {
+        Optional<Claim> claim = ClaimManager.get(player.serverLevel()).getClaimByCore(corePos);
+        if (claim.isEmpty() || !claim.get().isAdmin()) {
+            return;
+        }
+        BindManager binds = BindManager.get(player.server);
+        if (binds.isBoundTo(player.getUUID(), corePos)) {
+            binds.clearBind(player.getUUID());
+            player.displayClientMessage(Component.literal(
+                    "You'll no longer respawn at this safe zone (back to your bed / world spawn)."), false);
+        } else {
+            binds.setBind(player.getUUID(), corePos, player.serverLevel().dimension());
+            player.displayClientMessage(Component.literal("Bound to this safe zone - you'll revive here."), false);
+        }
     }
 
     public static void unbind(ServerPlayer player, BlockPos corePos) {
