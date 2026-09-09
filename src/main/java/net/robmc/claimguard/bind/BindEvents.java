@@ -1,6 +1,7 @@
 package net.robmc.claimguard.bind;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -71,7 +72,32 @@ public class BindEvents {
         if (level == null) {
             return;
         }
-        BlockPos pos = bind.get().pos();
-        player.teleportTo(level, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, player.getYRot(), player.getXRot());
+        BlockPos spot = safeSpawnNear(level, bind.get().pos());
+        player.teleportTo(level, spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, player.getYRot(), player.getXRot());
+    }
+
+    /**
+     * A standing spot a few blocks from the beacon (never on top of it). Tries a
+     * ring of offsets around the core for two-air-over-solid-ground; falls back to
+     * just beside the core if nothing clean is found.
+     */
+    private static BlockPos safeSpawnNear(ServerLevel level, BlockPos core) {
+        int[][] offsets = {
+                {2, 0}, {-2, 0}, {0, 2}, {0, -2},
+                {2, 2}, {-2, -2}, {2, -2}, {-2, 2},
+                {3, 0}, {-3, 0}, {0, 3}, {0, -3}
+        };
+        for (int[] o : offsets) {
+            BlockPos column = core.offset(o[0], 0, o[1]);
+            for (int dy = 3; dy >= -4; dy--) {
+                BlockPos feet = column.above(dy);
+                if (level.getBlockState(feet.below()).isFaceSturdy(level, feet.below(), Direction.UP)
+                        && level.getBlockState(feet).isAir()
+                        && level.getBlockState(feet.above()).isAir()) {
+                    return feet;
+                }
+            }
+        }
+        return core.offset(2, 1, 0); // fallback: beside the beacon, not on it
     }
 }

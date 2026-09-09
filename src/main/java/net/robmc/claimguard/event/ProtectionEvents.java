@@ -123,10 +123,11 @@ public class ProtectionEvents {
     }
 
     /**
-     * Stops explosions from destroying blocks inside a claim - EXCEPT a claim
-     * that's currently under siege, where TNT is the only way through the walls.
-     * The beacon block itself stays explosion-proof even during a siege (it can
-     * only be brought down by pickaxe hits).
+     * Explosion rules inside claims:
+     *  - admin zones: nothing ever breaks a block here;
+     *  - clan claims: creepers, ghasts, beds, end crystals etc. never break
+     *    blocks; only actual TNT, and only while the claim is under siege;
+     *  - the beacon core itself is always explosion-proof (pickaxe siege only).
      */
     @SubscribeEvent
     public static void onExplosionDetonate(ExplosionEvent.Detonate event) {
@@ -136,16 +137,26 @@ public class ProtectionEvents {
         ClaimManager manager = ClaimManager.get(serverLevel);
         net.robmc.claimguard.siege.SiegeManager sieges =
                 net.robmc.claimguard.siege.SiegeManager.get(serverLevel.getServer());
+
+        Entity exploder = event.getExplosion().getExploder();
+        boolean isTnt = exploder instanceof net.minecraft.world.entity.item.PrimedTnt
+                || exploder instanceof net.minecraft.world.entity.vehicle.MinecartTNT;
+
         event.getAffectedBlocks().removeIf(pos -> {
             Optional<Claim> claim = manager.getClaimAt(pos);
             if (claim.isEmpty()) {
                 return false;
             }
-            net.minecraft.core.BlockPos core = claim.get().getCorePos();
-            if (pos.equals(core)) {
-                return true; // beacon is always explosion-proof
+            Claim c = claim.get();
+            if (c.isAdmin()) {
+                return true; // admin zone: fully explosion-proof
             }
-            return !sieges.isUnderSiege(core); // sieged claim: let TNT through
+            net.minecraft.core.BlockPos core = c.getCorePos();
+            if (pos.equals(core)) {
+                return true; // beacon core: pickaxe siege only
+            }
+            // clan claim: keep protecting unless it's TNT during an active siege
+            return !(isTnt && sieges.isUnderSiege(core));
         });
     }
 
@@ -227,8 +238,9 @@ public class ProtectionEvents {
     }
 
     /**
-     * No player-vs-player damage when EITHER the victim or the attacker is standing
-     * in an admin zone (stops both spawn-killing and sniping out of a safe zone).
+     * No player-vs-player damage when the victim or the attacker is in an admin
+     * zone - UNLESS the victim was in PvP within the last 10 seconds. That combat
+     * tag stops a player ganking someone outside a safe area and ducking back in.
      */
     @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
@@ -243,8 +255,25 @@ public class ProtectionEvents {
         if (!manager.hasAdminClaims()) {
             return;
         }
-        if (manager.isInAdminClaim(victim.blockPosition()) || manager.isInAdminClaim(attackerPlayer.blockPosition())) {
-            event.setCanceled(true);
+        if (!manager.isInAdminClaim(victim.blockPosition()) && !manager.isInAdminClaim(attackerPlayer.blockPosition())) {
+            return;
+        }
+        if (net.robmc.claimguard.combat.CombatTracker.inCombat(victim.getUUID(), level.getGameTime())) {
+            return; // recently fighting - no safe-zone protection
+        }
+        event.setCanceled(true);
+    }
+
+    /** Tags both players as "in combat" whenever PvP damage actually lands. */
+    @SubscribeEvent
+    public static void onPvpHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        if (!(event.getEntity() instanceof Player victim) || !(victim.level() instanceof ServerLevel level)) {
+            return;
+        }
+        if (event.getSource().getEntity() instanceof Player attacker) {
+            long now = level.getGameTime();
+            net.robmc.claimguard.combat.CombatTracker.tag(victim.getUUID(), now);
+            net.robmc.claimguard.combat.CombatTracker.tag(attacker.getUUID(), now);
         }
     }
 
