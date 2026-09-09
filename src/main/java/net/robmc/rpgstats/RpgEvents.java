@@ -8,6 +8,9 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
@@ -17,6 +20,8 @@ import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.ForgeMod;
+import net.minecraftforge.event.ItemAttributeModifierEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
@@ -25,7 +30,7 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.ShieldBlockEvent;
 import net.robmc.rpgstats.item.SkillItem;
-import net.robmc.rpgstats.item.TwoHandedWeapon;
+import net.robmc.rpgstats.item.Weapons;
 import net.robmc.rpgstats.magic.SpellCasting;
 import net.robmc.rpgstats.registry.RpgItems;
 import net.robmc.rpgstats.skill.RecallManager;
@@ -57,6 +62,10 @@ public class RpgEvents {
     private static final Map<UUID, Boolean> wasSwinging = new HashMap<>();
     /** Game time of a player's last landed melee hit, so a hit isn't also charged as a whiffed swing. */
     private static final Map<UUID, Long> lastMeleeHitTick = new HashMap<>();
+
+    // vanilla's base weapon-attribute modifier UUIDs (they're protected on Item)
+    private static final UUID ATTACK_DAMAGE_UUID = UUID.fromString("CB3F55D3-645C-4F38-A497-9C13A33DB5CF");
+    private static final UUID ATTACK_SPEED_UUID = UUID.fromString("FA233E1C-4180-4865-B01B-BCCE9785ACA3");
 
     // --- lifecycle ---
 
@@ -91,13 +100,43 @@ public class RpgEvents {
         }
     }
 
+    // --- resource-pack weapons (CustomModelData iron sword / stick) get the right stats ---
+
+    @SubscribeEvent
+    public static void onWeaponAttributes(ItemAttributeModifierEvent event) {
+        if (event.getSlotType() != EquipmentSlot.MAINHAND) {
+            return;
+        }
+        // our own DaggerItem/PolearmItem already carry the right modifiers
+        Weapons.Kind kind = Weapons.kind(event.getItemStack());
+        int cmd = Weapons.customModelData(event.getItemStack());
+        if (cmd != Weapons.CMD_DAGGER && cmd != Weapons.CMD_POLEARM) {
+            return;
+        }
+        event.clearModifiers();
+        if (kind == Weapons.Kind.DAGGER) {
+            event.addModifier(Attributes.ATTACK_DAMAGE, new AttributeModifier(
+                    ATTACK_DAMAGE_UUID, "Weapon modifier", 3.0, AttributeModifier.Operation.ADDITION));
+            event.addModifier(Attributes.ATTACK_SPEED, new AttributeModifier(
+                    ATTACK_SPEED_UUID, "Weapon modifier", -1.6, AttributeModifier.Operation.ADDITION));
+        } else if (kind == Weapons.Kind.POLEARM) {
+            event.addModifier(Attributes.ATTACK_DAMAGE, new AttributeModifier(
+                    ATTACK_DAMAGE_UUID, "Weapon modifier", 5.0, AttributeModifier.Operation.ADDITION));
+            event.addModifier(Attributes.ATTACK_SPEED, new AttributeModifier(
+                    ATTACK_SPEED_UUID, "Weapon modifier", -3.0, AttributeModifier.Operation.ADDITION));
+            event.addModifier(ForgeMod.ENTITY_REACH.get(), new AttributeModifier(
+                    UUID.fromString("b7d5c1a0-0003-4a00-8000-000000000003"),
+                    "Polearm reach", 1.5, AttributeModifier.Operation.ADDITION));
+        }
+    }
+
     // --- two-handed weapons: never in the offhand, and clear the offhand while wielded ---
 
     private static void enforceTwoHanded(ServerPlayer player) {
         ItemStack off = player.getOffhandItem();
         ItemStack main = player.getMainHandItem();
-        boolean offIsTwoHanded = off.getItem() instanceof TwoHandedWeapon;
-        boolean mainIsTwoHanded = main.getItem() instanceof TwoHandedWeapon;
+        boolean offIsTwoHanded = Weapons.isTwoHanded(off);
+        boolean mainIsTwoHanded = Weapons.isTwoHanded(main);
 
         if (offIsTwoHanded) {
             player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);

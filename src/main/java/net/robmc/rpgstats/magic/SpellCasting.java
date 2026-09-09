@@ -20,7 +20,7 @@ import net.robmc.rpgstats.RpgManager;
 import net.robmc.rpgstats.PlayerStats;
 import net.robmc.rpgstats.Stat;
 import net.robmc.rpgstats.StatFormulas;
-import net.robmc.rpgstats.item.StaffItem;
+import net.robmc.rpgstats.item.Weapons;
 import net.robmc.rpgstats.registry.RpgSounds;
 
 import java.util.ArrayList;
@@ -56,6 +56,8 @@ public final class SpellCasting {
     private static final Map<UUID, Pending> casting = new HashMap<>();
     private static final Map<UUID, Map<Spell, Long>> cooldowns = new HashMap<>();
     private static final Map<UUID, List<TransferGain>> transferGains = new HashMap<>();
+    /** Players whose resource-pack staff we bumped to the glowing CustomModelData for a cast. */
+    private static final java.util.Set<UUID> glowBumped = new java.util.HashSet<>();
 
     private SpellCasting() {
     }
@@ -72,7 +74,7 @@ public final class SpellCasting {
         }
         // Transfers can be cast bare-handed or with a staff. Everything else needs a staff.
         ItemStack hand = player.getMainHandItem();
-        boolean staff = hand.getItem() instanceof StaffItem;
+        boolean staff = Weapons.isStaff(hand);
         if (spell.isTransfer()) {
             if (!staff && !hand.isEmpty()) {
                 player.displayClientMessage(
@@ -106,8 +108,33 @@ public final class SpellCasting {
         if (staff) {
             ClaimGuardNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
                     new StaffGlowPacket(player.getId(), castTicks + 8));
+            // resource-pack staves glow by swapping CustomModelData 71003 -> 71004
+            if (Weapons.customModelData(hand) == Weapons.CMD_STAFF) {
+                Weapons.setCustomModelData(hand, Weapons.CMD_STAFF_GLOW);
+                glowBumped.add(player.getUUID());
+            }
         }
         player.level().playSound(null, player.blockPosition(), SoundEvents.ILLUSIONER_PREPARE_MIRROR, SoundSource.PLAYERS, 0.6f, 1.4f);
+    }
+
+    /** Put a resource-pack staff's CustomModelData back once its cast is over. Called each tick. */
+    private static void restoreGlowCmd(MinecraftServer server) {
+        if (glowBumped.isEmpty()) {
+            return;
+        }
+        glowBumped.removeIf(id -> {
+            if (casting.containsKey(id)) {
+                return false; // still casting
+            }
+            ServerPlayer player = server.getPlayerList().getPlayer(id);
+            if (player != null) {
+                ItemStack held = player.getMainHandItem();
+                if (Weapons.customModelData(held) == Weapons.CMD_STAFF_GLOW) {
+                    Weapons.setCustomModelData(held, Weapons.CMD_STAFF);
+                }
+            }
+            return true;
+        });
     }
 
     public static void interrupt(ServerPlayer player) {
@@ -120,6 +147,7 @@ public final class SpellCasting {
     /** Called every server tick from RpgEvents. */
     public static void tick(MinecraftServer server) {
         long now = server.overworld().getGameTime();
+        restoreGlowCmd(server);
 
         if (!casting.isEmpty()) {
             casting.entrySet().removeIf(entry -> {
