@@ -250,6 +250,9 @@ public final class StatFormulas {
 
     // --- Fire Magic (first advanced school; end-game mage kit - costs & damage run higher than Adept) ---
 
+    /** Fire projectile detonations catch every living thing within this of the impact - caster and allies included. */
+    public static final double FIRE_IMPACT_RADIUS = 2.5;
+
     // Shared stacking burn (Ember Dart applies it; Sunburst & Cinder Maelstrom keep it stacked)
     public static final int FIRE_BURN_MAX_STACKS = 3;
     public static final int FIRE_BURN_DURATION_TICKS = 100;      // 5 s - runs off fast, you have to keep re-applying

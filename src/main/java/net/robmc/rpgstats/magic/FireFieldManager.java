@@ -93,9 +93,10 @@ public final class FireFieldManager {
                 level.playSound(null, BlockPos.containing(f.center), SoundEvents.FIRE_AMBIENT,
                         SoundSource.PLAYERS, 3.0f, 0.85f);
                 ServerPlayer owner = server.getPlayerList().getPlayer(f.owner);
-                DamageSource src = owner != null
+                DamageSource fromCaster = owner != null
                         ? owner.damageSources().indirectMagic(owner, owner)
                         : level.damageSources().onFire();
+                DamageSource selfHit = level.damageSources().magic();
                 double r2 = f.radius * f.radius;
                 AABB box = new AABB(f.center.x - f.radius, f.center.y - 2.0, f.center.z - f.radius,
                         f.center.x + f.radius, f.center.y + 3.0, f.center.z + f.radius);
@@ -108,8 +109,9 @@ public final class FireFieldManager {
                     if (dx * dx + dz * dz > r2) {
                         continue;
                     }
-                    le.hurt(src, (float) f.tickDamage);     // the field's own bite - friendly fire and all
-                    BurnManager.apply(le, f.burnPerStack);  // ... and it keeps the burn stacked while you're in it
+                    // no exclusions - the caster and their allies take it just the same
+                    le.hurt(le == owner ? selfHit : fromCaster, (float) f.tickDamage);
+                    BurnManager.apply(le, f.burnPerStack);
                 }
             }
             return now >= f.endTick;

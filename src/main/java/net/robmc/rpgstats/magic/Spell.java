@@ -21,10 +21,10 @@ public enum Spell {
     BRIGHT_LIGHT("Bright Light", School.ADEPT, 5, Kind.BRIGHT_LIGHT, Pool.MANA, null, 40, 24, 300),
 
     // --- Fire Magic (the first advanced school - end-game mage, higher cost & damage) ---
-    EMBER_DART("Ember Dart", School.FIRE, 1, Kind.EMBER_DART, Pool.MANA, null, 14, 10, 40),
+    EMBER_DART("Ember Dart", School.FIRE, 1, Kind.EMBER_DART, Pool.MANA, null, 14, 40, 40),
     SERPENTS_PLUME("Serpent's Plume", School.FIRE, 2, Kind.SERPENTS_PLUME, Pool.MANA, null, 24, 2, 200),
-    SUNBURST("Sunburst", School.FIRE, 3, Kind.SUNBURST, Pool.MANA, null, 32, 18, 100),
-    PYROCLASM("Pyroclasm", School.FIRE, 4, Kind.PYROCLASM, Pool.MANA, null, 42, 40, 200),
+    SUNBURST("Sunburst", School.FIRE, 3, Kind.SUNBURST, Pool.MANA, null, 32, 38, 100),
+    PYROCLASM("Pyroclasm", School.FIRE, 4, Kind.PYROCLASM, Pool.MANA, null, 42, 60, 200),
     CINDER_MAELSTROM("Cinder Maelstrom", School.FIRE, 5, Kind.CINDER_MAELSTROM, Pool.MANA, null, 90, 50, 900);
 
     public enum Pool { HEALTH, STAMINA, MANA }

@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -174,46 +175,38 @@ public class SpellProjectileEntity extends ThrowableProjectile {
             }
             case EMBER_DART -> {
                 int spellLvl = casterSpellLevel(spell);
-                if (hit != null) {
-                    hit.hurt(damageSources().indirectMagic(this, owner), damage);
-                    BurnManager.apply(hit, StatFormulas.fireBurnPerStack(spellLvl));
-                    if (isEnemy(hit, owner)) {
+                float burn = (float) StatFormulas.fireBurnPerStack(spellLvl);
+                for (LivingEntity le : fireImpacted(level, at, hit)) {
+                    le.hurt(fireSource(le, owner), damage);
+                    BurnManager.apply(le, burn);
+                    if (isEnemy(le, owner)) {
                         enemiesHit++;
                     }
-                } else if (selfCaught) {
-                    owner.hurt(damageSources().magic(), damage);
-                    BurnManager.apply(owner, StatFormulas.fireBurnPerStack(spellLvl));
                 }
                 level.sendParticles(new DustParticleOptions(colour(), 1.4f), at.x, at.y, at.z, 8, 0.2, 0.2, 0.2, 0.02);
                 level.sendParticles(ParticleTypes.FLAME, at.x, at.y, at.z, 8, 0.15, 0.15, 0.15, 0.02);
             }
             case SUNBURST -> {
                 int spellLvl = casterSpellLevel(spell);
-                if (hit != null) {
-                    hit.hurt(damageSources().indirectMagic(this, owner), damage);
-                    knockUp(hit, StatFormulas.SUNBURST_LAUNCH);
-                    BurnManager.apply(hit, StatFormulas.fireBurnPerStack(spellLvl));
-                    if (isEnemy(hit, owner)) {
+                float burn = (float) StatFormulas.fireBurnPerStack(spellLvl);
+                for (LivingEntity le : fireImpacted(level, at, hit)) {
+                    le.hurt(fireSource(le, owner), damage);
+                    knockUp(le, StatFormulas.SUNBURST_LAUNCH);
+                    BurnManager.apply(le, burn);
+                    if (isEnemy(le, owner)) {
                         enemiesHit++;
                     }
-                } else if (selfCaught) {
-                    owner.hurt(damageSources().magic(), damage);
-                    knockUp(owner, StatFormulas.SUNBURST_LAUNCH);
-                    BurnManager.apply(owner, StatFormulas.fireBurnPerStack(spellLvl));
                 }
                 level.sendParticles(ParticleTypes.FLAME, at.x, at.y, at.z, 24, 0.3, 0.3, 0.3, 0.05);
                 level.playSound(null, blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.9f, 1.4f);
             }
             case PYROCLASM -> {
-                if (hit != null) {
-                    hit.hurt(damageSources().indirectMagic(this, owner), damage);
-                    knockUp(hit, StatFormulas.PYROCLASM_LAUNCH);
-                    if (isEnemy(hit, owner)) {
+                for (LivingEntity le : fireImpacted(level, at, hit)) {
+                    le.hurt(fireSource(le, owner), damage);
+                    knockUp(le, StatFormulas.PYROCLASM_LAUNCH);
+                    if (isEnemy(le, owner)) {
                         enemiesHit++;
                     }
-                } else if (selfCaught) {
-                    owner.hurt(damageSources().magic(), damage);
-                    knockUp(owner, StatFormulas.PYROCLASM_LAUNCH);
                 }
                 level.sendParticles(ParticleTypes.FLAME, at.x, at.y, at.z, 30, 0.4, 0.3, 0.4, 0.06);
                 level.sendParticles(ParticleTypes.LAVA, at.x, at.y, at.z, 8, 0.3, 0.2, 0.3, 0.0);
@@ -231,6 +224,27 @@ public class SpellProjectileEntity extends ThrowableProjectile {
 
     private static double sq(double v) {
         return v * v;
+    }
+
+    /**
+     * Every living thing a fire detonation catches: whatever it struck plus everything
+     * within {@link StatFormulas#FIRE_IMPACT_RADIUS} of the impact. No exclusions - the
+     * caster and their allies burn too.
+     */
+    private java.util.List<LivingEntity> fireImpacted(ServerLevel level, Vec3 at, LivingEntity direct) {
+        double r = StatFormulas.FIRE_IMPACT_RADIUS;
+        java.util.List<LivingEntity> list = level.getEntitiesOfClass(LivingEntity.class,
+                new AABB(at, at).inflate(r),
+                e -> e.isAlive() && e.distanceToSqr(at) <= (r + e.getBbWidth()) * (r + e.getBbWidth()));
+        if (direct != null && direct.isAlive() && !list.contains(direct)) {
+            list.add(direct);
+        }
+        return list;
+    }
+
+    /** Self-damage reads as plain magic (no attacker), everyone else as the caster's spell. */
+    private DamageSource fireSource(LivingEntity victim, LivingEntity owner) {
+        return victim == owner ? damageSources().magic() : damageSources().indirectMagic(this, owner);
     }
 
     /** Set an entity's vertical velocity to launch it straight up (fall damage lands naturally on the way down). */
