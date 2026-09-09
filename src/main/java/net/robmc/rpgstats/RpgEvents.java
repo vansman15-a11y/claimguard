@@ -85,6 +85,8 @@ public class RpgEvents {
         if (event.phase == TickEvent.Phase.END) {
             SpellCasting.tick(event.getServer());
             net.robmc.rpgstats.magic.BleedManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.BurnManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.FireFieldManager.tick(event.getServer());
         }
     }
 

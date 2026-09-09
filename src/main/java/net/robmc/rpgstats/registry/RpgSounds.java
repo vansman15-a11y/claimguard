@@ -24,6 +24,11 @@ public final class RpgSounds {
     public static final RegistryObject<SoundEvent> AWAY = reg("spell.away");
     public static final RegistryObject<SoundEvent> WARD = reg("spell.ward");
     public static final RegistryObject<SoundEvent> BRIGHT_LIGHT = reg("spell.bright_light");
+    public static final RegistryObject<SoundEvent> EMBER_DART = reg("spell.ember_dart");
+    public static final RegistryObject<SoundEvent> SERPENTS_PLUME = reg("spell.serpents_plume");
+    public static final RegistryObject<SoundEvent> SUNBURST = reg("spell.sunburst");
+    public static final RegistryObject<SoundEvent> PYROCLASM = reg("spell.pyroclasm");
+    public static final RegistryObject<SoundEvent> CINDER_MAELSTROM = reg("spell.cinder_maelstrom");
 
     private RpgSounds() {
     }
@@ -44,6 +49,11 @@ public final class RpgSounds {
             case AWAY -> AWAY.get();
             case WARD -> WARD.get();
             case BRIGHT_LIGHT -> BRIGHT_LIGHT.get();
+            case EMBER_DART -> EMBER_DART.get();
+            case SERPENTS_PLUME -> SERPENTS_PLUME.get();
+            case SUNBURST -> SUNBURST.get();
+            case PYROCLASM -> PYROCLASM.get();
+            case CINDER_MAELSTROM -> CINDER_MAELSTROM.get();
         };
     }
 

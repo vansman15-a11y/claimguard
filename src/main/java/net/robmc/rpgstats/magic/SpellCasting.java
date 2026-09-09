@@ -264,7 +264,15 @@ public final class SpellCasting {
                 spend(player, s, spell.costPool(), spell.flatCost());
                 castWard(player, lvl);
             }
-            default -> { // every Adept projectile
+            case SERPENTS_PLUME -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castSerpentsPlume(player, s, lvl);
+            }
+            case CINDER_MAELSTROM -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castCinderMaelstrom(player, lvl);
+            }
+            default -> { // every projectile spell (Adept + Fire)
                 spend(player, s, spell.costPool(), spell.flatCost());
                 SpellProjectiles.launch(player, spell, lvl);
             }
@@ -325,6 +333,63 @@ public final class SpellCasting {
                 StatFormulas.WARD_DURATION_TICKS, amp, false, false, true));
         player.serverLevel().sendParticles(new DustParticleOptions(new Vector3f(0.55f, 0.8f, 1.0f), 1.2f),
                 player.getX(), player.getY() + 1.0, player.getZ(), 24, 0.45, 0.7, 0.45, 0.02);
+    }
+
+    /** Serpent's Plume: an instant hitscan fire ray. Dims the vision of a player it lands on. */
+    private static void castSerpentsPlume(ServerPlayer player, PlayerStats s, int spellLevel) {
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getViewVector(1.0f);
+        Vec3 far = eye.add(look.scale(StatFormulas.SERPENTS_PLUME_RANGE));
+
+        net.minecraft.world.phys.BlockHitResult block = level.clip(new net.minecraft.world.level.ClipContext(
+                eye, far, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+        Vec3 end = block.getType() != net.minecraft.world.phys.HitResult.Type.MISS ? block.getLocation() : far;
+
+        net.minecraft.world.phys.EntityHitResult hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(
+                level, player, eye, end,
+                new net.minecraft.world.phys.AABB(eye, end).inflate(1.0),
+                e -> e instanceof net.minecraft.world.entity.LivingEntity && e != player && e.isAlive() && !e.isSpectator());
+
+        Vec3 impact = hit != null ? hit.getLocation() : end;
+        // a line of embers along the ray
+        int steps = (int) Math.max(4, eye.distanceTo(impact) * 2);
+        for (int i = 0; i <= steps; i++) {
+            Vec3 p = eye.lerp(impact, i / (double) steps);
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.FLAME, p.x, p.y, p.z, 1, 0.0, 0.0, 0.0, 0.0);
+        }
+        level.playSound(null, player.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.0f, 0.9f);
+
+        if (hit != null && hit.getEntity() instanceof net.minecraft.world.entity.LivingEntity target) {
+            float dmg = (float) (StatFormulas.serpentsPlumeDamage(spellLevel) * StatFormulas.spellDamageMultiplier(s));
+            target.hurt(player.damageSources().indirectMagic(player, player), dmg);
+            if (target instanceof net.minecraft.world.entity.player.Player) {
+                target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                        net.minecraft.world.effect.MobEffects.DARKNESS,
+                        StatFormulas.SERPENTS_PLUME_DARKNESS_TICKS, 0, false, false, true));
+            }
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE,
+                    hit.getLocation().x, hit.getLocation().y, hit.getLocation().z, 12, 0.2, 0.3, 0.2, 0.02);
+            RpgManager.addSpellXp(player, Spell.SERPENTS_PLUME, StatFormulas.spellHitXp(1));
+        }
+    }
+
+    /** Cinder Maelstrom: drop a lingering AOE fire field where you're looking. */
+    private static void castCinderMaelstrom(ServerPlayer player, int spellLevel) {
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getViewVector(1.0f);
+        Vec3 far = eye.add(look.scale(StatFormulas.CINDER_FIELD_PLACE_RANGE));
+        net.minecraft.world.phys.BlockHitResult block = level.clip(new net.minecraft.world.level.ClipContext(
+                eye, far, net.minecraft.world.level.ClipContext.Block.OUTLINE,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+        Vec3 center = block.getType() != net.minecraft.world.phys.HitResult.Type.MISS ? block.getLocation() : far;
+
+        FireFieldManager.spawn(player, center, spellLevel);
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.EXPLOSION,
+                center.x, center.y + 0.2, center.z, 3, 1.0, 0.2, 1.0, 0.0);
+        level.playSound(null, net.minecraft.core.BlockPos.containing(center), SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 2.0f, 0.6f);
     }
 
     // --- pool helpers ---

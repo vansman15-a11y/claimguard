@@ -248,6 +248,72 @@ public final class StatFormulas {
     public static final int BRIGHT_LIGHT_FLASH_TICKS = 40;
     public static final double BRIGHT_LIGHT_FACING_DOT = 0.15;   // how "toward" the blast a look vector must be
 
+    // --- Fire Magic (first advanced school; end-game mage kit - costs & damage run higher than Adept) ---
+
+    // Shared stacking burn (Ember Dart applies it; Sunburst & Cinder Maelstrom keep it stacked)
+    public static final int FIRE_BURN_MAX_STACKS = 3;
+    public static final int FIRE_BURN_DURATION_TICKS = 100;      // 5 s - runs off fast, you have to keep re-applying
+    public static final int FIRE_BURN_INTERVAL = 20;             // a burn tick every 1 s (5 ticks over the window)
+    private static final double FIRE_BURN_PER_STACK_MIN = 0.35;  // raw, per stack, per burn tick - at spell level 1
+    private static final double FIRE_BURN_PER_STACK_MAX = 0.75;  // ... at the cap; x3 stacks = a real burn, still not OP
+
+    public static double fireBurnPerStack(int spellLevel) {
+        return FIRE_BURN_PER_STACK_MIN
+                + (FIRE_BURN_PER_STACK_MAX - FIRE_BURN_PER_STACK_MIN) * effectiveness(spellLevel);
+    }
+
+    // Ember Dart: fast fire bolt, adds one burn stack per hit
+    public static final double EMBER_DART_SPEED = 1.3;
+    private static final double EMBER_DART_DMG_MIN = 1.0;        // raw impact at spell level 1
+    private static final double EMBER_DART_DMG_MAX = 2.2;        // ... at the cap
+
+    public static double emberDartDamage(int spellLevel) {
+        return EMBER_DART_DMG_MIN + (EMBER_DART_DMG_MAX - EMBER_DART_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    // Serpent's Plume: instant hitscan ray, dims the vision of a player it hits
+    public static final double SERPENTS_PLUME_RANGE = 42.0;
+    public static final int SERPENTS_PLUME_DARKNESS_TICKS = 60;  // 3 s of Darkness (a soft blind, players only)
+    private static final double SERPENTS_PLUME_DMG_MIN = 2.2;    // raw at spell level 1
+    private static final double SERPENTS_PLUME_DMG_MAX = 4.5;    // ... at the cap - it always connects, so no huge number
+
+    public static double serpentsPlumeDamage(int spellLevel) {
+        return SERPENTS_PLUME_DMG_MIN + (SERPENTS_PLUME_DMG_MAX - SERPENTS_PLUME_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    // Sunburst: fast medium bolt, knocks the target up (also a burn stacker)
+    public static final double SUNBURST_SPEED = 1.6;
+    public static final double SUNBURST_LAUNCH = 0.62;           // up a couple feet
+    private static final double SUNBURST_DMG_MIN = 3.0;          // raw at spell level 1
+    private static final double SUNBURST_DMG_MAX = 6.0;          // ... at the cap
+
+    public static double sunburstDamage(int spellLevel) {
+        return SUNBURST_DMG_MIN + (SUNBURST_DMG_MAX - SUNBURST_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    // Pyroclasm: slow-cast arcing bolt that falls like an arrow; ~Sunburst damage, ~2x the knock-up (fall damage on landing)
+    public static final double PYROCLASM_SPEED = 1.4;
+    public static final double PYROCLASM_ARC_LIFT = 0.35;        // how much the shot is angled up on release
+    public static final double PYROCLASM_LAUNCH = 1.15;          // ~2x Sunburst - high enough that the drop hurts
+    private static final double PYROCLASM_DMG_MIN = 3.0;
+    private static final double PYROCLASM_DMG_MAX = 6.0;
+
+    public static double pyroclasmDamage(int spellLevel) {
+        return PYROCLASM_DMG_MIN + (PYROCLASM_DMG_MAX - PYROCLASM_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    // Cinder Maelstrom: ultimate - a lingering AOE fire field that stacks burn AND deals its own damage (friendly fire included)
+    public static final double CINDER_FIELD_RADIUS = 4.5;
+    public static final int CINDER_FIELD_DURATION_TICKS = 100;   // ~5 s on the ground
+    public static final int CINDER_FIELD_DAMAGE_INTERVAL = 20;   // its own damage + a burn refresh every 1 s
+    public static final double CINDER_FIELD_PLACE_RANGE = 22.0;  // how far ahead you can drop it
+    private static final double CINDER_FIELD_DMG_MIN = 0.8;      // raw per field tick at spell level 1 (on top of the burn)
+    private static final double CINDER_FIELD_DMG_MAX = 1.8;      // ... at the cap
+
+    public static double cinderFieldTickDamage(int spellLevel) {
+        return CINDER_FIELD_DMG_MIN + (CINDER_FIELD_DMG_MAX - CINDER_FIELD_DMG_MIN) * effectiveness(spellLevel);
+    }
+
     // --- Rest skill (a semi-AFK downtime action; deliberately mild) ---
 
     public static final int REST_REGEN_INTERVAL_TICKS = 20;      // rest tops your pools up every ~1s

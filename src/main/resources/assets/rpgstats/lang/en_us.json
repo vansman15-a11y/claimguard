@@ -34,5 +34,10 @@
   "rpgstats.subtitle.spell.heal_other": "Heal Other cast",
   "rpgstats.subtitle.spell.away": "Away cast",
   "rpgstats.subtitle.spell.ward": "Ward cast",
-  "rpgstats.subtitle.spell.bright_light": "Bright Light cast"
+  "rpgstats.subtitle.spell.bright_light": "Bright Light cast",
+  "rpgstats.subtitle.spell.ember_dart": "Ember Dart cast",
+  "rpgstats.subtitle.spell.serpents_plume": "Serpent's Plume cast",
+  "rpgstats.subtitle.spell.sunburst": "Sunburst cast",
+  "rpgstats.subtitle.spell.pyroclasm": "Pyroclasm cast",
+  "rpgstats.subtitle.spell.cinder_maelstrom": "Cinder Maelstrom cast"
 }

@@ -28,6 +28,11 @@ public final class SpellIcons {
             case AWAY -> tex("away");
             case WARD -> tex("ward");
             case BRIGHT_LIGHT -> tex("bright_light");
+            case EMBER_DART -> tex("ember_dart");
+            case SERPENTS_PLUME -> tex("serpents_plume");
+            case SUNBURST -> tex("sunburst");
+            case PYROCLASM -> tex("pyroclasm");
+            case CINDER_MAELSTROM -> tex("cinder_maelstrom");
         };
     }
 

@@ -43,5 +43,30 @@
     "category": "player",
     "subtitle": "rpgstats.subtitle.spell.bright_light",
     "sounds": [ "rpgstats:spell/bright_light" ]
+  },
+  "spell.ember_dart": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.ember_dart",
+    "sounds": [ "rpgstats:spell/ember_dart" ]
+  },
+  "spell.serpents_plume": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.serpents_plume",
+    "sounds": [ "rpgstats:spell/serpents_plume" ]
+  },
+  "spell.sunburst": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.sunburst",
+    "sounds": [ "rpgstats:spell/sunburst" ]
+  },
+  "spell.pyroclasm": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.pyroclasm",
+    "sounds": [ "rpgstats:spell/pyroclasm" ]
+  },
+  "spell.cinder_maelstrom": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.cinder_maelstrom",
+    "sounds": [ "rpgstats:spell/cinder_maelstrom" ]
   }
 }

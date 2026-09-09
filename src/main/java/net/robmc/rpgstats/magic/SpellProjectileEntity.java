@@ -64,13 +64,16 @@ public class SpellProjectileEntity extends ThrowableProjectile {
             case HEAL_OTHER -> new Vector3f(1.0f, 0.35f, 0.4f);
             case AWAY -> new Vector3f(0.55f, 0.85f, 1.0f);
             case BRIGHT_LIGHT -> new Vector3f(1.0f, 1.0f, 0.85f);
+            case EMBER_DART -> new Vector3f(1.0f, 0.55f, 0.15f);
+            case SUNBURST -> new Vector3f(1.0f, 0.75f, 0.2f);
+            case PYROCLASM -> new Vector3f(1.0f, 0.4f, 0.1f);
             default -> new Vector3f(1.0f, 0.2f, 0.15f); // Sunder red
         };
     }
 
     @Override
     public boolean isNoGravity() {
-        return true;
+        return spell() != Spell.PYROCLASM; // Pyroclasm arcs and drops like an arrow; everything else flies flat
     }
 
     @Override
@@ -169,6 +172,53 @@ public class SpellProjectileEntity extends ThrowableProjectile {
                     }
                 }
             }
+            case EMBER_DART -> {
+                int spellLvl = casterSpellLevel(spell);
+                if (hit != null) {
+                    hit.hurt(damageSources().indirectMagic(this, owner), damage);
+                    BurnManager.apply(hit, StatFormulas.fireBurnPerStack(spellLvl));
+                    if (isEnemy(hit, owner)) {
+                        enemiesHit++;
+                    }
+                } else if (selfCaught) {
+                    owner.hurt(damageSources().magic(), damage);
+                    BurnManager.apply(owner, StatFormulas.fireBurnPerStack(spellLvl));
+                }
+                level.sendParticles(new DustParticleOptions(colour(), 1.4f), at.x, at.y, at.z, 8, 0.2, 0.2, 0.2, 0.02);
+                level.sendParticles(ParticleTypes.FLAME, at.x, at.y, at.z, 8, 0.15, 0.15, 0.15, 0.02);
+            }
+            case SUNBURST -> {
+                int spellLvl = casterSpellLevel(spell);
+                if (hit != null) {
+                    hit.hurt(damageSources().indirectMagic(this, owner), damage);
+                    knockUp(hit, StatFormulas.SUNBURST_LAUNCH);
+                    BurnManager.apply(hit, StatFormulas.fireBurnPerStack(spellLvl));
+                    if (isEnemy(hit, owner)) {
+                        enemiesHit++;
+                    }
+                } else if (selfCaught) {
+                    owner.hurt(damageSources().magic(), damage);
+                    knockUp(owner, StatFormulas.SUNBURST_LAUNCH);
+                    BurnManager.apply(owner, StatFormulas.fireBurnPerStack(spellLvl));
+                }
+                level.sendParticles(ParticleTypes.FLAME, at.x, at.y, at.z, 24, 0.3, 0.3, 0.3, 0.05);
+                level.playSound(null, blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.9f, 1.4f);
+            }
+            case PYROCLASM -> {
+                if (hit != null) {
+                    hit.hurt(damageSources().indirectMagic(this, owner), damage);
+                    knockUp(hit, StatFormulas.PYROCLASM_LAUNCH);
+                    if (isEnemy(hit, owner)) {
+                        enemiesHit++;
+                    }
+                } else if (selfCaught) {
+                    owner.hurt(damageSources().magic(), damage);
+                    knockUp(owner, StatFormulas.PYROCLASM_LAUNCH);
+                }
+                level.sendParticles(ParticleTypes.FLAME, at.x, at.y, at.z, 30, 0.4, 0.3, 0.4, 0.06);
+                level.sendParticles(ParticleTypes.LAVA, at.x, at.y, at.z, 8, 0.3, 0.2, 0.3, 0.0);
+                level.playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.7f, 1.5f);
+            }
             default -> {
             }
         }
@@ -181,6 +231,14 @@ public class SpellProjectileEntity extends ThrowableProjectile {
 
     private static double sq(double v) {
         return v * v;
+    }
+
+    /** Set an entity's vertical velocity to launch it straight up (fall damage lands naturally on the way down). */
+    private static void knockUp(LivingEntity e, double launch) {
+        Vec3 dm = e.getDeltaMovement();
+        e.setDeltaMovement(dm.x, launch, dm.z);
+        e.hurtMarked = true;
+        e.fallDistance = 0.0f;
     }
 
     private static boolean isEnemy(LivingEntity le, LivingEntity owner) {

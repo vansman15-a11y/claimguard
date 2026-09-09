@@ -297,6 +297,11 @@ public class SpellbookScreen extends Screen {
             case AWAY -> "knock back / self speed buff at feet";
             case WARD -> "instant 15+ HP damage shield on you";
             case BRIGHT_LIGHT -> "blinds anyone facing the blast";
+            case EMBER_DART -> "fast bolt, stacks a burn (x3)";
+            case SERPENTS_PLUME -> "instant fire ray, dims their vision";
+            case SUNBURST -> "fast bolt, knocks up + keeps burn";
+            case PYROCLASM -> "arcing bolt, big knock-up + fall";
+            case CINDER_MAELSTROM -> "lingering fire field, burns everyone in it";
         };
     }
 
