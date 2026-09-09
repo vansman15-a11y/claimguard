@@ -26,12 +26,8 @@ public class RpgKeybinds {
     public static final KeyMapping[] CAST = new KeyMapping[8];
 
     static {
-        int[] defaults = {
-                GLFW.GLFW_KEY_KP_1, GLFW.GLFW_KEY_KP_2, GLFW.GLFW_KEY_KP_3, GLFW.GLFW_KEY_KP_4,
-                GLFW.GLFW_KEY_KP_5, GLFW.GLFW_KEY_KP_6, GLFW.GLFW_KEY_KP_7, GLFW.GLFW_KEY_KP_8
-        };
         for (int i = 0; i < 8; i++) {
-            CAST[i] = key("cast_" + (i + 1), defaults[i]);
+            CAST[i] = key("cast_" + (i + 1), GLFW.GLFW_KEY_1 + i); // plain 1..8 by default
         }
     }
 
