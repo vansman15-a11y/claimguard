@@ -89,7 +89,7 @@ public final class RpgManager {
     public static void addSpellXp(ServerPlayer player, Spell spell, double amount) {
         PlayerStats s = stats(player);
         int before = s.getSchoolLevel(spell.school());
-        int gained = s.addSchoolXp(spell.school(), amount);
+        int gained = s.addSchoolXp(spell.school(), amount * StatFormulas.SCHOOL_XP_MULT);
         RpgData.get(player.server).markDirty();
         if (gained > 0) {
             int now = s.getSchoolLevel(spell.school());

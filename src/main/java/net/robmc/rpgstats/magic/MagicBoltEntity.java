@@ -8,9 +8,12 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -65,26 +68,40 @@ public class MagicBoltEntity extends ThrowableProjectile {
             return;
         }
         ServerLevel level = (ServerLevel) this.level();
+        Entity owner = getOwner();
         float direct = this.entityData.get(DAMAGE);
+        int enemiesHit = 0;
         Entity directHit = null;
-        if (result instanceof EntityHitResult ehr && ehr.getEntity() instanceof LivingEntity target && target != getOwner()) {
+        if (result instanceof EntityHitResult ehr && ehr.getEntity() instanceof LivingEntity target && target != owner) {
             directHit = target;
-            target.hurt(this.damageSources().indirectMagic(this, getOwner()), direct);
+            target.hurt(this.damageSources().indirectMagic(this, owner), direct);
+            if (isEnemy(target, owner)) {
+                enemiesHit++;
+            }
         }
 
-        // Splash: nearby living things take a fraction of a direct hit.
+        // Splash: nearby living things take a fraction of a direct hit - including you, if you shot your own feet.
         float splash = (float) (direct * StatFormulas.MAGIC_BOLT_SPLASH_FRACTION);
         double radius = StatFormulas.MAGIC_BOLT_SPLASH_RADIUS;
         if (splash > 0.0f) {
             AABB box = this.getBoundingBox().inflate(radius);
             for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, box)) {
-                if (le == getOwner() || le == directHit || !le.isAlive()) {
+                if (le == directHit || !le.isAlive()) {
                     continue;
                 }
                 if (le.distanceToSqr(this) <= radius * radius) {
-                    le.hurt(this.damageSources().indirectMagic(this, getOwner()), splash);
+                    le.hurt(le == owner ? this.damageSources().magic()
+                            : this.damageSources().indirectMagic(this, owner), splash);
+                    if (isEnemy(le, owner)) {
+                        enemiesHit++;
+                    }
                 }
             }
+        }
+
+        if (owner instanceof ServerPlayer caster && enemiesHit > 0) {
+            net.robmc.rpgstats.RpgManager.addSpellXp(caster, Spell.MAGIC_BOLT,
+                    StatFormulas.spellHitXp(enemiesHit));
         }
 
         level.sendParticles(new DustParticleOptions(BLUE, 2.0f), getX(), getY(), getZ(), 18, 0.3, 0.3, 0.3, 0.02);
@@ -96,5 +113,9 @@ public class MagicBoltEntity extends ThrowableProjectile {
     @Override
     protected boolean canHitEntity(Entity entity) {
         return entity != getOwner() && super.canHitEntity(entity);
+    }
+
+    private static boolean isEnemy(Entity e, Entity owner) {
+        return e != null && e != owner && (e instanceof Enemy || e instanceof Player);
     }
 }

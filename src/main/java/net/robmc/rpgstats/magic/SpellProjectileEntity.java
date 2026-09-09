@@ -14,6 +14,8 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -105,14 +107,25 @@ public class SpellProjectileEntity extends ThrowableProjectile {
         }
         Vec3 at = result.getLocation();
         Vec3 travel = getDeltaMovement().lengthSqr() > 1.0e-4 ? getDeltaMovement().normalize() : getViewVector(1.0f);
+        int enemiesHit = 0;
+
+        // shooting an offensive spell into the ground at your feet catches you in it
+        boolean selfCaught = owner != null && at.distanceToSqr(owner.position()) <= sq(StatFormulas.SPELL_SELF_HIT_RADIUS);
 
         switch (spell) {
             case SUNDER -> {
+                int schoolLvl = casterSchoolLevel(spell);
+                float bleed = (float) StatFormulas.sunderBleedPerTick(schoolLvl);
                 if (hit != null) {
                     hit.hurt(damageSources().indirectMagic(this, owner), (float) StatFormulas.SUNDER_IMPACT_DAMAGE);
-                    int schoolLvl = casterSchoolLevel(spell);
-                    BleedManager.start(hit, owner, (float) StatFormulas.sunderBleedPerTick(schoolLvl),
-                            StatFormulas.SUNDER_BLEED_TICKS);
+                    BleedManager.start(hit, owner, bleed, StatFormulas.SUNDER_BLEED_TICKS);
+                    if (isEnemy(hit, owner)) {
+                        enemiesHit++;
+                    }
+                }
+                if (hit == null && selfCaught) {
+                    owner.hurt(damageSources().magic(), (float) StatFormulas.SUNDER_IMPACT_DAMAGE);
+                    BleedManager.start(owner, owner, bleed, StatFormulas.SUNDER_BLEED_TICKS);
                 }
                 level.sendParticles(new DustParticleOptions(colour(), 1.6f), at.x, at.y, at.z, 14, 0.25, 0.25, 0.25, 0.02);
             }
@@ -129,6 +142,9 @@ public class SpellProjectileEntity extends ThrowableProjectile {
                     Vec3 push = new Vec3(travel.x, 0.0, travel.z).normalize().scale(StatFormulas.AWAY_KNOCKBACK);
                     hit.push(push.x, 0.4, push.z);
                     hit.hurtMarked = true;
+                    if (isEnemy(hit, owner)) {
+                        enemiesHit++;
+                    }
                 }
                 maybeSelfBuff(level, owner, at);
             }
@@ -137,7 +153,10 @@ public class SpellProjectileEntity extends ThrowableProjectile {
                     hit.hurt(damageSources().indirectMagic(this, owner), (float) StatFormulas.SCATTER_IMPACT_DAMAGE);
                     hit.push(0, StatFormulas.SCATTER_LAUNCH, 0);
                     hit.hurtMarked = true;
-                } else if (owner != null && at.distanceToSqr(owner.position()) <= StatFormulas.SCATTER_SELF_RANGE * StatFormulas.SCATTER_SELF_RANGE) {
+                    if (isEnemy(hit, owner)) {
+                        enemiesHit++;
+                    }
+                } else if (owner != null && at.distanceToSqr(owner.position()) <= sq(StatFormulas.SCATTER_SELF_RANGE)) {
                     owner.push(0, StatFormulas.SCATTER_LAUNCH, 0);
                     owner.hurtMarked = true;
                 }
@@ -149,7 +168,7 @@ public class SpellProjectileEntity extends ThrowableProjectile {
                 level.sendParticles(ParticleTypes.END_ROD, at.x, at.y, at.z, 40, 0.3, 0.3, 0.3, 0.25);
                 level.playSound(null, blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.0f, 1.2f);
                 for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, new AABB(at, at).inflate(r))) {
-                    if (le == owner || !le.isAlive()) {
+                    if (!le.isAlive()) {
                         continue;
                     }
                     Vec3 toBlast = at.subtract(le.getEyePosition()).normalize();
@@ -159,13 +178,28 @@ public class SpellProjectileEntity extends ThrowableProjectile {
                             ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> sp),
                                     new ScreenFlashPacket(StatFormulas.BRIGHT_LIGHT_FLASH_TICKS));
                         }
+                        if (isEnemy(le, owner)) {
+                            enemiesHit++;
+                        }
                     }
                 }
             }
             default -> {
             }
         }
+
+        if (getOwner() instanceof ServerPlayer caster && enemiesHit > 0) {
+            net.robmc.rpgstats.RpgManager.addSpellXp(caster, spell, StatFormulas.spellHitXp(enemiesHit));
+        }
         this.discard();
+    }
+
+    private static double sq(double v) {
+        return v * v;
+    }
+
+    private static boolean isEnemy(LivingEntity le, LivingEntity owner) {
+        return le != null && le != owner && (le instanceof Enemy || le instanceof Player);
     }
 
     private int casterSchoolLevel(Spell spell) {

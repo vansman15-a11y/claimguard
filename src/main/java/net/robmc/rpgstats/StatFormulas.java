@@ -203,11 +203,14 @@ public final class StatFormulas {
 
     // Sunder: a slow bolt that makes the target bleed
     public static final double SUNDER_SPEED = 0.55;               // magic-bolt slow
-    public static final double SUNDER_IMPACT_DAMAGE = 2.0;        // raw, small
-    public static final int SUNDER_BLEED_TICKS = 100;             // 5 s
-    public static final int SUNDER_BLEED_INTERVAL = 10;           // damage every 0.5 s
-    private static final double SUNDER_BLEED_MIN = 1.5;          // raw per tick at school level 1
-    private static final double SUNDER_BLEED_MAX = 4.0;          // ... at the cap
+    public static final double SUNDER_IMPACT_DAMAGE = 1.25;      // raw, small
+
+    /** Offensive spell impacts within this of the caster also catch the caster. */
+    public static final double SPELL_SELF_HIT_RADIUS = 2.5;
+    public static final int SUNDER_BLEED_TICKS = 80;              // 4 s
+    public static final int SUNDER_BLEED_INTERVAL = 20;           // damage every 1 s (4 hits total)
+    private static final double SUNDER_BLEED_MIN = 0.5;          // raw per tick at school level 1 - low-end spell
+    private static final double SUNDER_BLEED_MAX = 1.4;          // ... at the cap
 
     public static double sunderBleedPerTick(int schoolLevel) {
         return SUNDER_BLEED_MIN + (SUNDER_BLEED_MAX - SUNDER_BLEED_MIN) * effectiveness(schoolLevel);
@@ -268,8 +271,22 @@ public final class StatFormulas {
     public static final double XP_RANGED_HIT = 3.0;
     public static final double XP_MOVE_PER_METRE = 0.05;
     public static final double XP_SWIM_PER_METRE = 0.12;
-    public static final double XP_CAST_SPELL = 6.0;        // per cast, damage spells
-    public static final double XP_CAST_TRANSFER = 16.0;    // per cast, Weak Magic transfers - they level noticeably faster
+    /** Global multiplier on all magic-school XP. Bumped for testing new spells; drop to 1.0 for live. */
+    public static final double SCHOOL_XP_MULT = 1.6;
+    public static final double XP_CAST_SPELL = 10.0;       // per cast, damage spells
+    public static final double XP_CAST_TRANSFER = 22.0;    // per cast, Weak Magic transfers - they level noticeably faster
+    public static final double XP_SPELL_HIT = 30.0;        // per enemy an offensive spell actually lands on
+
+    /** School XP for landing an offensive spell on 1-3 enemies at once. */
+    public static double spellHitXp(int enemies) {
+        int n = Math.max(1, Math.min(3, enemies));
+        double mult = switch (n) {
+            case 1 -> 1.0;
+            case 2 -> 1.8;
+            default -> 2.8;
+        };
+        return XP_SPELL_HIT * mult;
+    }
     public static final double XP_FISH_CATCH = 6.0;
     public static final double XP_HARVEST_CROP = 2.0;
     public static final double XP_ENCHANT = 15.0;
