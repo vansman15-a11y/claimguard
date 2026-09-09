@@ -10,5 +10,9 @@
   "key.rpgstats.cast_6": "Cast Spell Slot 6",
   "key.rpgstats.cast_7": "Cast Spell Slot 7",
   "key.rpgstats.cast_8": "Cast Spell Slot 8",
-  "entity.rpgstats.magic_bolt": "Magic Bolt"
+  "entity.rpgstats.magic_bolt": "Magic Bolt",
+  "rpgstats.subtitle.spell.mana_to_stamina": "Transfer: Mana to Stamina",
+  "rpgstats.subtitle.spell.stamina_to_health": "Transfer: Stamina to Health",
+  "rpgstats.subtitle.spell.health_to_mana": "Transfer: Health to Mana",
+  "rpgstats.subtitle.spell.magic_bolt": "Magic Bolt cast"
 }

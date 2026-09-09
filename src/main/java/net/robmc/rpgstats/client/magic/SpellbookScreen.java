@@ -16,9 +16,9 @@ import net.robmc.rpgstats.magic.Spell;
  */
 public class SpellbookScreen extends Screen {
 
-    private static final int PANEL_W = 320;
+    private static final int PANEL_W = 340;
     private static final int PANEL_H = 210;
-    private static final int ROW_H = 22;
+    private static final int ROW_H = 24;
 
     private Spell dragging;         // dragging a spell FROM the list
     private int draggingSlot = -1;  // dragging a spell OUT of a bar slot
@@ -59,7 +59,7 @@ public class SpellbookScreen extends Screen {
         if (button == 0) {
             for (Spell spell : Spell.values()) {
                 int y = spellRowY(spell.ordinal());
-                if (mouseX >= panelLeft() + 14 && mouseX <= panelLeft() + 190 && mouseY >= y && mouseY <= y + ROW_H - 4) {
+                if (mouseX >= panelLeft() + 12 && mouseX <= panelLeft() + 234 && mouseY >= y && mouseY <= y + ROW_H - 4) {
                     dragging = spell;
                     return true;
                 }
@@ -119,9 +119,10 @@ public class SpellbookScreen extends Screen {
 
         for (Spell spell : Spell.values()) {
             int y = spellRowY(spell.ordinal());
-            g.fill(left + 12, y, left + 192, y + ROW_H - 4, 0xC0202838);
-            g.drawString(this.font, spell.displayName(), left + 16, y + 3, 0xFFFFFFFF, false);
-            g.drawString(this.font, describe(spell), left + 16, y + 12, 0xFF8FA0B4, false);
+            g.fill(left + 12, y, left + 234, y + ROW_H - 4, 0xC0202838);
+            SpellIcons.draw(g, spell, left + 14, y + 1, ROW_H - 6);
+            g.drawString(this.font, spell.displayName(), left + 38, y + 3, 0xFFFFFFFF, false);
+            g.drawString(this.font, describe(spell), left + 38, y + 12, 0xFF8FA0B4, false);
         }
 
         // the casting bar
@@ -129,10 +130,10 @@ public class SpellbookScreen extends Screen {
         g.drawString(this.font, "Bar", barX() - 2, barY() - 10, 0xFF9FC0FF, false);
 
         // drag ghost
-        if (dragging != null) {
-            g.drawString(this.font, SpellBarOverlay.abbrev(dragging), mouseX + 6, mouseY - 4, 0xFFFFFF00, true);
-        } else if (draggingSlot >= 0 && ClientSpells.slot(draggingSlot) != null) {
-            g.drawString(this.font, SpellBarOverlay.abbrev(ClientSpells.slot(draggingSlot)), mouseX + 6, mouseY - 4, 0xFFFFFF00, true);
+        Spell ghost = dragging != null ? dragging
+                : (draggingSlot >= 0 ? ClientSpells.slot(draggingSlot) : null);
+        if (ghost != null) {
+            SpellIcons.draw(g, ghost, mouseX - 8, mouseY - 8, 16);
         }
 
         super.render(g, mouseX, mouseY, partialTick);
@@ -140,10 +141,10 @@ public class SpellbookScreen extends Screen {
 
     private static String describe(Spell spell) {
         return switch (spell) {
-            case MANA_TO_STAMINA -> "0.4s - spend Mana, gain 2x Stamina";
-            case STAMINA_TO_HEALTH -> "0.4s - spend Stamina, gain 2x Health";
-            case HEALTH_TO_MANA -> "0.4s - spend Health, gain 2x Mana";
-            case MAGIC_BOLT -> "slow blue orb, low damage, grows with level";
+            case MANA_TO_STAMINA -> "0.4s - spend Mana, gain 1.5x Stamina over 2s";
+            case STAMINA_TO_HEALTH -> "0.4s - spend Stamina, gain 1.5x Health over 2s";
+            case HEALTH_TO_MANA -> "0.4s - spend Health, gain 1.5x Mana over 2s";
+            case MAGIC_BOLT -> "slow orb, splash on impact, grows with level";
         };
     }
 

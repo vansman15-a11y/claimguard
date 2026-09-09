@@ -1,0 +1,22 @@
+{
+  "spell.mana_to_stamina": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.mana_to_stamina",
+    "sounds": [ "rpgstats:spell/mana_to_stamina" ]
+  },
+  "spell.stamina_to_health": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.stamina_to_health",
+    "sounds": [ "rpgstats:spell/stamina_to_health" ]
+  },
+  "spell.health_to_mana": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.health_to_mana",
+    "sounds": [ "rpgstats:spell/health_to_mana" ]
+  },
+  "spell.magic_bolt": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.magic_bolt",
+    "sounds": [ "rpgstats:spell/magic_bolt" ]
+  }
+}

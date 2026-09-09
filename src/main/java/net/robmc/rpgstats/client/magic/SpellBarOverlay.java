@@ -57,25 +57,12 @@ public class SpellBarOverlay {
 
         Spell spell = ClientSpells.slot(index);
         if (spell != null) {
-            g.drawString(font, abbrev(spell), x + 3, y + 3, tint(spell), false);
+            SpellIcons.draw(g, spell, x + 2, y + 2, SLOT - 4);
             if (ClientSpells.isCasting() && ClientSpells.castingSpell() == spell) {
                 int h = (int) (SLOT * ClientSpells.castProgress());
                 g.fill(x, y + SLOT - h, x + SLOT, y + SLOT, 0x8055C9FF);
             }
         }
         g.drawString(font, String.valueOf(index + 1), x + SLOT - 6, y + SLOT - 8, 0xFF808080, false);
-    }
-
-    static String abbrev(Spell spell) {
-        return switch (spell) {
-            case MANA_TO_STAMINA -> "M>S";
-            case STAMINA_TO_HEALTH -> "S>H";
-            case HEALTH_TO_MANA -> "H>M";
-            case MAGIC_BOLT -> "Bolt";
-        };
-    }
-
-    static int tint(Spell spell) {
-        return spell.isTransfer() ? 0xFF9FE0FF : 0xFF5AA0FF;
     }
 }

@@ -15,6 +15,7 @@ import net.robmc.rpgstats.RpgManager;
 import net.robmc.rpgstats.PlayerStats;
 import net.robmc.rpgstats.Stat;
 import net.robmc.rpgstats.StatFormulas;
+import net.robmc.rpgstats.registry.RpgSounds;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -147,7 +148,8 @@ public final class SpellCasting {
         s.addWeakMagicXp(StatFormulas.XP_CAST_SPELL * 0.5);
         cooldowns.computeIfAbsent(player.getUUID(), k -> new HashMap<>())
                 .put(spell, player.serverLevel().getGameTime() + spell.cooldownTicks());
-        player.level().playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 0.7f, 1.6f);
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                RpgSounds.forSpell(spell), SoundSource.PLAYERS, 1.0f, 1.0f);
         RpgManager.sync(player);
         ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new CastStatePacket("", 0));
     }
