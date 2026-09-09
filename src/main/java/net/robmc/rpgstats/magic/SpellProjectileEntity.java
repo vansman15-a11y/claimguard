@@ -114,8 +114,8 @@ public class SpellProjectileEntity extends ThrowableProjectile {
 
         switch (spell) {
             case SUNDER -> {
-                int schoolLvl = casterSchoolLevel(spell);
-                float bleed = (float) StatFormulas.sunderBleedPerTick(schoolLvl);
+                int spellLvl = casterSpellLevel(spell);
+                float bleed = (float) StatFormulas.sunderBleedPerTick(spellLvl);
                 if (hit != null) {
                     hit.hurt(damageSources().indirectMagic(this, owner), (float) StatFormulas.SUNDER_IMPACT_DAMAGE);
                     BleedManager.start(hit, owner, bleed, StatFormulas.SUNDER_BLEED_TICKS);
@@ -131,7 +131,7 @@ public class SpellProjectileEntity extends ThrowableProjectile {
             }
             case HEAL_OTHER -> {
                 if (hit != null) {
-                    hit.heal((float) StatFormulas.healOtherAmount(casterSchoolLevel(spell)));
+                    hit.heal((float) StatFormulas.healOtherAmount(casterSpellLevel(spell)));
                     pulseRing(level, hit, new Vector3f(1.0f, 0.3f, 0.35f));
                     level.playSound(null, hit.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 0.8f, 1.6f);
                 }
@@ -202,9 +202,9 @@ public class SpellProjectileEntity extends ThrowableProjectile {
         return le != null && le != owner && (le instanceof Enemy || le instanceof Player);
     }
 
-    private int casterSchoolLevel(Spell spell) {
+    private int casterSpellLevel(Spell spell) {
         if (getOwner() instanceof ServerPlayer sp) {
-            return net.robmc.rpgstats.RpgManager.stats(sp).getSchoolLevel(spell.school());
+            return net.robmc.rpgstats.RpgManager.stats(sp).getSpellLevel(spell);
         }
         return 1;
     }

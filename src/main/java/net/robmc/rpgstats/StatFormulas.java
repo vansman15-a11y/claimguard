@@ -271,8 +271,10 @@ public final class StatFormulas {
     public static final double XP_RANGED_HIT = 3.0;
     public static final double XP_MOVE_PER_METRE = 0.05;
     public static final double XP_SWIM_PER_METRE = 0.12;
-    /** Global multiplier on all magic-school XP. Bumped for testing new spells; drop to 1.0 for live. */
+    /** Global multiplier on all magic XP (spell + school). Bumped for testing new spells; drop to 1.0 for live. */
     public static final double SCHOOL_XP_MULT = 1.6;
+    /** Fraction of a spell's XP that also feeds its school - a school hits 100 near when its spells all reach ~70. */
+    public static final double SCHOOL_XP_SHARE = 0.5;
     public static final double XP_CAST_SPELL = 10.0;       // per cast, damage spells
     public static final double XP_CAST_TRANSFER = 22.0;    // per cast, Weak Magic transfers - they level noticeably faster
     public static final double XP_SPELL_HIT = 30.0;        // per enemy an offensive spell actually lands on

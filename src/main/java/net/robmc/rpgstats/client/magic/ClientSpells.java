@@ -17,6 +17,7 @@ public final class ClientSpells {
 
     private static final int SLOT_COUNT = StatFormulas.TOTAL_BAR_SLOTS;
     private static final String[] SLOTS = new String[SLOT_COUNT];
+    private static int[] spellLevels = new int[Spell.values().length];
     private static int[] schoolLevels = defaultSchoolLevels();
     private static int[] skillLevels = new int[Skill.values().length];
 
@@ -41,6 +42,9 @@ public final class ClientSpells {
     public static void onSyncSpellBar(SyncSpellBarPacket p) {
         for (int i = 0; i < SLOT_COUNT; i++) {
             SLOTS[i] = i < p.slots.length ? p.slots[i] : "";
+        }
+        if (p.spellLevels != null && p.spellLevels.length == spellLevels.length) {
+            spellLevels = p.spellLevels;
         }
         if (p.schoolLevels != null && p.schoolLevels.length == schoolLevels.length) {
             schoolLevels = p.schoolLevels;
@@ -125,9 +129,9 @@ public final class ClientSpells {
         return (i >= 0 && i < SLOT_COUNT && SLOTS[i] != null) ? SLOTS[i] : "";
     }
 
-    /** The viewer's level in this spell's school. */
+    /** The viewer's level in this individual spell. */
     public static int spellLevel(Spell spell) {
-        return spell == null ? 0 : schoolLevel(spell.school());
+        return spell == null ? 0 : spellLevels[spell.ordinal()];
     }
 
     public static int schoolLevel(School school) {

@@ -275,12 +275,13 @@ public class SpellbookScreen extends Screen {
             }
             case SPELL -> {
                 Spell spell = Spell.valueOf(row.name);
+                int lvl = ClientSpells.spellLevel(spell);
                 g.fill(x + 12, y, x + LIST_W, y + ROW_H - 3, 0xC0202838);
                 SpellIcons.draw(g, spell, x + 14, y + 1, ROW_H - 6);
                 g.drawString(this.font, spell.displayName(), x + 36, y + 3, 0xFFFFFFFF, false);
                 g.drawString(this.font, describe(spell), x + 36, y + 12, 0xFF8FA0B4, false);
-                String t = "T" + row.tier;
-                g.drawString(this.font, t, x + LIST_W - 4 - this.font.width(t), y + 3, 0xFFB9A9E3, false);
+                String lt = "Lv " + lvl + " (" + StatFormulas.effectivenessPercent(lvl) + "%)";
+                g.drawString(this.font, lt, x + LIST_W - 4 - this.font.width(lt), y + 3, 0xFFB9A9E3, false);
             }
         }
     }

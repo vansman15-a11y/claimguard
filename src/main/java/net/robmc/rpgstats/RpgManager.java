@@ -29,6 +29,10 @@ public final class RpgManager {
         return RpgData.get(player.server).getOrCreate(player.getUUID());
     }
 
+    public static void markDirty(ServerPlayer player) {
+        RpgData.get(player.server).markDirty();
+    }
+
     /** First join: seed the pools to full so a new player starts around BASE_POOL on each bar. */
     public static void ensureInitialised(ServerPlayer player) {
         PlayerStats s = stats(player);
@@ -82,25 +86,39 @@ public final class RpgManager {
     public static void syncSpellBar(ServerPlayer player) {
         PlayerStats s = stats(player);
         ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new SyncSpellBarPacket(s.getSpellBar().clone(), s.schoolLevelArray(), s.skillLevelArray()));
+                new SyncSpellBarPacket(s.getSpellBar().clone(), s.spellLevelArray(),
+                        s.schoolLevelArray(), s.skillLevelArray()));
     }
 
-    /** Casting a spell trains its whole school; announce a level-up (which may unlock a tier). */
+    /**
+     * XP from casting / landing a spell: the spell levels on its own (scales its power),
+     * and a share of the same XP feeds its school (unlocks tiers). Tuned so a school hits
+     * 100 around the time all its spells reach ~70.
+     */
     public static void addSpellXp(ServerPlayer player, Spell spell, double amount) {
         PlayerStats s = stats(player);
-        int before = s.getSchoolLevel(spell.school());
-        int gained = s.addSchoolXp(spell.school(), amount * StatFormulas.SCHOOL_XP_MULT);
-        RpgData.get(player.server).markDirty();
-        if (gained > 0) {
-            int now = s.getSchoolLevel(spell.school());
+        double gross = amount * StatFormulas.SCHOOL_XP_MULT;
+
+        int spellGained = s.addSpellXp(spell, gross);
+        if (spellGained > 0) {
+            int now = s.getSpellLevel(spell);
             player.displayClientMessage(Component.literal(
-                    spell.school().displayName() + "  ->  Lv " + now
+                    spell.displayName() + "  ->  Lv " + now
                             + "  (" + StatFormulas.effectivenessPercent(now) + "%)")
                     .withStyle(ChatFormatting.LIGHT_PURPLE), true);
+        }
+
+        var school = spell.school();
+        int before = s.getSchoolLevel(school);
+        int schoolGained = s.addSchoolXp(school, gross * StatFormulas.SCHOOL_XP_SHARE);
+        if (schoolGained > 0) {
+            int now = s.getSchoolLevel(school);
+            player.displayClientMessage(Component.literal(
+                    school.displayName() + " school  ->  Lv " + now).withStyle(ChatFormatting.DARK_PURPLE), false);
             for (int t = 2; t <= net.robmc.rpgstats.magic.School.MAX_TIERS; t++) {
-                int unlock = spell.school().unlockLevel(t);
+                int unlock = school.unlockLevel(t);
                 if (before < unlock && now >= unlock) {
-                    net.robmc.rpgstats.magic.Spell unlocked = net.robmc.rpgstats.magic.Spell.of(spell.school(), t);
+                    net.robmc.rpgstats.magic.Spell unlocked = net.robmc.rpgstats.magic.Spell.of(school, t);
                     if (unlocked != null) {
                         player.displayClientMessage(Component.literal(
                                 "Unlocked: " + unlocked.displayName()).withStyle(ChatFormatting.AQUA), false);
@@ -108,6 +126,8 @@ public final class RpgManager {
                 }
             }
         }
+
+        RpgData.get(player.server).markDirty();
         syncSpellBar(player);
     }
 

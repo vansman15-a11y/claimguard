@@ -14,11 +14,13 @@ public class SyncSpellBarPacket {
     private static final int SLOTS = StatFormulas.TOTAL_BAR_SLOTS;
 
     public final String[] slots;
+    public final int[] spellLevels;   // indexed by Spell.ordinal()
     public final int[] schoolLevels;  // indexed by School.ordinal()
     public final int[] skillLevels;   // indexed by Skill.ordinal()
 
-    public SyncSpellBarPacket(String[] slots, int[] schoolLevels, int[] skillLevels) {
+    public SyncSpellBarPacket(String[] slots, int[] spellLevels, int[] schoolLevels, int[] skillLevels) {
         this.slots = slots;
+        this.spellLevels = spellLevels;
         this.schoolLevels = schoolLevels;
         this.skillLevels = skillLevels;
     }
@@ -27,6 +29,7 @@ public class SyncSpellBarPacket {
         for (int i = 0; i < SLOTS; i++) {
             buf.writeUtf(i < p.slots.length && p.slots[i] != null ? p.slots[i] : "", 48);
         }
+        writeInts(buf, p.spellLevels);
         writeInts(buf, p.schoolLevels);
         writeInts(buf, p.skillLevels);
     }
@@ -36,9 +39,10 @@ public class SyncSpellBarPacket {
         for (int i = 0; i < SLOTS; i++) {
             slots[i] = buf.readUtf(48);
         }
+        int[] spellLevels = readInts(buf);
         int[] schoolLevels = readInts(buf);
         int[] skillLevels = readInts(buf);
-        return new SyncSpellBarPacket(slots, schoolLevels, skillLevels);
+        return new SyncSpellBarPacket(slots, spellLevels, schoolLevels, skillLevels);
     }
 
     private static void writeInts(FriendlyByteBuf buf, int[] arr) {
