@@ -89,8 +89,10 @@ public class RpgHudOverlay {
         g.fill(x, y, x + BAR_W, y + BAR_H, COL_BG);
         int fill = (int) (BAR_W * Math.max(0f, Math.min(1f, value / max)));
         g.fill(x, y, x + fill, y + BAR_H, colour);
-        String text = Math.round(value) + " / " + Math.round(max);
-        g.drawString(font, text, x + (BAR_W - font.width(text)) / 2, y + 1, 0xFFFFFFFF, true);
+        boolean exhausted = colour == COL_STAM && value <= 0f;
+        String text = exhausted ? "EXHAUSTED" : Math.round(value) + " / " + Math.round(max);
+        g.drawString(font, text, x + (BAR_W - font.width(text)) / 2, y + 1,
+                exhausted ? 0xFFFF5555 : 0xFFFFFFFF, true);
     }
 
     /** Hides vanilla bars, and nudges the hotbar group by its saved layout offset. */

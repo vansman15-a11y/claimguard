@@ -6,16 +6,24 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.CrossbowItem;
+import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.TridentItem;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.living.ShieldBlockEvent;
 import net.robmc.rpgstats.magic.SpellCasting;
 import net.robmc.rpgstats.skill.RecallManager;
 import net.robmc.rpgstats.skill.RestManager;
+import net.minecraftforge.event.entity.player.ArrowLooseEvent;
+import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.ItemFishedEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -125,6 +133,8 @@ public class RpgEvents {
             player.setSprinting(false); // out of gas
         }
 
+        Exhaustion.update(player, s.getStamina(), StatFormulas.maxStamina(s));
+
         RestManager.tick(player);
         RecallManager.tick(player);
 
@@ -139,18 +149,69 @@ public class RpgEvents {
     public static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         RestManager.clear(event.getEntity().getUUID());
         RecallManager.clear(event.getEntity().getUUID());
+        Exhaustion.clear(event.getEntity().getUUID());
     }
 
     @SubscribeEvent
     public static void onJump(LivingEvent.LivingJumpEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            RestManager.stop(player, "You get up.");
-            PlayerStats s = RpgManager.stats(player);
-            if (s.getStamina() > 0) {
-                s.setStamina(s.getStamina() - StatFormulas.STAMINA_JUMP);
-                RpgManager.sync(player);
-            }
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
         }
+        RestManager.stop(player, "You get up.");
+        if (Exhaustion.is(player)) {
+            // too exhausted to jump - kill the upward velocity the jump just applied
+            Vec3 dm = player.getDeltaMovement();
+            player.setDeltaMovement(dm.x, Math.min(dm.y, 0.0), dm.z);
+            player.hurtMarked = true; // force the corrected velocity to the client
+            return;
+        }
+        PlayerStats s = RpgManager.stats(player);
+        if (s.getStamina() > 0) {
+            s.setStamina(s.getStamina() - StatFormulas.STAMINA_JUMP);
+            RpgManager.sync(player);
+        }
+    }
+
+    // --- exhausted: can't fight ---
+
+    @SubscribeEvent
+    public static void onAttackEntity(AttackEntityEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && Exhaustion.is(player)) {
+            event.setCanceled(true);
+            player.displayClientMessage(exhaustedMsg(), true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onArrowLoose(ArrowLooseEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && Exhaustion.is(player)) {
+            event.setCanceled(true);
+            player.displayClientMessage(exhaustedMsg(), true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onUseItemStart(LivingEntityUseItemEvent.Start event) {
+        if (!(event.getEntity() instanceof ServerPlayer player) || !Exhaustion.is(player)) {
+            return;
+        }
+        var item = event.getItem().getItem();
+        if (item instanceof BowItem || item instanceof CrossbowItem || item instanceof ShieldItem) {
+            event.setCanceled(true);
+            player.displayClientMessage(exhaustedMsg(), true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onShieldBlock(ShieldBlockEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && Exhaustion.is(player)) {
+            event.setCanceled(true); // no parry while exhausted - the hit lands in full
+        }
+    }
+
+    private static net.minecraft.network.chat.Component exhaustedMsg() {
+        return net.minecraft.network.chat.Component.literal("Too exhausted.")
+                .withStyle(net.minecraft.ChatFormatting.RED);
     }
 
     // --- combat: scale damage to the pool, apply stat multipliers, award XP ---

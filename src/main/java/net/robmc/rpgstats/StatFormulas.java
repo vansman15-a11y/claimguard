@@ -146,6 +146,12 @@ public final class StatFormulas {
     public static final double STAMINA_JUMP = 3.0;               // per jump
     public static final double STAMINA_MELEE_SWING = 6.0;        // per landed hit with a weapon
 
+    // --- exhausted state (stamina bottomed out) ---
+    /** Exhausted at 0 stamina; stays exhausted until stamina climbs back to this fraction of max. */
+    public static final double EXHAUSTION_RECOVER_FRACTION = 0.15;
+    /** Slowness level applied while exhausted (0 = Slowness I; 3 = Slowness IV, roughly -60% move speed). */
+    public static final int EXHAUSTION_SLOWNESS_AMPLIFIER = 3;
+
     // --- taking a hit also bleeds stamina/mana ---
 
     /** Fraction of damage taken (from a mob or player) that is also drained from stamina + mana. */
