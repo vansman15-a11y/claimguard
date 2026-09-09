@@ -123,7 +123,8 @@ public final class SpellCasting {
             return;
         }
 
-        int castTicks = (int) Math.max(2, spell.castTicks() * StatFormulas.castSpeedMultiplier(s));
+        int castTicks = (int) Math.max(2, spell.castTicks()
+                * StatFormulas.castSpeedMultiplier(s) * Afflictions.castTimeMult(player));
         casting.put(player.getUUID(), new Pending(spell, now + castTicks));
         ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                 new CastStatePacket(spell.name(), castTicks));
@@ -272,7 +273,15 @@ public final class SpellCasting {
                 spend(player, s, spell.costPool(), spell.flatCost());
                 castCinderMaelstrom(player, lvl);
             }
-            default -> { // every projectile spell (Adept + Fire)
+            case HEARTWELL -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castHeartwell(player, lvl);
+            }
+            case PESTILENCE -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castPestilence(player, s, lvl);
+            }
+            default -> { // every projectile spell (Adept + Fire + Chaos bolts)
                 spend(player, s, spell.costPool(), spell.flatCost());
                 SpellProjectiles.launch(player, spell, lvl);
             }
@@ -312,7 +321,7 @@ public final class SpellCasting {
 
     private static void castMagicBolt(ServerPlayer player, PlayerStats s, int spellLevel) {
         // Raw damage; RpgEvents scales it up when the target is a player, same as melee.
-        float damage = (float) StatFormulas.magicBoltDamage(spellLevel, s);
+        float damage = (float) (StatFormulas.magicBoltDamage(spellLevel, s) * Afflictions.spellDamageMult(player));
         float speed = (float) StatFormulas.magicBoltSpeed(spellLevel); // slow at low level, front-loaded gains
 
         ServerLevel level = player.serverLevel();
@@ -362,7 +371,8 @@ public final class SpellCasting {
         level.playSound(null, player.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.0f, 0.9f);
 
         if (hit != null && hit.getEntity() instanceof net.minecraft.world.entity.LivingEntity target) {
-            float dmg = (float) (StatFormulas.serpentsPlumeDamage(spellLevel) * StatFormulas.spellDamageMultiplier(s));
+            float dmg = (float) (StatFormulas.serpentsPlumeDamage(spellLevel)
+                    * StatFormulas.spellDamageMultiplier(s) * Afflictions.spellDamageMult(player));
             target.hurt(player.damageSources().indirectMagic(player, player), dmg);
             if (target instanceof net.minecraft.world.entity.player.Player) {
                 target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
@@ -390,6 +400,65 @@ public final class SpellCasting {
         level.sendParticles(net.minecraft.core.particles.ParticleTypes.EXPLOSION,
                 center.x, center.y + 0.2, center.z, 3, 1.0, 0.2, 1.0, 0.0);
         level.playSound(null, net.minecraft.core.BlockPos.containing(center), SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 2.0f, 0.6f);
+    }
+
+    /** Heartwell: heal yourself, and splash a slice of that heal to allies standing in the purple aura. */
+    private static void castHeartwell(ServerPlayer player, int spellLevel) {
+        ServerLevel level = player.serverLevel();
+        double heal = StatFormulas.heartwellSelfHeal(spellLevel);
+        player.heal((float) heal);
+
+        double splash = heal * StatFormulas.HEARTWELL_ALLY_FRACTION;
+        double r = StatFormulas.HEARTWELL_AURA_RADIUS;
+        for (ServerPlayer ally : level.getEntitiesOfClass(ServerPlayer.class,
+                player.getBoundingBox().inflate(r))) {
+            if (ally == player || ally.distanceToSqr(player) > r * r || !ally.isAlive()) {
+                continue;
+            }
+            if (net.robmc.claimguard.clan.ClanActions.areFriendly(player.server, player.getUUID(), ally.getUUID())) {
+                ally.heal((float) splash);
+                RpgManager.sync(ally);
+            }
+        }
+
+        level.sendParticles(new DustParticleOptions(new Vector3f(0.62f, 0.22f, 0.88f), 1.5f),
+                player.getX(), player.getY() + 1.0, player.getZ(), 44, r * 0.5, 0.9, r * 0.5, 0.02);
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.WITCH,
+                player.getX(), player.getY() + 1.0, player.getZ(), 18, r * 0.45, 0.8, r * 0.45, 0.0);
+    }
+
+    /** Pestilence: an instant hitscan ray that diseases whatever it lands on for damage over 5 s. */
+    private static void castPestilence(ServerPlayer player, PlayerStats s, int spellLevel) {
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getViewVector(1.0f);
+        Vec3 far = eye.add(look.scale(StatFormulas.PESTILENCE_RANGE));
+
+        net.minecraft.world.phys.BlockHitResult block = level.clip(new net.minecraft.world.level.ClipContext(
+                eye, far, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+        Vec3 end = block.getType() != net.minecraft.world.phys.HitResult.Type.MISS ? block.getLocation() : far;
+
+        net.minecraft.world.phys.EntityHitResult hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(
+                level, player, eye, end,
+                new net.minecraft.world.phys.AABB(eye, end).inflate(1.0),
+                e -> e instanceof net.minecraft.world.entity.LivingEntity && e != player && e.isAlive() && !e.isSpectator());
+
+        Vec3 impact = hit != null ? hit.getLocation() : end;
+        int steps = (int) Math.max(4, eye.distanceTo(impact) * 2);
+        for (int i = 0; i <= steps; i++) {
+            Vec3 p = eye.lerp(impact, i / (double) steps);
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.COMPOSTER, p.x, p.y, p.z, 1, 0.03, 0.03, 0.03, 0.0);
+        }
+        level.playSound(null, player.blockPosition(), SoundEvents.BEE_LOOP_AGGRESSIVE, SoundSource.PLAYERS, 1.0f, 0.7f);
+
+        if (hit != null && hit.getEntity() instanceof net.minecraft.world.entity.LivingEntity target) {
+            float perTick = (float) (StatFormulas.pestilenceDotPerTick(spellLevel) * Afflictions.spellDamageMult(player));
+            DiseaseManager.start(target, perTick, StatFormulas.PESTILENCE_DOT_TICKS);
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.SNEEZE,
+                    hit.getLocation().x, hit.getLocation().y, hit.getLocation().z, 16, 0.25, 0.35, 0.25, 0.03);
+            RpgManager.addSpellXp(player, Spell.PESTILENCE, StatFormulas.spellHitXp(1));
+        }
     }
 
     // --- pool helpers ---

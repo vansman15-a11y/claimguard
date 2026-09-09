@@ -317,6 +317,53 @@ public final class StatFormulas {
         return CINDER_FIELD_DMG_MIN + (CINDER_FIELD_DMG_MAX - CINDER_FIELD_DMG_MIN) * effectiveness(spellLevel);
     }
 
+    // --- Chaos Magic (a debuff school with one very strong heal) ---
+
+    public static final double CHAOS_BOLT_SPEED = 1.0;            // "medium speed" for Wither / Slump / Hexdrain bolts
+
+    // Heartwell: heal yourself, and splash a slice of that heal to allies standing in the purple aura
+    public static final double HEARTWELL_AURA_RADIUS = 4.5;
+    public static final double HEARTWELL_ALLY_FRACTION = 0.25;    // allies get 25% of what you healed yourself for
+    private static final double HEARTWELL_HEAL_MIN = 55.0;        // HP healed at spell level 1
+    private static final double HEARTWELL_HEAL_MAX = 120.0;       // ... at the cap - a real heal
+
+    public static double heartwellSelfHeal(int spellLevel) {
+        return HEARTWELL_HEAL_MIN + (HEARTWELL_HEAL_MAX - HEARTWELL_HEAL_MIN) * effectiveness(spellLevel);
+    }
+
+    // Wither: while it's on you, your casts are slower and your spells hit softer
+    public static final int WITHER_DURATION_TICKS = 160;          // 8 s
+    public static final double WITHER_CAST_TIME_MULT = 1.15;      // +15% cast time
+    public static final double WITHER_SPELL_DAMAGE_MULT = 0.90;   // -10% outgoing spell damage
+    public static final double WITHER_IMPACT_DAMAGE = 1.0;        // raw - it's a debuff, not a nuke
+
+    // Slump: cuts the target's Vitality & Quickness - i.e. their max HP and their stamina
+    public static final int SLUMP_DURATION_TICKS = 140;           // 7 s
+    public static final double SLUMP_MAX_HP_FRACTION = 0.14;      // -14% max health (vanilla clamps current HP down)
+    public static final double SLUMP_STAMINA_DRAIN_FRACTION = 0.15; // and lose 15% of current stamina on the hit
+    public static final double SLUMP_IMPACT_DAMAGE = 1.0;
+
+    // Pestilence: instant hitscan disease - damage over 5 s
+    public static final double PESTILENCE_RANGE = 40.0;
+    public static final int PESTILENCE_DOT_TICKS = 100;           // 5 s
+    public static final int PESTILENCE_DOT_INTERVAL = 20;         // a tick every 1 s (5 hits)
+    private static final double PESTILENCE_DOT_MIN = 1.2;         // raw per tick at spell level 1
+    private static final double PESTILENCE_DOT_MAX = 2.6;         // ... at the cap
+
+    public static double pestilenceDotPerTick(int spellLevel) {
+        return PESTILENCE_DOT_MIN + (PESTILENCE_DOT_MAX - PESTILENCE_DOT_MIN) * effectiveness(spellLevel);
+    }
+
+    // Hexdrain: steal mana from the target (players only); deliberately not a spam tool
+    public static final double HEXDRAIN_RETURN_FRACTION = 0.6;    // caster keeps 60% of what was drained
+    public static final double HEXDRAIN_MOB_DAMAGE = 2.0;         // raw, if it somehow hits something with no mana
+    private static final double HEXDRAIN_MANA_MIN = 90.0;
+    private static final double HEXDRAIN_MANA_MAX = 160.0;
+
+    public static double hexdrainMana(int spellLevel) {
+        return HEXDRAIN_MANA_MIN + (HEXDRAIN_MANA_MAX - HEXDRAIN_MANA_MIN) * effectiveness(spellLevel);
+    }
+
     // --- Rest skill (a semi-AFK downtime action; deliberately mild) ---
 
     public static final int REST_REGEN_INTERVAL_TICKS = 20;      // rest tops your pools up every ~1s

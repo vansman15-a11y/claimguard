@@ -29,6 +29,11 @@ public final class RpgSounds {
     public static final RegistryObject<SoundEvent> SUNBURST = reg("spell.sunburst");
     public static final RegistryObject<SoundEvent> PYROCLASM = reg("spell.pyroclasm");
     // Cinder Maelstrom has no custom sfx - it uses a vanilla cast boom + a looping fire crackle from FireFieldManager.
+    public static final RegistryObject<SoundEvent> HEARTWELL = reg("spell.heartwell");
+    public static final RegistryObject<SoundEvent> WITHER = reg("spell.wither");
+    public static final RegistryObject<SoundEvent> SLUMP = reg("spell.slump");
+    public static final RegistryObject<SoundEvent> PESTILENCE = reg("spell.pestilence");
+    public static final RegistryObject<SoundEvent> HEXDRAIN = reg("spell.hexdrain");
 
     private RpgSounds() {
     }
@@ -54,6 +59,11 @@ public final class RpgSounds {
             case SUNBURST -> SUNBURST.get();
             case PYROCLASM -> PYROCLASM.get();
             case CINDER_MAELSTROM -> net.minecraft.sounds.SoundEvents.FIRECHARGE_USE; // vanilla cast boom
+            case HEARTWELL -> HEARTWELL.get();
+            case WITHER -> WITHER.get();
+            case SLUMP -> SLUMP.get();
+            case PESTILENCE -> PESTILENCE.get();
+            case HEXDRAIN -> HEXDRAIN.get();
         };
     }
 

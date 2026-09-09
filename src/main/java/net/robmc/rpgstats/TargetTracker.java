@@ -19,8 +19,10 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.PacketDistributor;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.TargetInfoPacket;
+import net.robmc.rpgstats.magic.Afflictions;
 import net.robmc.rpgstats.magic.BleedManager;
 import net.robmc.rpgstats.magic.BurnManager;
+import net.robmc.rpgstats.magic.DiseaseManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,6 +87,18 @@ public final class TargetTracker {
         int bleed = BleedManager.remainingTicks(now, target.getId());
         if (bleed > 0) {
             out.add(new TargetInfoPacket.Debuff(TargetInfoPacket.KIND_BLEED, 0, bleed, (byte) 0));
+        }
+        int disease = DiseaseManager.remainingTicks(now, target.getId());
+        if (disease > 0) {
+            out.add(new TargetInfoPacket.Debuff(TargetInfoPacket.KIND_DISEASE, 0, disease, (byte) 0));
+        }
+        int wither = Afflictions.remainingTicks(now, target.getId(), Afflictions.Kind.WITHER);
+        if (wither > 0) {
+            out.add(new TargetInfoPacket.Debuff(TargetInfoPacket.KIND_WITHER, 0, wither, (byte) 0));
+        }
+        int slump = Afflictions.remainingTicks(now, target.getId(), Afflictions.Kind.SLUMP);
+        if (slump > 0) {
+            out.add(new TargetInfoPacket.Debuff(TargetInfoPacket.KIND_SLUMP, 0, slump, (byte) 0));
         }
         for (MobEffectInstance mi : target.getActiveEffects()) {
             if (mi.getEffect().getCategory() != MobEffectCategory.HARMFUL) {

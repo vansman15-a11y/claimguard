@@ -68,6 +68,9 @@ public class SpellProjectileEntity extends ThrowableProjectile {
             case EMBER_DART -> new Vector3f(1.0f, 0.55f, 0.15f);
             case SUNBURST -> new Vector3f(1.0f, 0.75f, 0.2f);
             case PYROCLASM -> new Vector3f(1.0f, 0.4f, 0.1f);
+            case WITHER -> new Vector3f(0.32f, 0.08f, 0.42f);   // black-purple
+            case SLUMP -> new Vector3f(0.72f, 0.45f, 0.85f);    // purple, yellow flecks added on hit
+            case HEXDRAIN -> new Vector3f(0.5f, 0.12f, 0.68f);  // deep purple
             default -> new Vector3f(1.0f, 0.2f, 0.15f); // Sunder red
         };
     }
@@ -216,6 +219,58 @@ public class SpellProjectileEntity extends ThrowableProjectile {
                 level.sendParticles(ParticleTypes.FLAME, at.x, at.y, at.z, 30, 0.4, 0.3, 0.4, 0.06);
                 level.sendParticles(ParticleTypes.LAVA, at.x, at.y, at.z, 8, 0.3, 0.2, 0.3, 0.0);
                 level.playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.7f, 1.5f);
+            }
+            case WITHER -> {
+                if (hit != null) {
+                    hit.hurt(damageSources().indirectMagic(this, owner), damage);
+                    Afflictions.apply(hit, Afflictions.Kind.WITHER, StatFormulas.WITHER_DURATION_TICKS);
+                    if (isEnemy(hit, owner)) {
+                        enemiesHit++;
+                    }
+                }
+                level.sendParticles(new DustParticleOptions(colour(), 1.5f), at.x, at.y, at.z, 18, 0.3, 0.3, 0.3, 0.02);
+                level.sendParticles(ParticleTypes.SMOKE, at.x, at.y, at.z, 10, 0.2, 0.2, 0.2, 0.01);
+            }
+            case SLUMP -> {
+                if (hit != null) {
+                    hit.hurt(damageSources().indirectMagic(this, owner), damage);
+                    Afflictions.apply(hit, Afflictions.Kind.SLUMP, StatFormulas.SLUMP_DURATION_TICKS);
+                    hit.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,
+                            StatFormulas.SLUMP_DURATION_TICKS, 0, false, true, true));
+                    if (hit instanceof ServerPlayer sp) {
+                        var hs = net.robmc.rpgstats.RpgManager.stats(sp);
+                        hs.setStamina(hs.getStamina() * (1.0 - StatFormulas.SLUMP_STAMINA_DRAIN_FRACTION));
+                        net.robmc.rpgstats.RpgManager.applyAttributes(sp); // re-clamp HP to the new lower max
+                        net.robmc.rpgstats.RpgManager.sync(sp);
+                    }
+                    if (isEnemy(hit, owner)) {
+                        enemiesHit++;
+                    }
+                }
+                level.sendParticles(new DustParticleOptions(colour(), 1.4f), at.x, at.y, at.z, 14, 0.3, 0.3, 0.3, 0.02);
+                level.sendParticles(new DustParticleOptions(new Vector3f(0.95f, 0.85f, 0.2f), 1.1f),
+                        at.x, at.y, at.z, 10, 0.25, 0.25, 0.25, 0.02);
+            }
+            case HEXDRAIN -> {
+                if (hit != null) {
+                    if (hit instanceof ServerPlayer victim && owner instanceof ServerPlayer caster) {
+                        var vs = net.robmc.rpgstats.RpgManager.stats(victim);
+                        var cs = net.robmc.rpgstats.RpgManager.stats(caster);
+                        double drained = Math.min(vs.getMana(),
+                                StatFormulas.hexdrainMana(casterSpellLevel(spell)));
+                        vs.setMana(vs.getMana() - drained);
+                        cs.setMana(cs.getMana() + drained * StatFormulas.HEXDRAIN_RETURN_FRACTION);
+                        net.robmc.rpgstats.RpgManager.sync(victim);
+                        net.robmc.rpgstats.RpgManager.sync(caster);
+                    } else {
+                        hit.hurt(damageSources().indirectMagic(this, owner), damage);
+                    }
+                    if (isEnemy(hit, owner)) {
+                        enemiesHit++;
+                    }
+                }
+                level.sendParticles(new DustParticleOptions(colour(), 1.5f), at.x, at.y, at.z, 20, 0.3, 0.3, 0.3, 0.03);
+                level.sendParticles(ParticleTypes.WITCH, at.x, at.y, at.z, 12, 0.25, 0.25, 0.25, 0.02);
             }
             default -> {
             }

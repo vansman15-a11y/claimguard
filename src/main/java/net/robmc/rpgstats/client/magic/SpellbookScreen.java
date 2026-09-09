@@ -302,6 +302,11 @@ public class SpellbookScreen extends Screen {
             case SUNBURST -> "fast bolt, knocks up + keeps burn";
             case PYROCLASM -> "arcing bolt, big knock-up + fall";
             case CINDER_MAELSTROM -> "lingering fire field, burns everyone in it";
+            case HEARTWELL -> "big self-heal, splashes 25% to allies near you";
+            case WITHER -> "bolt: -15% their cast speed, -10% their spell dmg";
+            case SLUMP -> "bolt: cuts their max HP and stamina for a while";
+            case PESTILENCE -> "instant disease ray, damage over 5s";
+            case HEXDRAIN -> "bolt: steal mana from a player (1 min CD)";
         };
     }
 

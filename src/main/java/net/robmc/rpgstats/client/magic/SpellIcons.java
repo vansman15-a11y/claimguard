@@ -33,6 +33,11 @@ public final class SpellIcons {
             case SUNBURST -> tex("sunburst");
             case PYROCLASM -> tex("pyroclasm");
             case CINDER_MAELSTROM -> tex("cinder_maelstrom");
+            case HEARTWELL -> tex("heartwell");
+            case WITHER -> tex("wither");
+            case SLUMP -> tex("slump");
+            case PESTILENCE -> tex("pestilence");
+            case HEXDRAIN -> tex("hexdrain");
         };
     }
 

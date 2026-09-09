@@ -55,6 +55,9 @@ public final class TargetFrameOverlay {
 
     private static final ResourceLocation BURN_ICON = new ResourceLocation(RpgStats.MOD_ID, "textures/gui/debuff/burn.png");
     private static final ResourceLocation BLEED_ICON = new ResourceLocation(RpgStats.MOD_ID, "textures/gui/debuff/bleed.png");
+    private static final ResourceLocation DISEASE_ICON = new ResourceLocation(RpgStats.MOD_ID, "textures/gui/debuff/disease.png");
+    private static final ResourceLocation WITHER_ICON = new ResourceLocation(RpgStats.MOD_ID, "textures/gui/debuff/wither.png");
+    private static final ResourceLocation SLUMP_ICON = new ResourceLocation(RpgStats.MOD_ID, "textures/gui/debuff/slump.png");
 
     private static LivingEntity target;
     private static long lastSeenTick;
@@ -212,8 +215,16 @@ public final class TargetFrameOverlay {
             if (d.stacks > 1) {
                 tiny(g, font, Integer.toString(d.stacks), x - 0.5f, y - 1.0f, 0xFFFFE0A0);
             }
-        } else {
+        } else if (d.kind == TargetInfoPacket.KIND_BLEED) {
             g.blit(BLEED_ICON, x, y, ICON, ICON, 0f, 0f, 16, 16, 16, 16);
+        } else if (d.kind == TargetInfoPacket.KIND_DISEASE) {
+            g.blit(DISEASE_ICON, x, y, ICON, ICON, 0f, 0f, 16, 16, 16, 16);
+        } else if (d.kind == TargetInfoPacket.KIND_WITHER) {
+            g.blit(WITHER_ICON, x, y, ICON, ICON, 0f, 0f, 16, 16, 16, 16);
+        } else if (d.kind == TargetInfoPacket.KIND_SLUMP) {
+            g.blit(SLUMP_ICON, x, y, ICON, ICON, 0f, 0f, 16, 16, 16, 16);
+        } else {
+            g.fill(x, y, x + ICON, y + ICON, 0xFF503050);
         }
 
         int secs = ClientTargetInfo.secondsLeft(d);

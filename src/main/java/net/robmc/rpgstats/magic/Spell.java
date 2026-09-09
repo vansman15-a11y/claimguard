@@ -25,14 +25,22 @@ public enum Spell {
     SERPENTS_PLUME("Serpent's Plume", School.FIRE, 2, Kind.SERPENTS_PLUME, Pool.MANA, null, 24, 2, 200),
     SUNBURST("Sunburst", School.FIRE, 3, Kind.SUNBURST, Pool.MANA, null, 32, 38, 100),
     PYROCLASM("Pyroclasm", School.FIRE, 4, Kind.PYROCLASM, Pool.MANA, null, 42, 60, 200),
-    CINDER_MAELSTROM("Cinder Maelstrom", School.FIRE, 5, Kind.CINDER_MAELSTROM, Pool.MANA, null, 90, 50, 900);
+    CINDER_MAELSTROM("Cinder Maelstrom", School.FIRE, 5, Kind.CINDER_MAELSTROM, Pool.MANA, null, 90, 50, 900),
+
+    // --- Chaos Magic (debuff school with one very strong heal) ---
+    HEARTWELL("Heartwell", School.CHAOS, 1, Kind.HEARTWELL, Pool.MANA, null, 28, 20, 400),
+    WITHER("Wither", School.CHAOS, 2, Kind.WITHER, Pool.MANA, null, 24, 26, 400),
+    SLUMP("Slump", School.CHAOS, 3, Kind.SLUMP, Pool.MANA, null, 30, 26, 300),
+    PESTILENCE("Pestilence", School.CHAOS, 4, Kind.PESTILENCE, Pool.MANA, null, 34, 2, 200),
+    HEXDRAIN("Hexdrain", School.CHAOS, 5, Kind.HEXDRAIN, Pool.MANA, null, 40, 30, 1200);
 
     public enum Pool { HEALTH, STAMINA, MANA }
 
     /** How SpellCasting resolves the spell when the cast finishes. */
     public enum Kind {
         TRANSFER, MAGIC_BOLT, SUNDER, HEAL_OTHER, AWAY, WARD, BRIGHT_LIGHT,
-        EMBER_DART, SERPENTS_PLUME, SUNBURST, PYROCLASM, CINDER_MAELSTROM
+        EMBER_DART, SERPENTS_PLUME, SUNBURST, PYROCLASM, CINDER_MAELSTROM,
+        HEARTWELL, WITHER, SLUMP, PESTILENCE, HEXDRAIN
     }
 
     private final String displayName;

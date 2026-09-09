@@ -15,7 +15,7 @@ public final class SpellProjectiles {
 
     public static void launch(ServerPlayer player, Spell spell, int spellLevel) {
         PlayerStats s = RpgManager.stats(player);
-        double spellMult = StatFormulas.spellDamageMultiplier(s);
+        double spellMult = StatFormulas.spellDamageMultiplier(s) * Afflictions.spellDamageMult(player);
 
         float damage;
         float speed;
@@ -47,6 +47,18 @@ public final class SpellProjectiles {
             case PYROCLASM -> {
                 damage = (float) (StatFormulas.pyroclasmDamage(spellLevel) * spellMult);
                 speed = (float) StatFormulas.PYROCLASM_SPEED;
+            }
+            case WITHER -> {
+                damage = (float) (StatFormulas.WITHER_IMPACT_DAMAGE * spellMult);
+                speed = (float) StatFormulas.CHAOS_BOLT_SPEED;
+            }
+            case SLUMP -> {
+                damage = (float) (StatFormulas.SLUMP_IMPACT_DAMAGE * spellMult);
+                speed = (float) StatFormulas.CHAOS_BOLT_SPEED;
+            }
+            case HEXDRAIN -> {
+                damage = (float) (StatFormulas.HEXDRAIN_MOB_DAMAGE * spellMult);
+                speed = (float) StatFormulas.CHAOS_BOLT_SPEED;
             }
             default -> {
                 return;

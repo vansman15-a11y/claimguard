@@ -63,5 +63,30 @@
     "category": "player",
     "subtitle": "rpgstats.subtitle.spell.pyroclasm",
     "sounds": [ "rpgstats:spell/pyroclasm" ]
+  },
+  "spell.heartwell": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.heartwell",
+    "sounds": [ "rpgstats:spell/heartwell" ]
+  },
+  "spell.wither": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.wither",
+    "sounds": [ "rpgstats:spell/wither" ]
+  },
+  "spell.slump": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.slump",
+    "sounds": [ "rpgstats:spell/slump" ]
+  },
+  "spell.pestilence": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.pestilence",
+    "sounds": [ "rpgstats:spell/pestilence" ]
+  },
+  "spell.hexdrain": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.hexdrain",
+    "sounds": [ "rpgstats:spell/hexdrain" ]
   }
 }

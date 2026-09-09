@@ -596,6 +596,24 @@ public final class ClanActions {
                 new SyncAlliesPacket(new ArrayList<>(allied)));
     }
 
+    /** True if two players are on the same side - same clan, or clans that ally each other. */
+    public static boolean areFriendly(net.minecraft.server.MinecraftServer server, UUID a, UUID b) {
+        if (a.equals(b)) {
+            return true;
+        }
+        ClanManager clans = ClanManager.get(server);
+        UUID clanA = clans.getClanOf(a).map(Clan::getId).orElse(null);
+        UUID clanB = clans.getClanOf(b).map(Clan::getId).orElse(null);
+        if (clanA == null || clanB == null) {
+            return false;
+        }
+        if (clanA.equals(clanB)) {
+            return true;
+        }
+        Clan ca = clans.getClanById(clanA).orElse(null);
+        return ca != null && ca.getRelation(clanB) == ClanRelation.ALLY;
+    }
+
     /** True if 'playerId' is in a clan that 'ownerClanId' considers an ally. */
     public static boolean isAllyOf(net.minecraft.server.MinecraftServer server, UUID ownerClanId, UUID playerId) {
         ClanManager clans = ClanManager.get(server);

@@ -19,6 +19,9 @@ public class TargetInfoPacket {
     public static final byte KIND_VANILLA = 0; // id = BuiltInRegistries.MOB_EFFECT id
     public static final byte KIND_BURN = 1;    // stacks used
     public static final byte KIND_BLEED = 2;
+    public static final byte KIND_DISEASE = 3; // Pestilence
+    public static final byte KIND_WITHER = 4;
+    public static final byte KIND_SLUMP = 5;
 
     public static final class Debuff {
         public final byte kind;

@@ -87,6 +87,8 @@ public class RpgEvents {
             net.robmc.rpgstats.magic.BleedManager.tick(event.getServer());
             net.robmc.rpgstats.magic.BurnManager.tick(event.getServer());
             net.robmc.rpgstats.magic.FireFieldManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.DiseaseManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.Afflictions.tick(event.getServer());
         }
     }
 
