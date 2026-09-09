@@ -6,8 +6,10 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.robmc.rpgstats.magic.SpellCasting;
 import net.minecraftforge.event.entity.player.ItemFishedEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -38,6 +40,14 @@ public class RpgEvents {
             RpgManager.ensureInitialised(player);
             RpgManager.applyAttributes(player);
             RpgManager.sync(player);
+            RpgManager.syncSpellBar(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            SpellCasting.tick(event.getServer());
         }
     }
 
@@ -49,6 +59,7 @@ public class RpgEvents {
             s.setMana(StatFormulas.maxMana(s));
             RpgManager.applyAttributes(player);
             RpgManager.sync(player);
+            RpgManager.syncSpellBar(player);
         }
     }
 
@@ -93,8 +104,9 @@ public class RpgEvents {
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onLivingHurt(LivingHurtEvent event) {
         float amount = event.getAmount();
+        boolean magic = event.getSource().is(DamageTypes.INDIRECT_MAGIC) || event.getSource().is(DamageTypes.MAGIC);
 
-        if (event.getSource().getEntity() instanceof ServerPlayer attacker && attacker.isAlive()) {
+        if (!magic && event.getSource().getEntity() instanceof ServerPlayer attacker && attacker.isAlive()) {
             PlayerStats as = RpgManager.stats(attacker);
             boolean projectile = event.getSource().is(DamageTypeTags.IS_PROJECTILE)
                     || event.getSource().getDirectEntity() instanceof Projectile;
@@ -108,9 +120,13 @@ public class RpgEvents {
             }
         }
 
-        // Everything hitting a player is scaled to the big pool.
-        if (event.getEntity() instanceof ServerPlayer) {
+        // Everything hitting a player is scaled to the big pool; Dexterity shaves a little off spells.
+        if (event.getEntity() instanceof ServerPlayer victim) {
             amount *= (float) StatFormulas.DAMAGE_SCALE;
+            if (magic) {
+                amount *= (float) (1.0 - StatFormulas.spellDamageResist(RpgManager.stats(victim)));
+            }
+            SpellCasting.interrupt(victim); // taking a hit breaks your cast
         }
 
         event.setAmount(amount);

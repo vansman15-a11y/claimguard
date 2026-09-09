@@ -9,6 +9,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraftforge.network.PacketDistributor;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.SyncRpgStatsPacket;
+import net.robmc.claimguard.network.SyncSpellBarPacket;
 
 import java.util.UUID;
 
@@ -72,6 +73,12 @@ public final class RpgManager {
                 s.getMana(), StatFormulas.maxMana(s),
                 s.getLevel(Stat.STRENGTH), s.getLevel(Stat.VITALITY), s.getLevel(Stat.DEXTERITY),
                 s.getLevel(Stat.QUICKNESS), s.getLevel(Stat.INTELLIGENCE), s.getLevel(Stat.WISDOM)));
+    }
+
+    public static void syncSpellBar(ServerPlayer player) {
+        PlayerStats s = stats(player);
+        ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new SyncSpellBarPacket(s.getSpellBar().clone(), s.getWeakMagicLevel()));
     }
 
     public static void addXp(ServerPlayer player, Stat stat, double amount) {

@@ -43,6 +43,13 @@ public class HudEditorScreen extends Screen {
         return new int[]{x, y, HOTBAR_W, HOTBAR_H};
     }
 
+    private int[] spellBarBox() {
+        int x = net.robmc.rpgstats.client.magic.SpellBarOverlay.defaultLeft() + HudLayout.offX(HudLayout.SPELL_BAR);
+        int y = net.robmc.rpgstats.client.magic.SpellBarOverlay.defaultTop(height) + HudLayout.offY(HudLayout.SPELL_BAR);
+        return new int[]{x, y, net.robmc.rpgstats.client.magic.SpellBarOverlay.SLOT,
+                net.robmc.rpgstats.client.magic.SpellBarOverlay.BAR_H};
+    }
+
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
         if (button == 0) {
@@ -52,6 +59,10 @@ public class HudEditorScreen extends Screen {
             }
             if (inside(hotbarBox(), mx, my)) {
                 startDrag(HudLayout.HOTBAR, mx, my);
+                return true;
+            }
+            if (inside(spellBarBox(), mx, my)) {
+                startDrag(HudLayout.SPELL_BAR, mx, my);
                 return true;
             }
         }
@@ -93,6 +104,10 @@ public class HudEditorScreen extends Screen {
         int[] hb = hotbarBox();
         g.fill(hb[0], hb[1], hb[0] + hb[2], hb[1] + hb[3], 0x40FFFFFF);
         outline(g, hb, 0xFFFFC24B, "Hotbar");
+
+        int[] sb = spellBarBox();
+        net.robmc.rpgstats.client.magic.SpellBarOverlay.render(g, this.font, sb[0], sb[1]);
+        outline(g, sb, 0xFF9FC0FF, "Spell bar");
 
         super.render(g, mouseX, mouseY, partialTick);
     }

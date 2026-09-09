@@ -22,10 +22,40 @@ public class PlayerStats {
     private double mana = StatFormulas.BASE_POOL;
     private boolean initialised = false;
 
+    /** Weak Magic school progress (also nudges Intelligence). Level 1 = all Weak Magic spells known. */
+    private int weakMagicLevel = 1;
+    private double weakMagicXp = 0;
+
+    /** The 8 vertical spell-bar slots, each holding a Spell enum name or "". */
+    private final String[] spellBar = new String[8];
+
     public PlayerStats() {
         for (Stat stat : Stat.values()) {
             levels.put(stat, 0);
             xp.put(stat, 0.0);
+        }
+        java.util.Arrays.fill(spellBar, "");
+    }
+
+    public int getWeakMagicLevel() {
+        return weakMagicLevel;
+    }
+
+    public void addWeakMagicXp(double amount) {
+        weakMagicXp += amount;
+        while (weakMagicXp >= StatFormulas.xpForNextLevel(weakMagicLevel)) {
+            weakMagicXp -= StatFormulas.xpForNextLevel(weakMagicLevel);
+            weakMagicLevel++;
+        }
+    }
+
+    public String[] getSpellBar() {
+        return spellBar;
+    }
+
+    public void setSpellSlot(int slot, String spellName) {
+        if (slot >= 0 && slot < spellBar.length) {
+            spellBar[slot] = spellName == null ? "" : spellName;
         }
     }
 
@@ -90,6 +120,11 @@ public class PlayerStats {
         tag.putDouble("Stamina", stamina);
         tag.putDouble("Mana", mana);
         tag.putBoolean("Initialised", initialised);
+        tag.putInt("WeakMagicLevel", weakMagicLevel);
+        tag.putDouble("WeakMagicXp", weakMagicXp);
+        for (int i = 0; i < spellBar.length; i++) {
+            tag.putString("Spell" + i, spellBar[i]);
+        }
         return tag;
     }
 
@@ -102,6 +137,11 @@ public class PlayerStats {
         stats.stamina = tag.getDouble("Stamina");
         stats.mana = tag.getDouble("Mana");
         stats.initialised = tag.getBoolean("Initialised");
+        stats.weakMagicLevel = Math.max(1, tag.getInt("WeakMagicLevel"));
+        stats.weakMagicXp = tag.getDouble("WeakMagicXp");
+        for (int i = 0; i < stats.spellBar.length; i++) {
+            stats.spellBar[i] = tag.getString("Spell" + i);
+        }
         return stats;
     }
 }

@@ -1,4 +1,14 @@
 {
   "key.categories.rpgstats": "RPG Stats",
-  "key.rpgstats.hud_editor": "HUD Layout Editor"
+  "key.rpgstats.hud_editor": "HUD Layout Editor",
+  "key.rpgstats.spellbook": "Open Spellbook",
+  "key.rpgstats.cast_1": "Cast Spell Slot 1",
+  "key.rpgstats.cast_2": "Cast Spell Slot 2",
+  "key.rpgstats.cast_3": "Cast Spell Slot 3",
+  "key.rpgstats.cast_4": "Cast Spell Slot 4",
+  "key.rpgstats.cast_5": "Cast Spell Slot 5",
+  "key.rpgstats.cast_6": "Cast Spell Slot 6",
+  "key.rpgstats.cast_7": "Cast Spell Slot 7",
+  "key.rpgstats.cast_8": "Cast Spell Slot 8",
+  "entity.rpgstats.magic_bolt": "Magic Bolt"
 }

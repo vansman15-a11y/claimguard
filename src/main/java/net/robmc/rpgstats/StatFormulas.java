@@ -99,6 +99,11 @@ public final class StatFormulas {
         return 80.0 + 12.0 * currentLevel;
     }
 
+    // --- spells (see magic/) ---
+    public static final double TRANSFER_AMOUNT = 40.0;   // per cast: spend up to this, gain 2x
+    public static final double MAGIC_BOLT_BASE_DAMAGE = 3.0;  // raw (pre-DAMAGE_SCALE) - deliberately weak
+    public static final double MAGIC_BOLT_RANGE = 24.0;
+
     // XP granted per action (tune freely)
     public static final double XP_MINE_BLOCK = 1.0;
     public static final double XP_CHOP_LOG = 2.5;

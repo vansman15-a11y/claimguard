@@ -9,20 +9,44 @@ import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.robmc.claimguard.network.CastSpellPacket;
+import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.rpgstats.RpgStats;
+import net.robmc.rpgstats.client.magic.SpellbookScreen;
 import org.lwjgl.glfw.GLFW;
 
-/** J toggles the HUD layout editor. */
+/** J = HUD editor, U = spellbook, numpad 1-8 = cast spell-bar slot (all rebindable). */
 @Mod.EventBusSubscriber(modid = RpgStats.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class RpgKeybinds {
 
-    public static final KeyMapping HUD_EDITOR = new KeyMapping(
-            "key.rpgstats.hud_editor", KeyConflictContext.UNIVERSAL,
-            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J, "key.categories.rpgstats");
+    private static final String CATEGORY = "key.categories.rpgstats";
+
+    public static final KeyMapping HUD_EDITOR = key("hud_editor", GLFW.GLFW_KEY_J);
+    public static final KeyMapping SPELLBOOK = key("spellbook", GLFW.GLFW_KEY_U);
+    public static final KeyMapping[] CAST = new KeyMapping[8];
+
+    static {
+        int[] defaults = {
+                GLFW.GLFW_KEY_KP_1, GLFW.GLFW_KEY_KP_2, GLFW.GLFW_KEY_KP_3, GLFW.GLFW_KEY_KP_4,
+                GLFW.GLFW_KEY_KP_5, GLFW.GLFW_KEY_KP_6, GLFW.GLFW_KEY_KP_7, GLFW.GLFW_KEY_KP_8
+        };
+        for (int i = 0; i < 8; i++) {
+            CAST[i] = key("cast_" + (i + 1), defaults[i]);
+        }
+    }
+
+    private static KeyMapping key(String name, int code) {
+        return new KeyMapping("key.rpgstats." + name, KeyConflictContext.IN_GAME,
+                InputConstants.Type.KEYSYM, code, CATEGORY);
+    }
 
     @SubscribeEvent
     public static void onRegister(RegisterKeyMappingsEvent event) {
         event.register(HUD_EDITOR);
+        event.register(SPELLBOOK);
+        for (KeyMapping k : CAST) {
+            event.register(k);
+        }
     }
 
     @Mod.EventBusSubscriber(modid = RpgStats.MOD_ID, value = Dist.CLIENT)
@@ -33,11 +57,26 @@ public class RpgKeybinds {
                 return;
             }
             Minecraft mc = Minecraft.getInstance();
+
             while (HUD_EDITOR.consumeClick()) {
                 if (mc.screen == null) {
                     mc.setScreen(new HudEditorScreen());
                 } else if (mc.screen instanceof HudEditorScreen) {
                     mc.setScreen(null);
+                }
+            }
+            while (SPELLBOOK.consumeClick()) {
+                if (mc.screen == null) {
+                    mc.setScreen(new SpellbookScreen());
+                } else if (mc.screen instanceof SpellbookScreen) {
+                    mc.setScreen(null);
+                }
+            }
+            if (mc.screen == null && mc.player != null) {
+                for (int i = 0; i < 8; i++) {
+                    while (CAST[i].consumeClick()) {
+                        ClaimGuardNetwork.CHANNEL.sendToServer(new CastSpellPacket(i));
+                    }
                 }
             }
         }
