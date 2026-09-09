@@ -41,7 +41,7 @@ public class PlayerStats {
             xp.put(stat, 0.0);
         }
         for (School school : School.values()) {
-            schoolLevels.put(school, 0);
+            schoolLevels.put(school, 1); // every school starts at 1 - tier-1 spells are usable immediately
             schoolXp.put(school, 0.0);
         }
         for (Skill skill : Skill.values()) {
@@ -254,7 +254,7 @@ public class PlayerStats {
             stats.xp.put(stat, tag.getDouble(stat.name() + "_xp"));
         }
         for (School school : School.values()) {
-            stats.schoolLevels.put(school, clampLevel(tag.getInt("SchoolLvl_" + school.name())));
+            stats.schoolLevels.put(school, Math.max(1, clampLevel(tag.getInt("SchoolLvl_" + school.name()))));
             stats.schoolXp.put(school, tag.getDouble("SchoolXp_" + school.name()));
         }
         for (Skill skill : Skill.values()) {

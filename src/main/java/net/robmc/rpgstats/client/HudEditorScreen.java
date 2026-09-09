@@ -70,6 +70,13 @@ public class HudEditorScreen extends Screen {
         return new int[]{x, y - 1, RpgHudOverlay.STATUS_W, RpgHudOverlay.STATUS_H};
     }
 
+    private int[] castBarBox() {
+        int x = net.robmc.rpgstats.client.magic.CastBarOverlay.defaultLeft(width) + HudLayout.offX(HudLayout.CAST_BAR);
+        int y = net.robmc.rpgstats.client.magic.CastBarOverlay.defaultTop(height) + HudLayout.offY(HudLayout.CAST_BAR);
+        return new int[]{x - 1, y - 12, net.robmc.rpgstats.client.magic.CastBarOverlay.W + 2,
+                net.robmc.rpgstats.client.magic.CastBarOverlay.H + 14};
+    }
+
     private int hotbarX() {
         return (width - HOTBAR_W) / 2 + HudLayout.offX(HudLayout.HOTBAR);
     }
@@ -130,6 +137,10 @@ public class HudEditorScreen extends Screen {
             }
             if (inside(statusBox(), mx, my)) {
                 startDrag(HudLayout.STATUS, mx, my);
+                return true;
+            }
+            if (inside(castBarBox(), mx, my)) {
+                startDrag(HudLayout.CAST_BAR, mx, my);
                 return true;
             }
             if (inside(hotbarBox(), mx, my)) {
@@ -334,6 +345,11 @@ public class HudEditorScreen extends Screen {
         g.fill(status[0], status[1], status[0] + status[2], status[1] + status[3], 0x60000000);
         g.drawCenteredString(this.font, "EXHAUSTED", status[0] + status[2] / 2, status[1] + 2, 0xFFFF7777);
         outline(g, status, 0xFFFF7777, "Status");
+
+        int cbX = net.robmc.rpgstats.client.magic.CastBarOverlay.defaultLeft(width) + HudLayout.offX(HudLayout.CAST_BAR);
+        int cbY = net.robmc.rpgstats.client.magic.CastBarOverlay.defaultTop(height) + HudLayout.offY(HudLayout.CAST_BAR);
+        net.robmc.rpgstats.client.magic.CastBarOverlay.render(g, this.font, cbX, cbY, null, 0.6f);
+        outline(g, castBarBox(), 0xFFEAD37A, "Cast bar");
 
         // hotbar ghost with 9 slots
         int hbX = hotbarX();

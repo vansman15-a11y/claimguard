@@ -17,8 +17,14 @@ public final class ClientSpells {
 
     private static final int SLOT_COUNT = StatFormulas.TOTAL_BAR_SLOTS;
     private static final String[] SLOTS = new String[SLOT_COUNT];
-    private static int[] schoolLevels = new int[School.values().length];
+    private static int[] schoolLevels = defaultSchoolLevels();
     private static int[] skillLevels = new int[Skill.values().length];
+
+    private static int[] defaultSchoolLevels() {
+        int[] a = new int[School.values().length];
+        java.util.Arrays.fill(a, 1);
+        return a;
+    }
 
     private static Spell castingSpell;
     private static long castStartTick;
