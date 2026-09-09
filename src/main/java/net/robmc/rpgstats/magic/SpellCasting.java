@@ -1,6 +1,7 @@
 package net.robmc.rpgstats.magic;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -8,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 import net.minecraftforge.network.PacketDistributor;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.CastStatePacket;
@@ -41,6 +43,11 @@ public final class SpellCasting {
             this.ticksLeft = ticksLeft;
         }
     }
+
+    // transfer telltale particles - lets nearby players read which transfer someone is doing
+    private static final Vector3f FX_RED = new Vector3f(1.0f, 0.15f, 0.15f);
+    private static final Vector3f FX_YELLOW = new Vector3f(1.0f, 0.88f, 0.2f);
+    private static final Vector3f FX_BLUE = new Vector3f(0.25f, 0.45f, 1.0f);
 
     private static final Map<UUID, Pending> casting = new HashMap<>();
     private static final Map<UUID, Map<Spell, Long>> cooldowns = new HashMap<>();
@@ -140,6 +147,7 @@ public final class SpellCasting {
                 int ticks = StatFormulas.TRANSFER_DURATION_TICKS;
                 transferGains.computeIfAbsent(player.getUUID(), k -> new ArrayList<>())
                         .add(new TransferGain(spell.gainPool(), total / ticks, ticks));
+                spawnTransferFx(player, spell);
             }
         } else { // Magic Bolt
             spend(player, s, spell.costPool(), spell.flatCost());
@@ -155,6 +163,25 @@ public final class SpellCasting {
                 RpgSounds.forSpell(spell), SoundSource.PLAYERS, 1.0f, 1.0f);
         RpgManager.sync(player);
         ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new CastStatePacket("", 0));
+    }
+
+    /** A small two-tone puff at the feet and head so nearby players can tell which transfer this is. */
+    private static void spawnTransferFx(ServerPlayer player, Spell spell) {
+        Vector3f feet;
+        Vector3f head;
+        switch (spell) {
+            case STAMINA_TO_HEALTH -> { feet = FX_YELLOW; head = FX_RED; }
+            case MANA_TO_STAMINA -> { feet = FX_BLUE; head = FX_YELLOW; }
+            case HEALTH_TO_MANA -> { feet = FX_RED; head = FX_BLUE; }
+            default -> { return; }
+        }
+        ServerLevel level = player.serverLevel();
+        double x = player.getX();
+        double z = player.getZ();
+        level.sendParticles(new DustParticleOptions(feet, 0.8f),
+                x, player.getY() + 0.15, z, 4, 0.22, 0.1, 0.22, 0.0);
+        level.sendParticles(new DustParticleOptions(head, 0.8f),
+                x, player.getEyeY() + 0.15, z, 4, 0.22, 0.1, 0.22, 0.0);
     }
 
     private static void castMagicBolt(ServerPlayer player, PlayerStats s, int spellLevel) {

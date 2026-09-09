@@ -39,7 +39,7 @@ public final class StatFormulas {
     }
 
     /** XP to go from {@code currentLevel} to the next. Gentle to 50, a grind to 75, a slog to 100. */
-    public static final double XP_CURVE_BASE = 20.0;
+    public static final double XP_CURVE_BASE = 21.0;   // transfers (16 xp/cast): ~150 casts to 50, ~390 to 75, ~820 to 100
 
     public static double xpForNextLevel(int currentLevel) {
         double t = currentLevel / 25.0;
