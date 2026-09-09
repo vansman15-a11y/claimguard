@@ -9,6 +9,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.client.settings.KeyModifier;
+import net.robmc.rpgstats.StatFormulas;
 import net.robmc.rpgstats.client.magic.SpellBarOverlay;
 import org.lwjgl.glfw.GLFW;
 
@@ -67,16 +68,16 @@ public class HudEditorScreen extends Screen {
         return new int[]{hotbarX(), hotbarY(), HOTBAR_W, HOTBAR_H};
     }
 
-    private int spellBarX() {
-        return SpellBarOverlay.defaultLeft() + HudLayout.offX(HudLayout.SPELL_BAR);
+    private int spellBarX(int bar) {
+        return SpellBarOverlay.defaultLeft(bar) + HudLayout.offX(SpellBarOverlay.layoutKey(bar));
     }
 
-    private int spellBarY() {
-        return SpellBarOverlay.defaultTop(height) + HudLayout.offY(HudLayout.SPELL_BAR);
+    private int spellBarY(int bar) {
+        return SpellBarOverlay.defaultTop(height) + HudLayout.offY(SpellBarOverlay.layoutKey(bar));
     }
 
-    private int[] spellBarBox() {
-        return new int[]{spellBarX(), spellBarY(), SpellBarOverlay.SLOT, SpellBarOverlay.BAR_H};
+    private int[] spellBarBox(int bar) {
+        return new int[]{spellBarX(bar), spellBarY(bar), SpellBarOverlay.SLOT, SpellBarOverlay.BAR_H};
     }
 
     // --- input ---
@@ -96,7 +97,8 @@ public class HudEditorScreen extends Screen {
             }
             int ss = spellSlotAt(mx, my);
             if (ss >= 0) {
-                startCapture(RpgKeybinds.CAST[ss], "Spell slot " + (ss + 1));
+                startCapture(RpgKeybinds.CAST[ss],
+                        "Bar " + (ss / SpellBarOverlay.SLOTS + 1) + " slot " + (ss % SpellBarOverlay.SLOTS + 1));
                 return true;
             }
         }
@@ -110,9 +112,11 @@ public class HudEditorScreen extends Screen {
                 startDrag(HudLayout.HOTBAR, mx, my);
                 return true;
             }
-            if (inside(spellBarBox(), mx, my)) {
-                startDrag(HudLayout.SPELL_BAR, mx, my);
-                return true;
+            for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
+                if (inside(spellBarBox(bar), mx, my)) {
+                    startDrag(SpellBarOverlay.layoutKey(bar), mx, my);
+                    return true;
+                }
             }
         }
         return super.mouseClicked(mx, my, button);
@@ -256,13 +260,18 @@ public class HudEditorScreen extends Screen {
     }
 
     private int spellSlotAt(double x, double y) {
-        int sx = spellBarX();
-        int sy = spellBarY();
-        if (x < sx || x > sx + SpellBarOverlay.SLOT) {
-            return -1;
+        for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
+            int sx = spellBarX(bar);
+            int sy = spellBarY(bar);
+            if (x < sx || x > sx + SpellBarOverlay.SLOT) {
+                continue;
+            }
+            int i = (int) ((y - sy) / SpellBarOverlay.SLOT);
+            if (i >= 0 && i < SpellBarOverlay.SLOTS) {
+                return bar * SpellBarOverlay.SLOTS + i;
+            }
         }
-        int i = (int) ((y - sy) / SpellBarOverlay.SLOT);
-        return (i >= 0 && i < SpellBarOverlay.SLOTS) ? i : -1;
+        return -1;
     }
 
     // --- render ---
@@ -287,13 +296,16 @@ public class HudEditorScreen extends Screen {
             keyHint(g, minecraft.options.keyHotbarSlots[i], sx, hbY + 3, 16);
         }
 
-        // spell bar with 8 slots
-        int sbX = spellBarX();
-        int sbY = spellBarY();
-        SpellBarOverlay.render(g, this.font, sbX, sbY);
-        outline(g, spellBarBox(), 0xFF9FC0FF, "Spell bar  (1-8)");
-        for (int i = 0; i < 8; i++) {
-            keyHint(g, RpgKeybinds.CAST[i], sbX, sbY + i * SpellBarOverlay.SLOT, SpellBarOverlay.SLOT);
+        // the two casting bars
+        for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
+            int sbX = spellBarX(bar);
+            int sbY = spellBarY(bar);
+            SpellBarOverlay.render(g, this.font, sbX, sbY, SpellBarOverlay.firstSlot(bar));
+            outline(g, spellBarBox(bar), 0xFF9FC0FF, "Bar " + (bar + 1));
+            for (int i = 0; i < SpellBarOverlay.SLOTS; i++) {
+                keyHint(g, RpgKeybinds.CAST[bar * SpellBarOverlay.SLOTS + i],
+                        sbX, sbY + i * SpellBarOverlay.SLOT, SpellBarOverlay.SLOT);
+            }
         }
 
         if (capturing != null) {

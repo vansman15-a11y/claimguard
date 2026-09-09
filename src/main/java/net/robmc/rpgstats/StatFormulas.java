@@ -19,6 +19,11 @@ public final class StatFormulas {
     /** Hard cap on every stat level and every spell level. All stats at the cap = a fully maxed character. */
     public static final int LEVEL_CAP = 100;
 
+    // --- casting bars ---
+    public static final int BAR_SLOTS = 9;                       // slots per bar
+    public static final int BAR_COUNT = 2;                       // number of bars
+    public static final int TOTAL_BAR_SLOTS = BAR_SLOTS * BAR_COUNT;
+
     /**
      * Fraction of a stat/spell's level-{@link #LEVEL_CAP} power available at {@code level}.
      * Piecewise-linear: 0 -&gt; 0.75 over levels 0-50, -&gt; 0.95 over 50-75, -&gt; 1.00 over 75-100.

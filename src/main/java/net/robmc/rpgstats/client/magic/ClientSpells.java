@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.robmc.claimguard.network.CastStatePacket;
 import net.robmc.claimguard.network.SpellCooldownPacket;
 import net.robmc.claimguard.network.SyncSpellBarPacket;
+import net.robmc.rpgstats.StatFormulas;
 import net.robmc.rpgstats.magic.Spell;
 import net.robmc.rpgstats.skill.Skill;
 
@@ -13,7 +14,8 @@ public final class ClientSpells {
     /** How long the "spell is ready" flash lasts once a cooldown ends. */
     public static final int READY_FLASH_TICKS = 7;
 
-    private static final String[] SLOTS = new String[8];
+    private static final int SLOT_COUNT = StatFormulas.TOTAL_BAR_SLOTS;
+    private static final String[] SLOTS = new String[SLOT_COUNT];
     private static int[] spellLevels = new int[Spell.values().length];
     private static int[] skillLevels = new int[Skill.values().length];
 
@@ -28,7 +30,7 @@ public final class ClientSpells {
     }
 
     public static void onSyncSpellBar(SyncSpellBarPacket p) {
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < SLOT_COUNT; i++) {
             SLOTS[i] = i < p.slots.length ? p.slots[i] : "";
         }
         if (p.spellLevels != null && p.spellLevels.length == spellLevels.length) {
@@ -89,17 +91,17 @@ public final class ClientSpells {
     }
 
     public static void setSlotLocal(int i, String spellName) {
-        if (i >= 0 && i < 8) {
+        if (i >= 0 && i < SLOT_COUNT) {
             SLOTS[i] = spellName == null ? "" : spellName;
         }
     }
 
     public static Spell slot(int i) {
-        return (i >= 0 && i < 8) ? Spell.byName(SLOTS[i]) : null;
+        return (i >= 0 && i < SLOT_COUNT) ? Spell.byName(SLOTS[i]) : null;
     }
 
     public static String slotName(int i) {
-        return (i >= 0 && i < 8 && SLOTS[i] != null) ? SLOTS[i] : "";
+        return (i >= 0 && i < SLOT_COUNT && SLOTS[i] != null) ? SLOTS[i] : "";
     }
 
     public static int spellLevel(Spell spell) {
@@ -108,7 +110,7 @@ public final class ClientSpells {
 
     /** The skill bound to bar slot i, or null (also null if a spell is bound there). */
     public static Skill skillAt(int i) {
-        return (i >= 0 && i < 8) ? Skill.byName(SLOTS[i]) : null;
+        return (i >= 0 && i < SLOT_COUNT) ? Skill.byName(SLOTS[i]) : null;
     }
 
     public static int skillLevel(Skill skill) {

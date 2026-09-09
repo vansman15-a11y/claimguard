@@ -31,8 +31,8 @@ public class PlayerStats {
     private double mana = StatFormulas.BASE_POOL;
     private boolean initialised = false;
 
-    /** The 8 vertical spell-bar slots, each holding a Spell enum name or "". */
-    private final String[] spellBar = new String[8];
+    /** The two casting bars' slots (bar 1 = 0..8, bar 2 = 9..17), each holding a Spell/Skill enum name or "". */
+    private final String[] spellBar = new String[StatFormulas.TOTAL_BAR_SLOTS];
 
     public PlayerStats() {
         for (Stat stat : Stat.values()) {
@@ -178,9 +178,15 @@ public class PlayerStats {
         return spellBar;
     }
 
-    public void setSpellSlot(int slot, String spellName) {
-        if (slot >= 0 && slot < spellBar.length) {
-            spellBar[slot] = spellName == null ? "" : spellName;
+    public void setSpellSlot(int slot, String name) {
+        if (slot < 0 || slot >= spellBar.length) {
+            return;
+        }
+        // only a real spell/skill name or a clear - never arbitrary client text
+        if (name == null || name.isEmpty()) {
+            spellBar[slot] = "";
+        } else if (Spell.byName(name) != null || Skill.byName(name) != null) {
+            spellBar[slot] = name;
         }
     }
 

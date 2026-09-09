@@ -10,10 +10,10 @@ package net.robmc.rpgstats.magic;
  */
 public enum Spell {
 
-    MANA_TO_STAMINA("Transfer: Mana → Stamina", Pool.MANA, Pool.STAMINA, 8, 100, 0, "Weak Magic"),
-    STAMINA_TO_HEALTH("Transfer: Stamina → Health", Pool.STAMINA, Pool.HEALTH, 8, 100, 0, "Weak Magic"),
-    HEALTH_TO_MANA("Transfer: Health → Mana", Pool.HEALTH, Pool.MANA, 8, 100, 0, "Weak Magic"),
-    MAGIC_BOLT("Magic Bolt", Pool.MANA, null, 16, 30, 20, "Weak Magic");
+    MANA_TO_STAMINA("Transfer: Mana → Stamina", Pool.MANA, Pool.STAMINA, 8, 100, 0, School.WEAK),
+    STAMINA_TO_HEALTH("Transfer: Stamina → Health", Pool.STAMINA, Pool.HEALTH, 8, 100, 0, School.WEAK),
+    HEALTH_TO_MANA("Transfer: Health → Mana", Pool.HEALTH, Pool.MANA, 8, 100, 0, School.WEAK),
+    MAGIC_BOLT("Magic Bolt", Pool.MANA, null, 16, 30, 20, School.WEAK);
 
     public enum Pool { HEALTH, STAMINA, MANA }
 
@@ -23,9 +23,9 @@ public enum Spell {
     private final int castTicks;
     private final int cooldownTicks;
     private final double flatCost;  // fixed pool cost (Magic Bolt); 0 for transfers
-    private final String school;
+    private final School school;
 
-    Spell(String displayName, Pool costPool, Pool gainPool, int castTicks, int cooldownTicks, double flatCost, String school) {
+    Spell(String displayName, Pool costPool, Pool gainPool, int castTicks, int cooldownTicks, double flatCost, School school) {
         this.displayName = displayName;
         this.costPool = costPool;
         this.gainPool = gainPool;
@@ -59,7 +59,7 @@ public enum Spell {
         return flatCost;
     }
 
-    public String school() {
+    public School school() {
         return school;
     }
 

@@ -4,11 +4,14 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
+import net.robmc.rpgstats.StatFormulas;
 
 import java.util.function.Supplier;
 
-/** Server -&gt; client: the 8 spell-bar slot assignments and every spell/skill's current level. */
+/** Server -&gt; client: every casting-bar slot assignment and every spell/skill's current level. */
 public class SyncSpellBarPacket {
+
+    private static final int SLOTS = StatFormulas.TOTAL_BAR_SLOTS;
 
     public final String[] slots;
     public final int[] spellLevels;   // indexed by Spell.ordinal()
@@ -21,7 +24,7 @@ public class SyncSpellBarPacket {
     }
 
     public static void encode(SyncSpellBarPacket p, FriendlyByteBuf buf) {
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < SLOTS; i++) {
             buf.writeUtf(i < p.slots.length && p.slots[i] != null ? p.slots[i] : "", 48);
         }
         writeInts(buf, p.spellLevels);
@@ -29,8 +32,8 @@ public class SyncSpellBarPacket {
     }
 
     public static SyncSpellBarPacket decode(FriendlyByteBuf buf) {
-        String[] slots = new String[8];
-        for (int i = 0; i < 8; i++) {
+        String[] slots = new String[SLOTS];
+        for (int i = 0; i < SLOTS; i++) {
             slots[i] = buf.readUtf(48);
         }
         int[] spellLevels = readInts(buf);

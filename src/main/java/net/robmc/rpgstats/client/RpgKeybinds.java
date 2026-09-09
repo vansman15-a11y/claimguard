@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.settings.KeyConflictContext;
+import net.minecraftforge.client.settings.KeyModifier;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -16,11 +17,12 @@ import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.rpgstats.RpgStats;
 import net.robmc.rpgstats.client.magic.ClientRecall;
 import net.robmc.rpgstats.client.magic.ClientSpells;
+import net.robmc.rpgstats.StatFormulas;
 import net.robmc.rpgstats.client.magic.SpellbookScreen;
 import net.robmc.rpgstats.skill.Skill;
 import org.lwjgl.glfw.GLFW;
 
-/** J = HUD editor, U = spellbook, numpad 1-8 = cast spell-bar slot (all rebindable). */
+/** J = HUD editor, U = spellbook. Bar 1 slots = 1-9, bar 2 slots = Alt+1-9. All rebindable in the J editor. */
 @Mod.EventBusSubscriber(modid = RpgStats.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class RpgKeybinds {
 
@@ -28,17 +30,23 @@ public class RpgKeybinds {
 
     public static final KeyMapping HUD_EDITOR = key("hud_editor", GLFW.GLFW_KEY_J);
     public static final KeyMapping SPELLBOOK = key("spellbook", GLFW.GLFW_KEY_U);
-    public static final KeyMapping[] CAST = new KeyMapping[8];
+    public static final KeyMapping[] CAST = new KeyMapping[StatFormulas.TOTAL_BAR_SLOTS];
 
     static {
-        for (int i = 0; i < 8; i++) {
-            CAST[i] = key("cast_" + (i + 1), GLFW.GLFW_KEY_1 + i); // plain 1..8 by default
+        for (int i = 0; i < CAST.length; i++) {
+            int digit = GLFW.GLFW_KEY_1 + (i % StatFormulas.BAR_SLOTS);
+            KeyModifier mod = i < StatFormulas.BAR_SLOTS ? KeyModifier.NONE : KeyModifier.ALT;
+            CAST[i] = key("cast_" + (i + 1), mod, digit); // bar 1: plain 1-9, bar 2: Alt+1-9
         }
     }
 
     private static KeyMapping key(String name, int code) {
-        return new KeyMapping("key.rpgstats." + name, KeyConflictContext.IN_GAME,
-                InputConstants.Type.KEYSYM, code, CATEGORY);
+        return key(name, KeyModifier.NONE, code);
+    }
+
+    private static KeyMapping key(String name, KeyModifier modifier, int code) {
+        return new KeyMapping("key.rpgstats." + name, KeyConflictContext.IN_GAME, modifier,
+                InputConstants.Type.KEYSYM.getOrCreate(code), CATEGORY);
     }
 
     @SubscribeEvent
@@ -74,7 +82,7 @@ public class RpgKeybinds {
                 }
             }
             if (mc.screen == null && mc.player != null) {
-                for (int i = 0; i < 8; i++) {
+                for (int i = 0; i < CAST.length; i++) {
                     while (CAST[i].consumeClick()) {
                         activateSlot(mc, i);
                     }

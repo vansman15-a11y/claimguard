@@ -10,25 +10,36 @@ import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.robmc.rpgstats.RpgStats;
+import net.robmc.rpgstats.StatFormulas;
 import net.robmc.rpgstats.client.HudLayout;
 import net.robmc.rpgstats.client.RpgHudOverlay;
 import net.robmc.rpgstats.magic.Spell;
 import net.robmc.rpgstats.skill.Skill;
 
-/** The vertical, 8-slot spell casting bar. Separate from the vanilla hotbar; movable in the J editor. */
+/** Two vertical 9-slot casting bars on the left. Separate from the vanilla hotbar; movable in the J editor. */
 @Mod.EventBusSubscriber(modid = RpgStats.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class SpellBarOverlay {
 
     public static final int SLOT = 20;
-    public static final int SLOTS = 8;
+    public static final int SLOTS = StatFormulas.BAR_SLOTS;   // per bar
     public static final int BAR_H = SLOT * SLOTS;
 
-    public static int defaultLeft() {
-        return 8;
+    /** Anchor for a bar: bar 0 sits at the edge, bar 1 just to its right. */
+    public static int defaultLeft(int bar) {
+        return 8 + bar * (SLOT + 3);
+    }
+
+    public static String layoutKey(int bar) {
+        return bar == 0 ? HudLayout.SPELL_BAR : HudLayout.SPELL_BAR_2;
     }
 
     public static int defaultTop(int screenH) {
         return (screenH - BAR_H) / 2;
+    }
+
+    /** First global slot index of a bar. */
+    public static int firstSlot(int bar) {
+        return bar * SLOTS;
     }
 
     @SubscribeEvent
@@ -41,9 +52,11 @@ public class SpellBarOverlay {
         if (mc.player == null || mc.options.hideGui) {
             return;
         }
-        int x = defaultLeft() + HudLayout.offX(HudLayout.SPELL_BAR);
-        int y = defaultTop(screenH) + HudLayout.offY(HudLayout.SPELL_BAR);
-        render(g, mc.font, x, y);
+        for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
+            int x = defaultLeft(bar) + HudLayout.offX(layoutKey(bar));
+            int y = defaultTop(screenH) + HudLayout.offY(layoutKey(bar));
+            render(g, mc.font, x, y, firstSlot(bar));
+        }
 
         if (ClientRecall.isRecalling()) {
             g.drawCenteredString(mc.font, "Recalling  " + ClientRecall.secondsLeft() + "s",
@@ -51,10 +64,10 @@ public class SpellBarOverlay {
         }
     };
 
-    public static void render(GuiGraphics g, Font font, int x, int y) {
+    /** Render one bar's SLOTS slots starting from global slot {@code firstSlot}. */
+    public static void render(GuiGraphics g, Font font, int x, int y, int firstSlot) {
         for (int i = 0; i < SLOTS; i++) {
-            int sy = y + i * SLOT;
-            drawSlot(g, font, x, sy, i);
+            drawSlot(g, font, x, y + i * SLOT, firstSlot + i);
         }
     }
 
@@ -103,7 +116,7 @@ public class SpellBarOverlay {
                 cornerLevel(g, font, x, y, ClientSpells.skillLevel(skill), 0xFF9BE7A0);
             }
         }
-        g.drawString(font, String.valueOf(index + 1), x + SLOT - 6, y + SLOT - 8, 0xFF808080, false);
+        g.drawString(font, String.valueOf(index % SLOTS + 1), x + SLOT - 6, y + SLOT - 8, 0xFF808080, false);
     }
 
     /** The small level number tucked into a slot's top-left corner. */

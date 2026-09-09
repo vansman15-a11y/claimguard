@@ -66,7 +66,8 @@ public final class SpellCasting {
 
     /** A spell-bar slot's key was pressed: cast a spell, or activate a skill. */
     public static void activateSlot(ServerPlayer player, int slot) {
-        String name = (slot >= 0 && slot < 8) ? RpgManager.stats(player).getSpellBar()[slot] : "";
+        String name = (slot >= 0 && slot < StatFormulas.TOTAL_BAR_SLOTS)
+                ? RpgManager.stats(player).getSpellBar()[slot] : "";
         Skill skill = Skill.byName(name);
         if (skill != null) {
             switch (skill) {
@@ -80,7 +81,7 @@ public final class SpellCasting {
 
     public static void startCast(ServerPlayer player, int slot) {
         PlayerStats s = RpgManager.stats(player);
-        Spell spell = Spell.byName(slot >= 0 && slot < 8 ? s.getSpellBar()[slot] : "");
+        Spell spell = Spell.byName(slot >= 0 && slot < StatFormulas.TOTAL_BAR_SLOTS ? s.getSpellBar()[slot] : "");
         if (spell == null) {
             return;
         }

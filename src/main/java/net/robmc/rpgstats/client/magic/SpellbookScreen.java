@@ -8,28 +8,39 @@ import net.minecraft.network.chat.Component;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.SetSpellSlotPacket;
 import net.robmc.rpgstats.StatFormulas;
+import net.robmc.rpgstats.magic.School;
 import net.robmc.rpgstats.magic.Spell;
 import net.robmc.rpgstats.skill.Skill;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
- * Press U. Two sections - Weak Magic (the spells) and Skills (general abilities
- * like Rest) - plus your 8-slot bar on the right. Drag a row onto a slot to bind
- * it; drag a bound slot off to clear it.
+ * Press U. A scrolling list of every magic school (expand one to see its spells)
+ * plus a Skills section, and your two 9-slot casting bars on the right. Drag a
+ * spell or skill row onto a slot to bind it; drag a bound slot off to clear it.
+ * Only Weak Magic has spells so far.
  */
 public class SpellbookScreen extends Screen {
 
-    private static final int PANEL_W = 340;
-    private static final int PANEL_H = 262;
-    private static final int ROW_H = 24;
-    private static final int HEADER_GAP = 18;
+    private static final int PANEL_W = 392;
+    private static final int PANEL_H = 248;
+    private static final int ROW_H = 22;
+    private static final int LIST_W = 250;
+    private static final String SKILLS = "SKILLS";
 
-    private record Entry(String name, String display, String desc, int level, boolean skill, int y) {
+    private enum Kind { HEADER, SPELL, SKILL, EMPTY }
+
+    private record Row(Kind kind, String group, String name, int y) {
     }
 
-    private String draggingName;   // dragging a row or a bound slot
+    private final Set<String> expanded = new HashSet<>(Arrays.asList(School.WEAK.name(), SKILLS));
+    private int scroll;
+
+    private String draggingName;
     private int draggingSlot = -1;
 
     public SpellbookScreen() {
@@ -50,61 +61,107 @@ public class SpellbookScreen extends Screen {
         return (this.height - PANEL_H) / 2;
     }
 
-    private int rowLeft() {
-        return panelLeft() + 12;
+    private int listX() {
+        return panelLeft() + 10;
     }
 
-    private int rowRight() {
-        return panelLeft() + 234;
+    private int listY() {
+        return panelTop() + 32;
     }
 
-    private int barX() {
-        return panelLeft() + PANEL_W - 40;
+    private int listH() {
+        return PANEL_H - 32 - 32;
+    }
+
+    private int barX(int bar) {
+        return panelLeft() + PANEL_W - 12 - (StatFormulas.BAR_COUNT - bar) * (SpellBarOverlay.SLOT + 4);
     }
 
     private int barY() {
-        return panelTop() + 30;
+        return panelTop() + 40;
     }
 
-    /** All rows with their laid-out Y, in draw order. */
-    private List<Entry> entries() {
-        List<Entry> list = new ArrayList<>();
-        int y = panelTop() + 40;
-        for (Spell spell : Spell.values()) {
-            int lvl = ClientSpells.spellLevel(spell);
-            list.add(new Entry(spell.name(), spell.displayName(), spellDesc(spell), lvl, false, y));
+    // --- row layout ---
+
+    private List<Row> rows() {
+        List<Row> list = new ArrayList<>();
+        int y = 0;
+        for (School school : School.values()) {
+            list.add(new Row(Kind.HEADER, school.name(), school.displayName(), y));
             y += ROW_H;
+            if (expanded.contains(school.name())) {
+                List<Spell> spells = Arrays.stream(Spell.values()).filter(s -> s.school() == school).toList();
+                for (int i = 0; i < School.SPELLS_PER_SCHOOL; i++) {
+                    if (i < spells.size()) {
+                        list.add(new Row(Kind.SPELL, school.name(), spells.get(i).name(), y));
+                    } else {
+                        list.add(new Row(Kind.EMPTY, school.name(), "", y));
+                    }
+                    y += ROW_H;
+                }
+            }
         }
-        y += HEADER_GAP; // "Skills" sub-header
-        for (Skill skill : Skill.values()) {
-            int lvl = ClientSpells.skillLevel(skill);
-            list.add(new Entry(skill.name(), skill.displayName(), skill.blurb(), lvl, true, y));
-            y += ROW_H;
+        list.add(new Row(Kind.HEADER, SKILLS, "Skills", y));
+        y += ROW_H;
+        if (expanded.contains(SKILLS)) {
+            for (Skill skill : Skill.values()) {
+                list.add(new Row(Kind.SKILL, SKILLS, skill.name(), y));
+                y += ROW_H;
+            }
         }
         return list;
     }
 
+    private int contentH() {
+        List<Row> r = rows();
+        return r.isEmpty() ? 0 : r.get(r.size() - 1).y + ROW_H;
+    }
+
+    private int maxScroll() {
+        return Math.max(0, contentH() - listH());
+    }
+
+    // --- input ---
+
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseScrolled(double mx, double my, double delta) {
+        scroll = Math.max(0, Math.min(maxScroll(), scroll - (int) (delta * 20)));
+        return true;
+    }
+
+    @Override
+    public boolean mouseClicked(double mx, double my, int button) {
         if (button == 0) {
-            for (Entry e : entries()) {
-                if (mouseX >= rowLeft() && mouseX <= rowRight() && mouseY >= e.y && mouseY <= e.y + ROW_H - 4) {
-                    draggingName = e.name;
-                    return true;
-                }
-            }
-            int slot = slotAt(mouseX, mouseY);
+            int slot = slotAt(mx, my);
             if (slot >= 0 && !ClientSpells.slotName(slot).isEmpty()) {
                 draggingSlot = slot;
                 return true;
             }
+            if (mx >= listX() && mx <= listX() + LIST_W && my >= listY() && my <= listY() + listH()) {
+                int localY = (int) (my - listY()) + scroll;
+                for (Row row : rows()) {
+                    if (localY >= row.y && localY < row.y + ROW_H) {
+                        if (row.kind == Kind.HEADER) {
+                            if (expanded.contains(row.group)) {
+                                expanded.remove(row.group);
+                            } else {
+                                expanded.add(row.group);
+                            }
+                            scroll = Math.min(scroll, maxScroll());
+                        } else if (row.kind == Kind.SPELL || row.kind == Kind.SKILL) {
+                            draggingName = row.name;
+                        }
+                        return true;
+                    }
+                }
+            }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(mx, my, button);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        int slot = slotAt(mouseX, mouseY);
+    public boolean mouseReleased(double mx, double my, int button) {
+        int slot = slotAt(mx, my);
         if (draggingName != null && slot >= 0) {
             send(slot, draggingName);
         } else if (draggingSlot >= 0 && slot >= 0 && slot != draggingSlot) {
@@ -115,7 +172,7 @@ public class SpellbookScreen extends Screen {
         }
         draggingName = null;
         draggingSlot = -1;
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(mx, my, button);
     }
 
     private void send(int slot, String name) {
@@ -123,53 +180,62 @@ public class SpellbookScreen extends Screen {
         ClientSpells.setSlotLocal(slot, name);
     }
 
-    private int slotAt(double x, double y) {
-        int bx = barX();
-        int by = barY();
-        if (x < bx || x > bx + SpellBarOverlay.SLOT) {
-            return -1;
+    private int slotAt(double mx, double my) {
+        for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
+            int bx = barX(bar);
+            if (mx < bx || mx > bx + SpellBarOverlay.SLOT) {
+                continue;
+            }
+            int i = (int) ((my - barY()) / SpellBarOverlay.SLOT);
+            if (i >= 0 && i < SpellBarOverlay.SLOTS) {
+                return bar * SpellBarOverlay.SLOTS + i;
+            }
         }
-        int i = (int) ((y - by) / SpellBarOverlay.SLOT);
-        return (i >= 0 && i < SpellBarOverlay.SLOTS) ? i : -1;
+        return -1;
     }
+
+    // --- render ---
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(g);
-
         int left = panelLeft();
         int top = panelTop();
+
         g.fill(left, top, left + PANEL_W, top + PANEL_H, 0xE0140F1E);
         g.renderOutline(left, top, PANEL_W, PANEL_H, 0xFF3A5A88);
         g.drawString(this.font, "SPELLBOOK", left + 14, top + 12, 0xFF9FC0FF, false);
-        g.drawString(this.font, "drag a row to a slot -->", left + 100, top + 13, 0xFF6A6A6A, false);
+        g.drawString(this.font, "drag a spell or skill onto a bar slot", left + 96, top + 13, 0xFF6A6A6A, false);
 
-        List<Entry> es = entries();
-        // section headers, positioned from the first row of each section
-        g.drawString(this.font, "Weak Magic", left + 14, es.get(0).y - 12, 0xFFB9A9E3, false);
-        for (Entry e : es) {
-            if (e.skill) {
-                g.drawString(this.font, "Skills", left + 14, e.y - 12, 0xFF9BE7A0, false);
-                break;
+        int vx = listX();
+        int vy = listY();
+        int vh = listH();
+        g.fill(vx - 2, vy - 2, vx + LIST_W + 2, vy + vh + 2, 0x50000000);
+        g.enableScissor(vx, vy, vx + LIST_W, vy + vh);
+        for (Row row : rows()) {
+            int ry = vy + row.y - scroll;
+            if (ry + ROW_H < vy || ry > vy + vh) {
+                continue;
             }
+            drawRow(g, row, vx, ry);
+        }
+        g.disableScissor();
+
+        // scrollbar
+        int max = maxScroll();
+        if (max > 0) {
+            int trackH = vh;
+            int thumbH = Math.max(16, (int) ((long) trackH * vh / contentH()));
+            int thumbY = vy + (int) ((long) (trackH - thumbH) * scroll / max);
+            g.fill(vx + LIST_W + 3, vy, vx + LIST_W + 6, vy + vh, 0x40FFFFFF);
+            g.fill(vx + LIST_W + 3, thumbY, vx + LIST_W + 6, thumbY + thumbH, 0xAAB9C0D0);
         }
 
-        for (Entry e : es) {
-            g.fill(rowLeft(), e.y, rowRight(), e.y + ROW_H - 4, 0xC0202838);
-            if (e.skill) {
-                SkillIcons.draw(g, Skill.valueOf(e.name), rowLeft() + 2, e.y + 1);
-            } else {
-                SpellIcons.draw(g, Spell.valueOf(e.name), rowLeft() + 2, e.y + 1, ROW_H - 6);
-            }
-            String lvlTxt = "Lv " + e.level + " (" + StatFormulas.effectivenessPercent(e.level) + "%)";
-            g.drawString(this.font, e.display, rowLeft() + 26, e.y + 3, 0xFFFFFFFF, false);
-            g.drawString(this.font, lvlTxt, rowRight() - 2 - this.font.width(lvlTxt), e.y + 13,
-                    e.skill ? 0xFF9BE7A0 : 0xFFB9A9E3, false);
-            g.drawString(this.font, e.desc, rowLeft() + 26, e.y + 13, 0xFF8FA0B4, false);
+        // the two bars
+        for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
+            SpellBarOverlay.render(g, this.font, barX(bar), barY(), SpellBarOverlay.firstSlot(bar));
+            g.drawString(this.font, "Bar " + (bar + 1), barX(bar) - 1, barY() - 10, 0xFF9FC0FF, false);
         }
-
-        SpellBarOverlay.render(g, this.font, barX(), barY());
-        g.drawString(this.font, "Bar", barX() - 2, barY() - 10, 0xFF9FC0FF, false);
 
         // drag ghost
         String ghost = draggingName != null ? draggingName
@@ -185,13 +251,42 @@ public class SpellbookScreen extends Screen {
         super.render(g, mouseX, mouseY, partialTick);
     }
 
-    private static String spellDesc(Spell spell) {
-        return switch (spell) {
-            case MANA_TO_STAMINA -> "Mana -> Stamina";
-            case STAMINA_TO_HEALTH -> "Stamina -> Health";
-            case HEALTH_TO_MANA -> "Health -> Mana";
-            case MAGIC_BOLT -> "slow orb, splash on hit";
-        };
+    private void drawRow(GuiGraphics g, Row row, int x, int y) {
+        switch (row.kind) {
+            case HEADER -> {
+                boolean open = expanded.contains(row.group);
+                g.fill(x, y, x + LIST_W, y + ROW_H - 3, 0xC02A3346);
+                g.drawString(this.font, (open ? "[-] " : "[+] ") + row.name, x + 6, y + 6, 0xFFDDE6F5, false);
+                if (!SKILLS.equals(row.group)) {
+                    School school = School.valueOf(row.group);
+                    long have = Arrays.stream(Spell.values()).filter(s -> s.school() == school).count();
+                    String tag = have > 0 ? have + "/" + School.SPELLS_PER_SCHOOL : "—";
+                    g.drawString(this.font, tag, x + LIST_W - 4 - this.font.width(tag), y + 6, 0xFF8FA0B4, false);
+                }
+            }
+            case EMPTY -> {
+                g.fill(x + 12, y, x + LIST_W, y + ROW_H - 3, 0x50202838);
+                g.drawString(this.font, "—", x + 20, y + 6, 0xFF5A5A5A, false);
+            }
+            case SPELL -> {
+                Spell spell = Spell.valueOf(row.name);
+                int lvl = ClientSpells.spellLevel(spell);
+                g.fill(x + 12, y, x + LIST_W, y + ROW_H - 3, 0xC0202838);
+                SpellIcons.draw(g, spell, x + 14, y + 1, ROW_H - 6);
+                g.drawString(this.font, spell.displayName(), x + 36, y + 3, 0xFFFFFFFF, false);
+                String lt = "Lv " + lvl + " (" + StatFormulas.effectivenessPercent(lvl) + "%)";
+                g.drawString(this.font, lt, x + LIST_W - 4 - this.font.width(lt), y + 3, 0xFFB9A9E3, false);
+            }
+            case SKILL -> {
+                Skill skill = Skill.valueOf(row.name);
+                int lvl = ClientSpells.skillLevel(skill);
+                g.fill(x + 12, y, x + LIST_W, y + ROW_H - 3, 0xC0202838);
+                SkillIcons.draw(g, skill, x + 14, y + 1);
+                g.drawString(this.font, skill.displayName(), x + 36, y + 3, 0xFFFFFFFF, false);
+                String lt = "Lv " + lvl + " (" + StatFormulas.effectivenessPercent(lvl) + "%)";
+                g.drawString(this.font, lt, x + LIST_W - 4 - this.font.width(lt), y + 3, 0xFF9BE7A0, false);
+            }
+        }
     }
 
     @Override

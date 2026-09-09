@@ -20,6 +20,7 @@ public final class HudLayout {
     public static final String STAT_BARS = "statbars";
     public static final String HOTBAR = "hotbar";
     public static final String SPELL_BAR = "spellbar";
+    public static final String SPELL_BAR_2 = "spellbar2";
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path FILE = FMLPaths.CONFIGDIR.get().resolve("rpgstats-hud.json");
