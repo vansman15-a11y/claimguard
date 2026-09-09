@@ -4,6 +4,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.TridentItem;
@@ -96,6 +97,13 @@ public class RpgEvents {
             }
         }
         lastPos.put(player.getUUID(), new double[]{x, y, z});
+
+        // Hunger is out of the picture: never let it block sprinting, never let it self-heal.
+        FoodData food = player.getFoodData();
+        if (food.getFoodLevel() != StatFormulas.PINNED_FOOD_LEVEL) {
+            food.setFoodLevel(StatFormulas.PINNED_FOOD_LEVEL);
+        }
+        food.setExhaustion(0.0f);
 
         // Sprinting burns stamina; it cuts out when you're empty.
         if (player.isSprinting()) {

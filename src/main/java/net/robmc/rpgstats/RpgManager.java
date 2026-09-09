@@ -10,6 +10,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.SyncRpgStatsPacket;
 import net.robmc.claimguard.network.SyncSpellBarPacket;
+import net.robmc.rpgstats.magic.Spell;
 
 import java.util.UUID;
 
@@ -78,7 +79,21 @@ public final class RpgManager {
     public static void syncSpellBar(ServerPlayer player) {
         PlayerStats s = stats(player);
         ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new SyncSpellBarPacket(s.getSpellBar().clone(), s.getWeakMagicLevel()));
+                new SyncSpellBarPacket(s.getSpellBar().clone(), s.spellLevelArray()));
+    }
+
+    /** Train one spell; announce a level-up and re-sync the bar. */
+    public static void addSpellXp(ServerPlayer player, Spell spell, double amount) {
+        PlayerStats s = stats(player);
+        int gained = s.addSpellXp(spell, amount);
+        RpgData.get(player.server).markDirty();
+        if (gained > 0) {
+            player.displayClientMessage(Component.literal(
+                    spell.displayName() + "  ->  Lv " + s.getSpellLevel(spell)
+                            + "  (" + StatFormulas.effectivenessPercent(s.getSpellLevel(spell)) + "%)")
+                    .withStyle(ChatFormatting.LIGHT_PURPLE), true);
+        }
+        syncSpellBar(player);
     }
 
     public static void addXp(ServerPlayer player, Stat stat, double amount) {

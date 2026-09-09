@@ -7,6 +7,7 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.SetSpellSlotPacket;
+import net.robmc.rpgstats.StatFormulas;
 import net.robmc.rpgstats.magic.Spell;
 
 /**
@@ -121,8 +122,11 @@ public class SpellbookScreen extends Screen {
             int y = spellRowY(spell.ordinal());
             g.fill(left + 12, y, left + 234, y + ROW_H - 4, 0xC0202838);
             SpellIcons.draw(g, spell, left + 14, y + 1, ROW_H - 6);
+            int lvl = ClientSpells.spellLevel(spell);
+            String lvlTxt = "Lv " + lvl + " (" + StatFormulas.effectivenessPercent(lvl) + "%)";
             g.drawString(this.font, spell.displayName(), left + 38, y + 3, 0xFFFFFFFF, false);
-            g.drawString(this.font, describe(spell), left + 38, y + 12, 0xFF8FA0B4, false);
+            g.drawString(this.font, lvlTxt, left + 232 - this.font.width(lvlTxt), y + 13, 0xFFB9A9E3, false);
+            g.drawString(this.font, describe(spell), left + 38, y + 13, 0xFF8FA0B4, false);
         }
 
         // the casting bar
@@ -141,10 +145,10 @@ public class SpellbookScreen extends Screen {
 
     private static String describe(Spell spell) {
         return switch (spell) {
-            case MANA_TO_STAMINA -> "0.4s - spend Mana, gain 1.5x Stamina over 2s";
-            case STAMINA_TO_HEALTH -> "0.4s - spend Stamina, gain 1.5x Health over 2s";
-            case HEALTH_TO_MANA -> "0.4s - spend Health, gain 1.5x Mana over 2s";
-            case MAGIC_BOLT -> "slow orb, splash on impact, grows with level";
+            case MANA_TO_STAMINA -> "Mana -> Stamina";
+            case STAMINA_TO_HEALTH -> "Stamina -> Health";
+            case HEALTH_TO_MANA -> "Health -> Mana";
+            case MAGIC_BOLT -> "slow orb, splash on hit";
         };
     }
 

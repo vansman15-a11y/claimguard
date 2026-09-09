@@ -125,27 +125,29 @@ public final class SpellCasting {
 
     private static void complete(ServerPlayer player, Spell spell) {
         PlayerStats s = RpgManager.stats(player);
+        int lvl = s.getSpellLevel(spell);
 
         if (spell.isTransfer()) {
             // Only the source pool has to have something in it - a full target pool
-            // is fine, the overflow is simply wasted.
-            double input = Math.min(StatFormulas.TRANSFER_AMOUNT, available(player, s, spell.costPool()));
+            // is fine, the overflow is simply wasted. How much moves and the return
+            // rate both scale with this spell's level.
+            double input = Math.min(StatFormulas.transferAmount(lvl), available(player, s, spell.costPool()));
             if (input <= 0) {
                 player.displayClientMessage(Component.literal("Nothing to transfer.").withStyle(ChatFormatting.GRAY), true);
             } else {
                 spend(player, s, spell.costPool(), input);
-                double total = input * StatFormulas.TRANSFER_RATIO;
+                double total = input * StatFormulas.transferRatio(lvl);
                 int ticks = StatFormulas.TRANSFER_DURATION_TICKS;
                 transferGains.computeIfAbsent(player.getUUID(), k -> new ArrayList<>())
                         .add(new TransferGain(spell.gainPool(), total / ticks, ticks));
             }
         } else { // Magic Bolt
             spend(player, s, spell.costPool(), spell.flatCost());
-            castMagicBolt(player, s);
+            castMagicBolt(player, s, lvl);
         }
 
         RpgManager.addXp(player, Stat.INTELLIGENCE, StatFormulas.XP_CAST_SPELL);
-        s.addWeakMagicXp(StatFormulas.XP_CAST_SPELL * 0.5);
+        RpgManager.addSpellXp(player, spell, StatFormulas.XP_CAST_SPELL);
         cooldowns.computeIfAbsent(player.getUUID(), k -> new HashMap<>())
                 .put(spell, player.serverLevel().getGameTime() + spell.cooldownTicks());
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -154,17 +156,17 @@ public final class SpellCasting {
         ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new CastStatePacket("", 0));
     }
 
-    private static void castMagicBolt(ServerPlayer player, PlayerStats s) {
+    private static void castMagicBolt(ServerPlayer player, PlayerStats s, int spellLevel) {
         // Raw damage; RpgEvents scales it up when the target is a player, same as melee.
-        float damage = (float) ((StatFormulas.MAGIC_BOLT_BASE_DAMAGE + 0.6 * s.getWeakMagicLevel())
-                * StatFormulas.spellDamageMultiplier(s));
+        float damage = (float) StatFormulas.magicBoltDamage(spellLevel, s);
+        float speed = (float) StatFormulas.magicBoltSpeed(spellLevel); // slow at low level, front-loaded gains
 
         ServerLevel level = player.serverLevel();
         MagicBoltEntity bolt = new MagicBoltEntity(level, player, damage);
         bolt.setPos(player.getX(), player.getEyeY() - 0.15, player.getZ());
         Vec3 dir = player.getViewVector(1.0f);
-        bolt.setDeltaMovement(dir.scale(0.55)); // slow travel
-        bolt.shoot(dir.x, dir.y, dir.z, 0.55f, 0.0f);
+        bolt.setDeltaMovement(dir.scale(speed));
+        bolt.shoot(dir.x, dir.y, dir.z, speed, 0.0f);
         level.addFreshEntity(bolt);
     }
 

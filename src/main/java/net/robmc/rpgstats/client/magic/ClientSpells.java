@@ -9,7 +9,7 @@ import net.robmc.rpgstats.magic.Spell;
 public final class ClientSpells {
 
     private static final String[] SLOTS = new String[8];
-    private static int weakMagicLevel = 1;
+    private static int[] spellLevels = new int[Spell.values().length];
 
     private static Spell castingSpell;
     private static long castStartTick;
@@ -22,7 +22,9 @@ public final class ClientSpells {
         for (int i = 0; i < 8; i++) {
             SLOTS[i] = i < p.slots.length ? p.slots[i] : "";
         }
-        weakMagicLevel = p.weakMagicLevel;
+        if (p.spellLevels != null && p.spellLevels.length == spellLevels.length) {
+            spellLevels = p.spellLevels;
+        }
     }
 
     public static void onCastState(CastStatePacket p) {
@@ -50,8 +52,8 @@ public final class ClientSpells {
         return (i >= 0 && i < 8 && SLOTS[i] != null) ? SLOTS[i] : "";
     }
 
-    public static int weakMagicLevel() {
-        return weakMagicLevel;
+    public static int spellLevel(Spell spell) {
+        return spell == null ? 0 : spellLevels[spell.ordinal()];
     }
 
     public static boolean isCasting() {

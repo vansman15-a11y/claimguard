@@ -62,6 +62,13 @@ public class SpellBarOverlay {
                 int h = (int) (SLOT * ClientSpells.castProgress());
                 g.fill(x, y + SLOT - h, x + SLOT, y + SLOT, 0x8055C9FF);
             }
+            // spell level, small, tucked into the top-left corner
+            String lvl = Integer.toString(ClientSpells.spellLevel(spell));
+            g.pose().pushPose();
+            g.pose().translate(x + 1.0f, y + 0.5f, 0.0f);
+            g.pose().scale(0.7f, 0.7f, 1.0f);
+            g.drawString(font, lvl, 0, 0, 0xFFFFE066, true);
+            g.pose().popPose();
         }
         g.drawString(font, String.valueOf(index + 1), x + SLOT - 6, y + SLOT - 8, 0xFF808080, false);
     }

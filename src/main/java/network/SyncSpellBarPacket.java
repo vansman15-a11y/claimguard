@@ -7,22 +7,25 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-/** Server -> client: the 8 spell-bar slot assignments and the Weak Magic level. */
+/** Server -&gt; client: the 8 spell-bar slot assignments and every spell's current level. */
 public class SyncSpellBarPacket {
 
     public final String[] slots;
-    public final int weakMagicLevel;
+    public final int[] spellLevels;   // indexed by Spell.ordinal()
 
-    public SyncSpellBarPacket(String[] slots, int weakMagicLevel) {
+    public SyncSpellBarPacket(String[] slots, int[] spellLevels) {
         this.slots = slots;
-        this.weakMagicLevel = weakMagicLevel;
+        this.spellLevels = spellLevels;
     }
 
     public static void encode(SyncSpellBarPacket p, FriendlyByteBuf buf) {
         for (int i = 0; i < 8; i++) {
             buf.writeUtf(i < p.slots.length && p.slots[i] != null ? p.slots[i] : "", 48);
         }
-        buf.writeVarInt(p.weakMagicLevel);
+        buf.writeVarInt(p.spellLevels.length);
+        for (int lvl : p.spellLevels) {
+            buf.writeVarInt(lvl);
+        }
     }
 
     public static SyncSpellBarPacket decode(FriendlyByteBuf buf) {
@@ -30,7 +33,12 @@ public class SyncSpellBarPacket {
         for (int i = 0; i < 8; i++) {
             slots[i] = buf.readUtf(48);
         }
-        return new SyncSpellBarPacket(slots, buf.readVarInt());
+        int n = buf.readVarInt();
+        int[] levels = new int[Math.max(0, Math.min(n, 64))];
+        for (int i = 0; i < levels.length; i++) {
+            levels[i] = buf.readVarInt();
+        }
+        return new SyncSpellBarPacket(slots, levels);
     }
 
     public static void handle(SyncSpellBarPacket packet, Supplier<NetworkEvent.Context> ctx) {
