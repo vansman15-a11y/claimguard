@@ -2,6 +2,7 @@ package net.robmc.rpgstats;
 
 import net.minecraft.nbt.CompoundTag;
 import net.robmc.rpgstats.magic.Spell;
+import net.robmc.rpgstats.skill.Skill;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -23,6 +24,9 @@ public class PlayerStats {
     private final Map<Spell, Integer> spellLevels = new EnumMap<>(Spell.class);
     private final Map<Spell, Double> spellXp = new EnumMap<>(Spell.class);
 
+    private final Map<Skill, Integer> skillLevels = new EnumMap<>(Skill.class);
+    private final Map<Skill, Double> skillXp = new EnumMap<>(Skill.class);
+
     private double stamina = StatFormulas.BASE_POOL;
     private double mana = StatFormulas.BASE_POOL;
     private boolean initialised = false;
@@ -38,6 +42,10 @@ public class PlayerStats {
         for (Spell spell : Spell.values()) {
             spellLevels.put(spell, 0);
             spellXp.put(spell, 0.0);
+        }
+        for (Skill skill : Skill.values()) {
+            skillLevels.put(skill, 0);
+            skillXp.put(skill, 0.0);
         }
         java.util.Arrays.fill(spellBar, "");
     }
@@ -120,6 +128,50 @@ public class PlayerStats {
         return out;
     }
 
+    // --- skills ---
+
+    public int getSkillLevel(Skill skill) {
+        return skillLevels.getOrDefault(skill, 0);
+    }
+
+    public double getSkillXp(Skill skill) {
+        return skillXp.getOrDefault(skill, 0.0);
+    }
+
+    /** Adds XP to one skill and returns how many levels it gained. Stops at LEVEL_CAP. */
+    public int addSkillXp(Skill skill, double amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        int level = skillLevels.getOrDefault(skill, 0);
+        if (level >= StatFormulas.LEVEL_CAP) {
+            return 0;
+        }
+        double have = skillXp.getOrDefault(skill, 0.0) + amount;
+        int gained = 0;
+        while (level < StatFormulas.LEVEL_CAP && have >= StatFormulas.xpForNextLevel(level)) {
+            have -= StatFormulas.xpForNextLevel(level);
+            level++;
+            gained++;
+        }
+        if (level >= StatFormulas.LEVEL_CAP) {
+            have = 0;
+        }
+        skillLevels.put(skill, level);
+        skillXp.put(skill, have);
+        return gained;
+    }
+
+    /** Skill levels indexed by Skill.ordinal(), for the sync packet. */
+    public int[] skillLevelArray() {
+        Skill[] all = Skill.values();
+        int[] out = new int[all.length];
+        for (int i = 0; i < all.length; i++) {
+            out[i] = skillLevels.getOrDefault(all[i], 0);
+        }
+        return out;
+    }
+
     // --- spell bar ---
 
     public String[] getSpellBar() {
@@ -170,6 +222,10 @@ public class PlayerStats {
             tag.putInt("SpellLvl_" + spell.name(), spellLevels.getOrDefault(spell, 0));
             tag.putDouble("SpellXp_" + spell.name(), spellXp.getOrDefault(spell, 0.0));
         }
+        for (Skill skill : Skill.values()) {
+            tag.putInt("SkillLvl_" + skill.name(), skillLevels.getOrDefault(skill, 0));
+            tag.putDouble("SkillXp_" + skill.name(), skillXp.getOrDefault(skill, 0.0));
+        }
         tag.putDouble("Stamina", stamina);
         tag.putDouble("Mana", mana);
         tag.putBoolean("Initialised", initialised);
@@ -188,6 +244,10 @@ public class PlayerStats {
         for (Spell spell : Spell.values()) {
             stats.spellLevels.put(spell, clampLevel(tag.getInt("SpellLvl_" + spell.name())));
             stats.spellXp.put(spell, tag.getDouble("SpellXp_" + spell.name()));
+        }
+        for (Skill skill : Skill.values()) {
+            stats.skillLevels.put(skill, clampLevel(tag.getInt("SkillLvl_" + skill.name())));
+            stats.skillXp.put(skill, tag.getDouble("SkillXp_" + skill.name()));
         }
         stats.stamina = tag.getDouble("Stamina");
         stats.mana = tag.getDouble("Mana");

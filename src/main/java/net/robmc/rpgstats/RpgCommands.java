@@ -8,6 +8,7 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.robmc.rpgstats.magic.Spell;
+import net.robmc.rpgstats.skill.Skill;
 
 /** {@code /stats} - print your stat levels and pools in chat. */
 @Mod.EventBusSubscriber(modid = RpgStats.MOD_ID)
@@ -37,6 +38,16 @@ public class RpgCommands {
                         spell.displayName(), lvl, StatFormulas.LEVEL_CAP,
                         StatFormulas.effectivenessPercent(lvl),
                         s.getSpellXp(spell), StatFormulas.xpForNextLevel(lvl))));
+            }
+
+            player.sendSystemMessage(Component.literal("--- Your Skills ---").withStyle(ChatFormatting.GREEN));
+            for (Skill skill : Skill.values()) {
+                int lvl = s.getSkillLevel(skill);
+                player.sendSystemMessage(Component.literal(String.format(
+                        "%-12s %3d/%d  %3d%% power  (%.0f / %.0f xp)",
+                        skill.displayName(), lvl, StatFormulas.LEVEL_CAP,
+                        StatFormulas.effectivenessPercent(lvl),
+                        s.getSkillXp(skill), StatFormulas.xpForNextLevel(lvl))));
             }
 
             player.sendSystemMessage(Component.literal(String.format(

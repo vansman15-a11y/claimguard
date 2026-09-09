@@ -22,9 +22,11 @@ public class SyncRpgStatsPacket {
     public final int qui;
     public final int intel;
     public final int wis;
+    public final boolean resting;
 
     public SyncRpgStatsPacket(double health, double maxHealth, double stamina, double maxStamina,
-                              double mana, double maxMana, int str, int vit, int dex, int qui, int intel, int wis) {
+                              double mana, double maxMana, int str, int vit, int dex, int qui, int intel, int wis,
+                              boolean resting) {
         this.health = (float) health;
         this.maxHealth = (float) maxHealth;
         this.stamina = (float) stamina;
@@ -37,6 +39,7 @@ public class SyncRpgStatsPacket {
         this.qui = qui;
         this.intel = intel;
         this.wis = wis;
+        this.resting = resting;
     }
 
     public static void encode(SyncRpgStatsPacket p, FriendlyByteBuf buf) {
@@ -52,12 +55,14 @@ public class SyncRpgStatsPacket {
         buf.writeVarInt(p.qui);
         buf.writeVarInt(p.intel);
         buf.writeVarInt(p.wis);
+        buf.writeBoolean(p.resting);
     }
 
     public static SyncRpgStatsPacket decode(FriendlyByteBuf buf) {
         return new SyncRpgStatsPacket(
                 buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(),
-                buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt());
+                buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
+                buf.readBoolean());
     }
 
     public static void handle(SyncRpgStatsPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {

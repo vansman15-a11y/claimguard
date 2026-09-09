@@ -36,6 +36,7 @@ public class RpgHudOverlay {
 
     static float hp, maxHp = 300, stam, maxStam = 300, mana, maxMana = 300;
     static int str, vit, dex, qui, intel, wis;
+    public static boolean resting;
 
     public static void update(SyncRpgStatsPacket p) {
         hp = p.health;
@@ -50,6 +51,7 @@ public class RpgHudOverlay {
         qui = p.qui;
         intel = p.intel;
         wis = p.wis;
+        resting = p.resting;
     }
 
     /** Default top-left of the bar stack, before the layout offset. */

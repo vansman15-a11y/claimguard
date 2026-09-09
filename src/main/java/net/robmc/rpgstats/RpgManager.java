@@ -11,6 +11,8 @@ import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.SyncRpgStatsPacket;
 import net.robmc.claimguard.network.SyncSpellBarPacket;
 import net.robmc.rpgstats.magic.Spell;
+import net.robmc.rpgstats.skill.RestManager;
+import net.robmc.rpgstats.skill.Skill;
 
 import java.util.UUID;
 
@@ -73,13 +75,14 @@ public final class RpgManager {
                 s.getStamina(), StatFormulas.maxStamina(s),
                 s.getMana(), StatFormulas.maxMana(s),
                 s.getLevel(Stat.STRENGTH), s.getLevel(Stat.VITALITY), s.getLevel(Stat.DEXTERITY),
-                s.getLevel(Stat.QUICKNESS), s.getLevel(Stat.INTELLIGENCE), s.getLevel(Stat.WISDOM)));
+                s.getLevel(Stat.QUICKNESS), s.getLevel(Stat.INTELLIGENCE), s.getLevel(Stat.WISDOM),
+                RestManager.isResting(player.getUUID())));
     }
 
     public static void syncSpellBar(ServerPlayer player) {
         PlayerStats s = stats(player);
         ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new SyncSpellBarPacket(s.getSpellBar().clone(), s.spellLevelArray()));
+                new SyncSpellBarPacket(s.getSpellBar().clone(), s.spellLevelArray(), s.skillLevelArray()));
     }
 
     /** Train one spell; announce a level-up and re-sync the bar. */
@@ -92,6 +95,20 @@ public final class RpgManager {
                     spell.displayName() + "  ->  Lv " + s.getSpellLevel(spell)
                             + "  (" + StatFormulas.effectivenessPercent(s.getSpellLevel(spell)) + "%)")
                     .withStyle(ChatFormatting.LIGHT_PURPLE), true);
+        }
+        syncSpellBar(player);
+    }
+
+    /** Train one skill; announce a level-up and re-sync the bar. */
+    public static void addSkillXp(ServerPlayer player, Skill skill, double amount) {
+        PlayerStats s = stats(player);
+        int gained = s.addSkillXp(skill, amount);
+        RpgData.get(player.server).markDirty();
+        if (gained > 0) {
+            player.displayClientMessage(Component.literal(
+                    skill.displayName() + "  ->  Lv " + s.getSkillLevel(skill)
+                            + "  (" + StatFormulas.effectivenessPercent(s.getSkillLevel(skill)) + "%)")
+                    .withStyle(ChatFormatting.GREEN), true);
         }
         syncSpellBar(player);
     }

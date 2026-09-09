@@ -19,6 +19,8 @@ import net.robmc.rpgstats.PlayerStats;
 import net.robmc.rpgstats.Stat;
 import net.robmc.rpgstats.StatFormulas;
 import net.robmc.rpgstats.registry.RpgSounds;
+import net.robmc.rpgstats.skill.RestManager;
+import net.robmc.rpgstats.skill.Skill;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,6 +61,19 @@ public final class SpellCasting {
 
     public static boolean isCasting(UUID id) {
         return casting.containsKey(id);
+    }
+
+    /** A spell-bar slot's key was pressed: cast a spell, or activate a skill. */
+    public static void activateSlot(ServerPlayer player, int slot) {
+        String name = (slot >= 0 && slot < 8) ? RpgManager.stats(player).getSpellBar()[slot] : "";
+        Skill skill = Skill.byName(name);
+        if (skill != null) {
+            if (skill == Skill.REST) {
+                RestManager.toggle(player);
+            }
+            return;
+        }
+        startCast(player, slot);
     }
 
     public static void startCast(ServerPlayer player, int slot) {

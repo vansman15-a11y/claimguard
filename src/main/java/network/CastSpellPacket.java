@@ -29,7 +29,7 @@ public class CastSpellPacket {
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player != null) {
-                SpellCasting.startCast(player, packet.slot);
+                SpellCasting.activateSlot(player, packet.slot);
             }
         });
         context.setPacketHandled(true);

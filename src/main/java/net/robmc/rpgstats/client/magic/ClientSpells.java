@@ -5,6 +5,7 @@ import net.robmc.claimguard.network.CastStatePacket;
 import net.robmc.claimguard.network.SpellCooldownPacket;
 import net.robmc.claimguard.network.SyncSpellBarPacket;
 import net.robmc.rpgstats.magic.Spell;
+import net.robmc.rpgstats.skill.Skill;
 
 /** Client-side mirror of the player's spell bar and current cast, for the HUD. */
 public final class ClientSpells {
@@ -14,6 +15,7 @@ public final class ClientSpells {
 
     private static final String[] SLOTS = new String[8];
     private static int[] spellLevels = new int[Spell.values().length];
+    private static int[] skillLevels = new int[Skill.values().length];
 
     private static Spell castingSpell;
     private static long castStartTick;
@@ -31,6 +33,9 @@ public final class ClientSpells {
         }
         if (p.spellLevels != null && p.spellLevels.length == spellLevels.length) {
             spellLevels = p.spellLevels;
+        }
+        if (p.skillLevels != null && p.skillLevels.length == skillLevels.length) {
+            skillLevels = p.skillLevels;
         }
     }
 
@@ -99,6 +104,15 @@ public final class ClientSpells {
 
     public static int spellLevel(Spell spell) {
         return spell == null ? 0 : spellLevels[spell.ordinal()];
+    }
+
+    /** The skill bound to bar slot i, or null (also null if a spell is bound there). */
+    public static Skill skillAt(int i) {
+        return (i >= 0 && i < 8) ? Skill.byName(SLOTS[i]) : null;
+    }
+
+    public static int skillLevel(Skill skill) {
+        return skill == null ? 0 : skillLevels[skill.ordinal()];
     }
 
     public static boolean isCasting() {

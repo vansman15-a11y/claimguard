@@ -14,6 +14,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.robmc.rpgstats.magic.SpellCasting;
+import net.robmc.rpgstats.skill.RestManager;
 import net.minecraftforge.event.entity.player.ItemFishedEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -123,14 +124,24 @@ public class RpgEvents {
             player.setSprinting(false); // out of gas
         }
 
-        if (player.tickCount % StatFormulas.REGEN_INTERVAL_TICKS == 0) {
+        RestManager.tick(player);
+
+        // Resting runs its own (faster) regen; skip the normal pass so they don't stack.
+        if (!RestManager.isResting(player.getUUID())
+                && player.tickCount % StatFormulas.REGEN_INTERVAL_TICKS == 0) {
             RpgManager.regenTick(player);
         }
     }
 
     @SubscribeEvent
+    public static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        RestManager.clear(event.getEntity().getUUID());
+    }
+
+    @SubscribeEvent
     public static void onJump(LivingEvent.LivingJumpEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            RestManager.stop(player, "You get up.");
             PlayerStats s = RpgManager.stats(player);
             if (s.getStamina() > 0) {
                 s.setStamina(s.getStamina() - StatFormulas.STAMINA_JUMP);
@@ -173,6 +184,7 @@ public class RpgEvents {
                 amount *= (float) (1.0 - StatFormulas.spellDamageResist(RpgManager.stats(victim)));
             }
             SpellCasting.interrupt(victim); // taking a hit breaks your cast
+            RestManager.stop(victim, "Knocked out of your rest!");
 
             // A slice of any hit from a mob or player also bleeds your other pools.
             if (fromAttacker && amount > 0) {

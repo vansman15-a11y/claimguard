@@ -156,9 +156,9 @@ public final class StatFormulas {
 
     public static final int TRANSFER_DURATION_TICKS = 40;         // the gain is paid out over ~2 seconds
     private static final double TRANSFER_AMOUNT_MIN = 12.0;       // spent per cast at spell level 0
-    private static final double TRANSFER_AMOUNT_MAX = 30.0;       // ... at the level cap
+    private static final double TRANSFER_AMOUNT_MAX = 26.0;       // ... at the level cap
     private static final double TRANSFER_RATIO_MIN = 0.75;        // level 0: you LOSE value in the exchange
-    private static final double TRANSFER_RATIO_MAX = 1.40;        // level cap: still a touch weaker than the old flat 1.5
+    private static final double TRANSFER_RATIO_MAX = 1.25;        // level cap: a modest net gain, not a combat crutch
 
     public static double transferAmount(int spellLevel) {
         return TRANSFER_AMOUNT_MIN + (TRANSFER_AMOUNT_MAX - TRANSFER_AMOUNT_MIN) * effectiveness(spellLevel);
@@ -184,6 +184,19 @@ public final class StatFormulas {
 
     public static double magicBoltSpeed(int spellLevel) {
         return MAGIC_BOLT_SPEED_MIN + (MAGIC_BOLT_SPEED_MAX - MAGIC_BOLT_SPEED_MIN) * effectiveness(spellLevel);
+    }
+
+    // --- Rest skill (a semi-AFK downtime action; deliberately mild) ---
+
+    public static final int REST_REGEN_INTERVAL_TICKS = 20;      // rest tops your pools up every ~1s
+    public static final double REST_BREAK_DISTANCE = 0.4;        // move this far from where you sat -> you stand up
+    public static final double XP_REST_TICK = 4.0;               // Rest xp per regen tick while resting
+    private static final double REST_MULT_MIN = 2.0;             // pools regen this many x faster at Rest level 0
+    private static final double REST_MULT_MAX = 3.5;             // ... at the level cap - still modest, not a heal button
+
+    /** Multiplier on natural regen while resting, scaled by Rest level. */
+    public static double restRegenMultiplier(int restLevel) {
+        return REST_MULT_MIN + (REST_MULT_MAX - REST_MULT_MIN) * effectiveness(restLevel);
     }
 
     // --- damage scaling ---
