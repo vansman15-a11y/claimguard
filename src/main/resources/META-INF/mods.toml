@@ -30,3 +30,37 @@ Install on both the server and every client.
     versionRange="[1.20.1,1.21)"
     ordering="NONE"
     side="BOTH"
+
+[[mods]]
+modId="rpgstats"
+version="0.1.0"
+displayName="RPG Stats"
+authors="robmc"
+description='''
+A Dark-Age-of-Camelot-style stat system. Health, Stamina and Mana pools
+(start ~300, cap 450) fed by six trainable stats - Strength, Vitality,
+Dexterity, Quickness, Intelligence, Wisdom - each raised by the matching
+actions (mining, chopping, archery, moving, casting, fishing...). Bundled
+with ClaimGuard; install on the server and every client.
+'''
+
+[[dependencies.rpgstats]]
+    modId="claimguard"
+    mandatory=true
+    versionRange="[0.1.0,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.rpgstats]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.rpgstats]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"

@@ -1,0 +1,143 @@
+package net.robmc.rpgstats;
+
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.level.block.CropBlock;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.player.ItemFishedEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.level.BlockEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * Wires the RPG stat system into gameplay: initialises new players, keeps their
+ * attributes in sync, ticks natural regen, scales combat damage to the ~300-450
+ * pool, and awards stat XP for the matching actions.
+ */
+@Mod.EventBusSubscriber(modid = RpgStats.MOD_ID)
+public class RpgEvents {
+
+    /** Per-player last position, to measure distance travelled for Quickness. */
+    private static final Map<UUID, double[]> lastPos = new HashMap<>();
+
+    // --- lifecycle ---
+
+    @SubscribeEvent
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            RpgManager.ensureInitialised(player);
+            RpgManager.applyAttributes(player);
+            RpgManager.sync(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            PlayerStats s = RpgManager.stats(player);
+            s.setStamina(StatFormulas.maxStamina(s));
+            s.setMana(StatFormulas.maxMana(s));
+            RpgManager.applyAttributes(player);
+            RpgManager.sync(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onClone(PlayerEvent.Clone event) {
+        // Stats live in RpgData keyed by UUID, so nothing to copy - just refresh.
+        if (event.isWasDeath() && event.getEntity() instanceof ServerPlayer player) {
+            RpgManager.applyAttributes(player);
+        }
+    }
+
+    // --- regen + movement tick ---
+
+    @SubscribeEvent
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)) {
+            return;
+        }
+
+        // Quickness: distance travelled since last tick.
+        double[] prev = lastPos.get(player.getUUID());
+        double x = player.getX();
+        double y = player.getY();
+        double z = player.getZ();
+        if (prev != null) {
+            double dist = Math.sqrt(Math.pow(x - prev[0], 2) + Math.pow(y - prev[1], 2) + Math.pow(z - prev[2], 2));
+            if (dist > 0.05 && dist < 20) { // ignore teleports and jitter
+                boolean inWater = player.isInWater() || player.isSwimming();
+                double rate = inWater ? StatFormulas.XP_SWIM_PER_METRE : StatFormulas.XP_MOVE_PER_METRE;
+                RpgManager.addXp(player, Stat.QUICKNESS, dist * rate);
+            }
+        }
+        lastPos.put(player.getUUID(), new double[]{x, y, z});
+
+        if (player.tickCount % StatFormulas.REGEN_INTERVAL_TICKS == 0) {
+            RpgManager.regenTick(player);
+        }
+    }
+
+    // --- combat: scale damage to the pool, apply stat multipliers, award XP ---
+
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void onLivingHurt(LivingHurtEvent event) {
+        float amount = event.getAmount();
+
+        if (event.getSource().getEntity() instanceof ServerPlayer attacker && attacker.isAlive()) {
+            PlayerStats as = RpgManager.stats(attacker);
+            boolean projectile = event.getSource().is(DamageTypeTags.IS_PROJECTILE)
+                    || event.getSource().getDirectEntity() instanceof Projectile;
+            if (projectile) {
+                amount *= (float) StatFormulas.rangedDamageMultiplier(as);
+                RpgManager.addXp(attacker, Stat.DEXTERITY, StatFormulas.XP_RANGED_HIT);
+            } else if (event.getSource().getDirectEntity() == attacker) {
+                amount *= (float) StatFormulas.meleeDamageMultiplier(as);
+                RpgManager.addXp(attacker, Stat.STRENGTH, StatFormulas.XP_MELEE_HIT);
+                RpgManager.addXp(attacker, Stat.VITALITY, StatFormulas.XP_MELEE_HIT * 0.6);
+            }
+        }
+
+        // Everything hitting a player is scaled to the big pool.
+        if (event.getEntity() instanceof ServerPlayer) {
+            amount *= (float) StatFormulas.DAMAGE_SCALE;
+        }
+
+        event.setAmount(amount);
+    }
+
+    // --- gathering XP ---
+
+    @SubscribeEvent
+    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        if (!(event.getPlayer() instanceof ServerPlayer player)) {
+            return;
+        }
+        var state = event.getState();
+        if (state.is(BlockTags.LOGS)) {
+            boolean axe = player.getMainHandItem().getItem() instanceof AxeItem;
+            RpgManager.addXp(player, axe ? Stat.VITALITY : Stat.STRENGTH, StatFormulas.XP_CHOP_LOG);
+        } else if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state)) {
+            RpgManager.addXp(player, Stat.WISDOM, StatFormulas.XP_HARVEST_CROP);
+        } else {
+            RpgManager.addXp(player, Stat.STRENGTH, StatFormulas.XP_MINE_BLOCK);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onFished(ItemFishedEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            RpgManager.addXp(player, Stat.WISDOM, StatFormulas.XP_FISH_CATCH);
+        }
+    }
+}
