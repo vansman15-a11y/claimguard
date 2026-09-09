@@ -9,8 +9,15 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.client.settings.KeyModifier;
+import net.robmc.claimguard.network.ClaimGuardNetwork;
+import net.robmc.claimguard.network.SetSpellSlotPacket;
 import net.robmc.rpgstats.StatFormulas;
+import net.robmc.rpgstats.client.magic.ClientSpells;
+import net.robmc.rpgstats.client.magic.SkillIcons;
 import net.robmc.rpgstats.client.magic.SpellBarOverlay;
+import net.robmc.rpgstats.client.magic.SpellIcons;
+import net.robmc.rpgstats.magic.Spell;
+import net.robmc.rpgstats.skill.Skill;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -27,6 +34,9 @@ public class HudEditorScreen extends Screen {
     // dragging an element
     private String dragging;
     private int grabX, grabY, baseX, baseY;
+
+    // dragging a spell/skill binding out of a bar slot
+    private int draggingSpellFrom = -1;
 
     // capturing a key for a slot
     private KeyMapping capturing;
@@ -104,6 +114,12 @@ public class HudEditorScreen extends Screen {
         }
 
         if (button == 0) {
+            // a filled spell slot -> drag that binding to another slot
+            int ss = spellSlotAt(mx, my);
+            if (ss >= 0 && !ClientSpells.slotName(ss).isEmpty()) {
+                draggingSpellFrom = ss;
+                return true;
+            }
             if (inside(statBarsBox(), mx, my)) {
                 startDrag(HudLayout.STAT_BARS, mx, my);
                 return true;
@@ -113,7 +129,9 @@ public class HudEditorScreen extends Screen {
                 return true;
             }
             for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
-                if (inside(spellBarBox(bar), mx, my)) {
+                int[] b = spellBarBox(bar);
+                boolean onGrip = mx >= b[0] && mx <= b[0] + b[2] && my >= b[1] - 11 && my < b[1];
+                if (onGrip || inside(b, mx, my)) {
                     startDrag(SpellBarOverlay.layoutKey(bar), mx, my);
                     return true;
                 }
@@ -151,6 +169,9 @@ public class HudEditorScreen extends Screen {
 
     @Override
     public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+        if (draggingSpellFrom >= 0) {
+            return true; // handled on release
+        }
         if (dragging != null) {
             HudLayout.set(dragging, baseX + (int) mx - grabX, baseY + (int) my - grabY);
             return true;
@@ -160,8 +181,23 @@ public class HudEditorScreen extends Screen {
 
     @Override
     public boolean mouseReleased(double mx, double my, int button) {
+        if (draggingSpellFrom >= 0) {
+            int target = spellSlotAt(mx, my);
+            if (target >= 0 && target != draggingSpellFrom) {
+                String moving = ClientSpells.slotName(draggingSpellFrom);
+                String swapped = ClientSpells.slotName(target);
+                sendSlot(target, moving);
+                sendSlot(draggingSpellFrom, swapped); // swap (swapped may be empty)
+            }
+            draggingSpellFrom = -1;
+        }
         dragging = null;
         return super.mouseReleased(mx, my, button);
+    }
+
+    private void sendSlot(int slot, String name) {
+        ClaimGuardNetwork.CHANNEL.sendToServer(new SetSpellSlotPacket(slot, name));
+        ClientSpells.setSlotLocal(slot, name);
     }
 
     // --- capture / rebind ---
@@ -279,7 +315,7 @@ public class HudEditorScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         g.fill(0, 0, this.width, this.height, 0x60000000);
-        g.drawCenteredString(this.font, "HUD Editor  -  drag boxes to move, right-click a slot to rebind its key", this.width / 2, 12, 0xFFFFFF);
+        g.drawCenteredString(this.font, "HUD Editor  -  drag a bar's label to move it, drag a spell between slots, right-click a slot to rebind its key", this.width / 2, 12, 0xFFFFFF);
 
         int[] bars = statBarsBox();
         RpgHudOverlay.renderBars(g, this.font, bars[0] + 1, bars[1] + 1);
@@ -301,10 +337,25 @@ public class HudEditorScreen extends Screen {
             int sbX = spellBarX(bar);
             int sbY = spellBarY(bar);
             SpellBarOverlay.render(g, this.font, sbX, sbY, SpellBarOverlay.firstSlot(bar));
-            outline(g, spellBarBox(bar), 0xFF9FC0FF, "Bar " + (bar + 1));
+            // draggable label / grip strip above the bar
+            g.fill(sbX, sbY - 11, sbX + SpellBarOverlay.SLOT, sbY - 1, 0xC03A5A88);
+            g.drawString(this.font, "Bar " + (bar + 1), sbX, sbY - 10, 0xFFDDE6F5, true);
+            g.renderOutline(sbX, sbY, SpellBarOverlay.SLOT, SpellBarOverlay.BAR_H, 0xFF9FC0FF);
             for (int i = 0; i < SpellBarOverlay.SLOTS; i++) {
                 keyHint(g, RpgKeybinds.CAST[bar * SpellBarOverlay.SLOTS + i],
                         sbX, sbY + i * SpellBarOverlay.SLOT, SpellBarOverlay.SLOT);
+            }
+        }
+
+        // spell being dragged between slots
+        if (draggingSpellFrom >= 0) {
+            String n = ClientSpells.slotName(draggingSpellFrom);
+            Spell sp = Spell.byName(n);
+            Skill sk = Skill.byName(n);
+            if (sp != null) {
+                SpellIcons.draw(g, sp, mouseX - 8, mouseY - 8, 16);
+            } else if (sk != null) {
+                SkillIcons.draw(g, sk, mouseX - 8, mouseY - 8);
             }
         }
 
