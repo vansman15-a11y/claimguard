@@ -77,6 +77,12 @@ public class HudEditorScreen extends Screen {
                 net.robmc.rpgstats.client.magic.CastBarOverlay.H + 14};
     }
 
+    private int[] targetFrameBox() {
+        int x = TargetFrameOverlay.defaultLeft(width) + HudLayout.offX(HudLayout.TARGET_FRAME);
+        int y = TargetFrameOverlay.defaultTop(height) + HudLayout.offY(HudLayout.TARGET_FRAME);
+        return new int[]{x - 4, y - 4, TargetFrameOverlay.W + 8, TargetFrameOverlay.H + 8};
+    }
+
     private int hotbarX() {
         return (width - HOTBAR_W) / 2 + HudLayout.offX(HudLayout.HOTBAR);
     }
@@ -141,6 +147,10 @@ public class HudEditorScreen extends Screen {
             }
             if (inside(castBarBox(), mx, my)) {
                 startDrag(HudLayout.CAST_BAR, mx, my);
+                return true;
+            }
+            if (inside(targetFrameBox(), mx, my)) {
+                startDrag(HudLayout.TARGET_FRAME, mx, my);
                 return true;
             }
             if (inside(hotbarBox(), mx, my)) {
@@ -350,6 +360,14 @@ public class HudEditorScreen extends Screen {
         int cbY = net.robmc.rpgstats.client.magic.CastBarOverlay.defaultTop(height) + HudLayout.offY(HudLayout.CAST_BAR);
         net.robmc.rpgstats.client.magic.CastBarOverlay.render(g, this.font, cbX, cbY, null, 0.6f, false);
         outline(g, castBarBox(), 0xFFEAD37A, "Cast bar");
+
+        int[] tf = targetFrameBox();
+        g.fill(tf[0], tf[1], tf[0] + tf[2], tf[1] + tf[3], 0xB6000000);
+        g.drawString(this.font, "[RNG] Target", tf[0] + 4, tf[1] + 4, 0xFFE1533E, true);
+        int tfBarY = tf[1] + tf[3] - 12;
+        g.fill(tf[0] + 4, tfBarY, tf[0] + tf[2] - 4, tfBarY + 8, 0xC0301010);
+        g.fill(tf[0] + 4, tfBarY, tf[0] + 4 + (tf[2] - 8) * 6 / 10, tfBarY + 8, 0xFFC0392B);
+        outline(g, tf, 0xFFE1533E, "Target frame");
 
         // hotbar ghost with 9 slots
         int hbX = hotbarX();

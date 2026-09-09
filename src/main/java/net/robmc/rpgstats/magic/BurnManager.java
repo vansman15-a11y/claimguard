@@ -51,6 +51,18 @@ public final class BurnManager {
         burning.remove(entityId);
     }
 
+    /** Ticks of burn left on an entity ({@code now} = current game time), or 0. For the target frame. */
+    public static int remainingTicks(long now, int entityId) {
+        Burn b = burning.get(entityId);
+        return b == null ? 0 : (int) Math.max(0, b.endTick - now);
+    }
+
+    /** How many burn stacks an entity currently has (0-3). */
+    public static int stacks(int entityId) {
+        Burn b = burning.get(entityId);
+        return b == null ? 0 : b.stacks;
+    }
+
     /** Called every server tick from RpgEvents. */
     public static void tick(MinecraftServer server) {
         if (burning.isEmpty()) {

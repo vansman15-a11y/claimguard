@@ -1,0 +1,229 @@
+package net.robmc.rpgstats.client;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
+import net.minecraftforge.client.gui.overlay.IGuiOverlay;
+import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.robmc.claimguard.network.SyncClanViewPacket;
+import net.robmc.claimguard.network.TargetInfoPacket;
+import net.robmc.rpgstats.RpgStats;
+
+import java.util.List;
+
+/**
+ * DAoC / Rise-of-Agon style target frame. Look at a mob or player and a small
+ * panel appears near the top of the screen: their name (green for your clan,
+ * dark green for an ally, red for anyone else), clan tag, a health bar with
+ * numbers, and a row of debuff icons above it counting down.
+ *
+ * Movable in the J editor ({@link HudLayout#TARGET_FRAME}).
+ */
+@Mod.EventBusSubscriber(modid = RpgStats.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+public final class TargetFrameOverlay {
+
+    public static final int W = 148;
+    public static final int H = 40;
+
+    private static final int PICK_RANGE = 45;
+    private static final int GRACE_TICKS = 25; // keep the frame ~1.25 s after you look away
+
+    private static final int COL_SELF = 0xFF54DD6A;
+    private static final int COL_ALLY = 0xFF2F9A44;
+    private static final int COL_ENEMY = 0xFFE1533E;
+
+    private static final ResourceLocation BURN_ICON = new ResourceLocation(RpgStats.MOD_ID, "textures/gui/debuff/burn.png");
+    private static final ResourceLocation BLEED_ICON = new ResourceLocation(RpgStats.MOD_ID, "textures/gui/debuff/bleed.png");
+
+    private static LivingEntity target;
+    private static long lastSeenTick;
+
+    private TargetFrameOverlay() {
+    }
+
+    public static LivingEntity target() {
+        return (target != null && target.isAlive() && !target.isRemoved()) ? target : null;
+    }
+
+    public static int defaultLeft(int screenW) {
+        return (screenW - W) / 2;
+    }
+
+    public static int defaultTop(int screenH) {
+        return 6;
+    }
+
+    @SubscribeEvent
+    public static void register(RegisterGuiOverlaysEvent event) {
+        event.registerAbove(VanillaGuiOverlay.BOSS_EVENT_PROGRESS.id(), "rpg_target_frame", FRAME);
+    }
+
+    private static final IGuiOverlay FRAME = (gui, g, partialTick, screenW, screenH) -> {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.options.hideGui) {
+            return;
+        }
+        LivingEntity t = target();
+        if (t == null) {
+            return;
+        }
+        int x = defaultLeft(screenW) + HudLayout.offX(HudLayout.TARGET_FRAME);
+        int y = defaultTop(screenH) + HudLayout.offY(HudLayout.TARGET_FRAME);
+        render(g, mc, mc.font, x, y, t);
+    };
+
+    // --- target picking ---
+
+    @Mod.EventBusSubscriber(modid = RpgStats.MOD_ID, value = Dist.CLIENT)
+    public static final class Ticker {
+        private Ticker() {
+        }
+
+        @SubscribeEvent
+        public static void onClientTick(TickEvent.ClientTickEvent event) {
+            if (event.phase == TickEvent.Phase.END) {
+                updateTarget();
+            }
+        }
+    }
+
+    private static void updateTarget() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null) {
+            target = null;
+            return;
+        }
+        Entity cam = mc.getCameraEntity() == null ? mc.player : mc.getCameraEntity();
+        Vec3 eye = cam.getEyePosition(1.0f);
+        Vec3 look = cam.getViewVector(1.0f);
+        Vec3 far = eye.add(look.scale(PICK_RANGE));
+
+        HitResult block = mc.level.clip(new ClipContext(eye, far,
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, cam));
+        Vec3 end = block.getType() != HitResult.Type.MISS ? block.getLocation() : far;
+        double maxSq = eye.distanceToSqr(end);
+
+        AABB box = cam.getBoundingBox().expandTowards(look.scale(PICK_RANGE)).inflate(1.0);
+        EntityHitResult hit = ProjectileUtil.getEntityHitResult(cam, eye, end, box,
+                e -> e instanceof LivingEntity && e.isAlive() && e != mc.player && e != cam && !e.isSpectator(),
+                maxSq);
+
+        long now = mc.level.getGameTime();
+        if (hit != null && hit.getEntity() instanceof LivingEntity le) {
+            target = le;
+            lastSeenTick = now;
+        } else if (target != null
+                && (!target.isAlive() || target.isRemoved() || now - lastSeenTick > GRACE_TICKS)) {
+            target = null;
+        }
+    }
+
+    // --- rendering ---
+
+    private static void render(GuiGraphics g, Minecraft mc, Font font, int x, int y, LivingEntity t) {
+        int colour;
+        String name;
+        if (t instanceof Player p) {
+            colour = switch (ClientClanView.relation(p.getUUID())) {
+                case SyncClanViewPacket.SELF -> COL_SELF;
+                case SyncClanViewPacket.ALLY -> COL_ALLY;
+                default -> COL_ENEMY;
+            };
+            String tag = ClientClanView.tag(p.getUUID());
+            name = (tag.isEmpty() ? "" : "[" + tag + "] ") + p.getGameProfile().getName();
+        } else {
+            colour = COL_ENEMY;
+            name = t.getDisplayName().getString();
+        }
+
+        float hp = Math.max(0f, t.getHealth());
+        float max = Math.max(1f, t.getMaxHealth());
+        float absorb = t.getAbsorptionAmount();
+
+        g.fill(x - 4, y - 4, x + W + 4, y + H + 4, 0xB6000000);
+        g.renderOutline(x - 4, y - 4, W + 8, H + 8, 0x40FFFFFF);
+
+        g.drawString(font, clip(font, name, W), x, y, colour, true);
+
+        int rowY = y + 11;
+        int dx = x;
+        for (TargetInfoPacket.Debuff d : ClientTargetInfo.forEntity(t.getId())) {
+            if (dx + 16 > x + W) {
+                break;
+            }
+            drawDebuff(g, mc, font, dx, rowY, d);
+            dx += 18;
+        }
+
+        int barY = y + H - 8;
+        int barH = 8;
+        g.fill(x - 1, barY - 1, x + W + 1, barY + barH + 1, 0xFF000000);
+        g.fill(x, barY, x + W, barY + barH, 0xC0301010);
+        int hpFill = Math.round(W * Math.min(1f, hp / max));
+        g.fill(x, barY, x + hpFill, barY + barH, 0xFFC0392B);
+        if (absorb > 0f) {
+            int aFill = Math.min(W - hpFill, Math.round(W * Math.min(1f, absorb / max)));
+            g.fill(x + hpFill, barY, x + hpFill + aFill, barY + barH, 0xFFE8C349);
+        }
+        String hpText = Mth.ceil(hp) + " / " + Mth.ceil(max) + (absorb > 0f ? "  (+" + Mth.ceil(absorb) + ")" : "");
+        g.drawString(font, hpText, x + (W - font.width(hpText)) / 2, barY, 0xFFFFFFFF, true);
+    }
+
+    private static void drawDebuff(GuiGraphics g, Minecraft mc, Font font, int x, int y, TargetInfoPacket.Debuff d) {
+        if (d.kind == TargetInfoPacket.KIND_VANILLA) {
+            MobEffect eff = BuiltInRegistries.MOB_EFFECT.byId(d.id);
+            if (eff != null) {
+                TextureAtlasSprite sprite = mc.getMobEffectTextures().get(eff);
+                g.blit(x, y, 0, 16, 16, sprite);
+            } else {
+                g.fill(x, y, x + 16, y + 16, 0xFF503050);
+            }
+        } else if (d.kind == TargetInfoPacket.KIND_BURN) {
+            g.blit(BURN_ICON, x, y, 0, 0, 16, 16, 16, 16);
+            for (int i = 0; i < d.stacks && i < 3; i++) {
+                g.fill(x + 1 + i * 5, y - 2, x + 5 + i * 5, y, 0xFFFFC24B);
+            }
+        } else {
+            g.blit(BLEED_ICON, x, y, 0, 0, 16, 16, 16, 16);
+        }
+
+        int secs = ClientTargetInfo.secondsLeft(d);
+        if (secs > 0) {
+            String s = Integer.toString(secs);
+            g.pose().pushPose();
+            g.pose().translate(x + 16 - font.width(s) * 0.6f - 0.5f, y + 16 - 5.5f, 0);
+            g.pose().scale(0.6f, 0.6f, 1f);
+            g.drawString(font, s, 0, 0, 0xFFFFFFFF, true);
+            g.pose().popPose();
+        }
+    }
+
+    private static String clip(Font font, String s, int maxW) {
+        if (font.width(s) <= maxW) {
+            return s;
+        }
+        while (s.length() > 1 && font.width(s + "…") > maxW) {
+            s = s.substring(0, s.length() - 1);
+        }
+        return s + "…";
+    }
+}

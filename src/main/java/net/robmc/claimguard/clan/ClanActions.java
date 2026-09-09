@@ -18,6 +18,7 @@ import net.robmc.claimguard.network.OpenClanBrowsePacket;
 import net.robmc.claimguard.network.OpenClanRosterPacket;
 import net.robmc.claimguard.network.OpenCreateClanScreenPacket;
 import net.robmc.claimguard.network.SyncAlliesPacket;
+import net.robmc.claimguard.network.SyncClanViewPacket;
 import net.robmc.claimguard.registry.ModItems;
 import net.robmc.claimguard.siege.SiegeManager;
 
@@ -515,6 +516,7 @@ public final class ClanActions {
                 syncAllies(online);
             }
         }
+        syncClanViewToAll(player.server); // relation changed - refresh target-frame colours everywhere
     }
 
     public static void setRaidWindow(ServerPlayer player, String hhmm) {
@@ -546,6 +548,38 @@ public final class ClanActions {
         player.displayClientMessage(Component.literal(
                 "Raid window set to " + myClan.get().formatRaidWindow() + " (server time). "
                         + "Your claims can only be sieged during this 3-hour window."), false);
+    }
+
+    /**
+     * Send {@code viewer} a row for every online player - name, clan tag, and how
+     * {@code viewer}'s clan regards them. Feeds the client target frame.
+     */
+    public static void syncClanView(ServerPlayer viewer) {
+        ClanManager clans = ClanManager.get(viewer.server);
+        Clan myClan = clans.getClanOf(viewer.getUUID()).orElse(null);
+
+        List<SyncClanViewPacket.Row> rows = new ArrayList<>();
+        for (ServerPlayer other : viewer.server.getPlayerList().getPlayers()) {
+            Clan theirClan = clans.getClanOf(other.getUUID()).orElse(null);
+            String tag = theirClan == null ? "" : theirClan.getTag();
+            byte relation = SyncClanViewPacket.ENEMY;
+            if (myClan != null && theirClan != null) {
+                if (myClan.getId().equals(theirClan.getId())) {
+                    relation = SyncClanViewPacket.SELF;
+                } else if (myClan.getRelation(theirClan.getId()) == ClanRelation.ALLY) {
+                    relation = SyncClanViewPacket.ALLY;
+                }
+            }
+            rows.add(new SyncClanViewPacket.Row(other.getUUID(), other.getGameProfile().getName(), tag, relation));
+        }
+        ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> viewer), new SyncClanViewPacket(rows));
+    }
+
+    /** Refresh the clan view for every online player (call after any clan / relation change). */
+    public static void syncClanViewToAll(net.minecraft.server.MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            syncClanView(player);
+        }
     }
 
     public static void syncAllies(ServerPlayer player) {

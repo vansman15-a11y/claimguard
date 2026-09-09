@@ -40,6 +40,12 @@ public final class BleedManager {
         bleeding.remove(entityId);
     }
 
+    /** Ticks of bleed left on an entity ({@code now} = current game time), or 0. For the target frame. */
+    public static int remainingTicks(long now, int entityId) {
+        Bleed b = bleeding.get(entityId);
+        return b == null ? 0 : (int) Math.max(0, b.endTick - now);
+    }
+
     /** Called every server tick from RpgEvents. */
     public static void tick(MinecraftServer server) {
         if (bleeding.isEmpty()) {

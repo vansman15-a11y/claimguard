@@ -23,6 +23,7 @@ public final class HudLayout {
     public static final String SPELL_BAR_2 = "spellbar2";
     public static final String STATUS = "status";
     public static final String CAST_BAR = "castbar";
+    public static final String TARGET_FRAME = "targetframe";
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path FILE = FMLPaths.CONFIGDIR.get().resolve("rpgstats-hud.json");
