@@ -39,7 +39,7 @@ public final class StatFormulas {
     }
 
     /** XP to go from {@code currentLevel} to the next. Gentle to 50, a grind to 75, a slog to 100. */
-    public static final double XP_CURVE_BASE = 100.0;
+    public static final double XP_CURVE_BASE = 20.0;
 
     public static double xpForNextLevel(int currentLevel) {
         double t = currentLevel / 25.0;
@@ -199,7 +199,8 @@ public final class StatFormulas {
     public static final double XP_RANGED_HIT = 3.0;
     public static final double XP_MOVE_PER_METRE = 0.05;
     public static final double XP_SWIM_PER_METRE = 0.12;
-    public static final double XP_CAST_SPELL = 4.0;
+    public static final double XP_CAST_SPELL = 6.0;        // per cast, damage spells
+    public static final double XP_CAST_TRANSFER = 16.0;    // per cast, Weak Magic transfers - they level noticeably faster
     public static final double XP_FISH_CATCH = 6.0;
     public static final double XP_HARVEST_CROP = 2.0;
     public static final double XP_ENCHANT = 15.0;

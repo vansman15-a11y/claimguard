@@ -147,7 +147,8 @@ public final class SpellCasting {
         }
 
         RpgManager.addXp(player, Stat.INTELLIGENCE, StatFormulas.XP_CAST_SPELL);
-        RpgManager.addSpellXp(player, spell, StatFormulas.XP_CAST_SPELL);
+        RpgManager.addSpellXp(player, spell, spell.isTransfer()
+                ? StatFormulas.XP_CAST_TRANSFER : StatFormulas.XP_CAST_SPELL);
         cooldowns.computeIfAbsent(player.getUUID(), k -> new HashMap<>())
                 .put(spell, player.serverLevel().getGameTime() + spell.cooldownTicks());
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
