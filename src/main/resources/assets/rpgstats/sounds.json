@@ -18,5 +18,30 @@
     "category": "player",
     "subtitle": "rpgstats.subtitle.spell.magic_bolt",
     "sounds": [ "rpgstats:spell/magic_bolt" ]
+  },
+  "spell.sunder": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.sunder",
+    "sounds": [ "rpgstats:spell/sunder" ]
+  },
+  "spell.heal_other": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.heal_other",
+    "sounds": [ "rpgstats:spell/heal_other" ]
+  },
+  "spell.away": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.away",
+    "sounds": [ "rpgstats:spell/away" ]
+  },
+  "spell.scatter": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.scatter",
+    "sounds": [ "rpgstats:spell/scatter" ]
+  },
+  "spell.bright_light": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.bright_light",
+    "sounds": [ "rpgstats:spell/bright_light" ]
   }
 }

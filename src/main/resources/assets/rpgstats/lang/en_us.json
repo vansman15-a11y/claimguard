@@ -29,5 +29,10 @@
   "rpgstats.subtitle.spell.mana_to_stamina": "Transfer: Mana to Stamina",
   "rpgstats.subtitle.spell.stamina_to_health": "Transfer: Stamina to Health",
   "rpgstats.subtitle.spell.health_to_mana": "Transfer: Health to Mana",
-  "rpgstats.subtitle.spell.magic_bolt": "Magic Bolt cast"
+  "rpgstats.subtitle.spell.magic_bolt": "Magic Bolt cast",
+  "rpgstats.subtitle.spell.sunder": "Sunder cast",
+  "rpgstats.subtitle.spell.heal_other": "Heal Other cast",
+  "rpgstats.subtitle.spell.away": "Away cast",
+  "rpgstats.subtitle.spell.scatter": "Scatter cast",
+  "rpgstats.subtitle.spell.bright_light": "Bright Light cast"
 }

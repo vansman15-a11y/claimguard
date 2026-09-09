@@ -19,6 +19,11 @@ public final class RpgSounds {
     public static final RegistryObject<SoundEvent> STAMINA_TO_HEALTH = reg("spell.stamina_to_health");
     public static final RegistryObject<SoundEvent> HEALTH_TO_MANA = reg("spell.health_to_mana");
     public static final RegistryObject<SoundEvent> MAGIC_BOLT = reg("spell.magic_bolt");
+    public static final RegistryObject<SoundEvent> SUNDER = reg("spell.sunder");
+    public static final RegistryObject<SoundEvent> HEAL_OTHER = reg("spell.heal_other");
+    public static final RegistryObject<SoundEvent> AWAY = reg("spell.away");
+    public static final RegistryObject<SoundEvent> SCATTER = reg("spell.scatter");
+    public static final RegistryObject<SoundEvent> BRIGHT_LIGHT = reg("spell.bright_light");
 
     private RpgSounds() {
     }
@@ -34,7 +39,11 @@ public final class RpgSounds {
             case STAMINA_TO_HEALTH -> STAMINA_TO_HEALTH.get();
             case HEALTH_TO_MANA -> HEALTH_TO_MANA.get();
             case MAGIC_BOLT -> MAGIC_BOLT.get();
-            default -> MAGIC_BOLT.get();
+            case SUNDER -> SUNDER.get();
+            case HEAL_OTHER -> HEAL_OTHER.get();
+            case AWAY -> AWAY.get();
+            case SCATTER -> SCATTER.get();
+            case BRIGHT_LIGHT -> BRIGHT_LIGHT.get();
         };
     }
 
