@@ -12,9 +12,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.robmc.rpgstats.RpgStats;
 import net.robmc.rpgstats.StatFormulas;
 import net.robmc.rpgstats.client.HudLayout;
-import net.robmc.rpgstats.client.RpgHudOverlay;
 import net.robmc.rpgstats.magic.Spell;
-import net.robmc.rpgstats.skill.Skill;
 
 /** Two vertical 9-slot casting bars on the left. Separate from the vanilla hotbar; movable in the J editor. */
 @Mod.EventBusSubscriber(modid = RpgStats.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
@@ -100,21 +98,6 @@ public class SpellBarOverlay {
             }
 
             cornerLevel(g, font, x, y, ClientSpells.spellLevel(spell), 0xFFFFE066);
-        } else {
-            Skill skill = ClientSpells.skillAt(index);
-            if (skill != null) {
-                SkillIcons.draw(g, skill, x + 2, y + 2);
-                if (skill == Skill.REST && RpgHudOverlay.resting) {
-                    g.fill(x + 1, y + 1, x + SLOT - 1, y + SLOT - 1, 0x4033DD33);
-                    g.renderOutline(x, y, SLOT, SLOT, 0xFF66FF66);
-                }
-                if (skill == Skill.RECALL && ClientRecall.isRecalling()) {
-                    int h = (int) (SLOT * ClientRecall.progress());
-                    g.fill(x, y + SLOT - h, x + SLOT, y + SLOT, 0x8033C0FF);
-                    g.renderOutline(x, y, SLOT, SLOT, 0xFF55D0FF);
-                }
-                cornerLevel(g, font, x, y, ClientSpells.skillLevel(skill), 0xFF9BE7A0);
-            }
         }
         g.drawString(font, String.valueOf(index % SLOTS + 1), x + SLOT - 6, y + SLOT - 8, 0xFF808080, false);
     }

@@ -4,6 +4,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.robmc.rpgstats.registry.RpgEntities;
+import net.robmc.rpgstats.registry.RpgItems;
 import net.robmc.rpgstats.registry.RpgSounds;
 
 /**
@@ -23,5 +24,6 @@ public class RpgStats {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         RpgEntities.register(modEventBus);
         RpgSounds.register(modEventBus);
+        RpgItems.register(modEventBus);
     }
 }

@@ -21,6 +21,8 @@
   "key.rpgstats.cast_17": "Bar 2 - Slot 8",
   "key.rpgstats.cast_18": "Bar 2 - Slot 9",
   "entity.rpgstats.magic_bolt": "Magic Bolt",
+  "item.rpgstats.skill_rest": "Rest",
+  "item.rpgstats.skill_recall": "Recall",
   "rpgstats.subtitle.spell.mana_to_stamina": "Transfer: Mana to Stamina",
   "rpgstats.subtitle.spell.stamina_to_health": "Transfer: Stamina to Health",
   "rpgstats.subtitle.spell.health_to_mana": "Transfer: Health to Mana",

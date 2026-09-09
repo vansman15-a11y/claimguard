@@ -13,11 +13,9 @@ import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.SetSpellSlotPacket;
 import net.robmc.rpgstats.StatFormulas;
 import net.robmc.rpgstats.client.magic.ClientSpells;
-import net.robmc.rpgstats.client.magic.SkillIcons;
 import net.robmc.rpgstats.client.magic.SpellBarOverlay;
 import net.robmc.rpgstats.client.magic.SpellIcons;
 import net.robmc.rpgstats.magic.Spell;
-import net.robmc.rpgstats.skill.Skill;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -140,7 +138,8 @@ public class HudEditorScreen extends Screen {
             }
             for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
                 int[] b = spellBarBox(bar);
-                boolean onGrip = mx >= b[0] && mx <= b[0] + b[2] && my >= b[1] - 11 && my < b[1];
+                // the "Bar N" label strip above the bar - generous so the whole label grabs
+                boolean onGrip = mx >= b[0] - 2 && mx <= b[0] + 40 && my >= b[1] - 13 && my <= b[1];
                 if (onGrip || inside(b, mx, my)) {
                     startDrag(SpellBarOverlay.layoutKey(bar), mx, my);
                     return true;
@@ -353,8 +352,9 @@ public class HudEditorScreen extends Screen {
             int sbY = spellBarY(bar);
             SpellBarOverlay.render(g, this.font, sbX, sbY, SpellBarOverlay.firstSlot(bar));
             // draggable label / grip strip above the bar
-            g.fill(sbX, sbY - 11, sbX + SpellBarOverlay.SLOT, sbY - 1, 0xC03A5A88);
-            g.drawString(this.font, "Bar " + (bar + 1), sbX, sbY - 10, 0xFFDDE6F5, true);
+            g.fill(sbX - 2, sbY - 13, sbX + 40, sbY - 1, 0xC03A5A88);
+            g.renderOutline(sbX - 2, sbY - 13, 42, 12, 0xFF9FC0FF);
+            g.drawString(this.font, "Bar " + (bar + 1), sbX + 1, sbY - 10, 0xFFDDE6F5, true);
             g.renderOutline(sbX, sbY, SpellBarOverlay.SLOT, SpellBarOverlay.BAR_H, 0xFF9FC0FF);
             for (int i = 0; i < SpellBarOverlay.SLOTS; i++) {
                 keyHint(g, RpgKeybinds.CAST[bar * SpellBarOverlay.SLOTS + i],
@@ -364,13 +364,9 @@ public class HudEditorScreen extends Screen {
 
         // spell being dragged between slots
         if (draggingSpellFrom >= 0) {
-            String n = ClientSpells.slotName(draggingSpellFrom);
-            Spell sp = Spell.byName(n);
-            Skill sk = Skill.byName(n);
+            Spell sp = Spell.byName(ClientSpells.slotName(draggingSpellFrom));
             if (sp != null) {
                 SpellIcons.draw(g, sp, mouseX - 8, mouseY - 8, 16);
-            } else if (sk != null) {
-                SkillIcons.draw(g, sk, mouseX - 8, mouseY - 8);
             }
         }
 

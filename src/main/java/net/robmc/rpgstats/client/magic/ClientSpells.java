@@ -108,11 +108,6 @@ public final class ClientSpells {
         return spell == null ? 0 : spellLevels[spell.ordinal()];
     }
 
-    /** The skill bound to bar slot i, or null (also null if a spell is bound there). */
-    public static Skill skillAt(int i) {
-        return (i >= 0 && i < SLOT_COUNT) ? Skill.byName(SLOTS[i]) : null;
-    }
-
     public static int skillLevel(Skill skill) {
         return skill == null ? 0 : skillLevels[skill.ordinal()];
     }

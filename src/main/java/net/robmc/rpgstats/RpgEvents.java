@@ -8,16 +8,22 @@ import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.item.ItemTossEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.ShieldBlockEvent;
+import net.robmc.rpgstats.item.SkillItem;
 import net.robmc.rpgstats.magic.SpellCasting;
+import net.robmc.rpgstats.registry.RpgItems;
 import net.robmc.rpgstats.skill.RecallManager;
 import net.robmc.rpgstats.skill.RestManager;
 import net.minecraftforge.event.entity.player.ArrowLooseEvent;
@@ -57,6 +63,7 @@ public class RpgEvents {
             RpgManager.applyAttributes(player);
             RpgManager.sync(player);
             RpgManager.syncSpellBar(player);
+            grantSkillItems(player);
         }
     }
 
@@ -76,6 +83,41 @@ public class RpgEvents {
             RpgManager.applyAttributes(player);
             RpgManager.sync(player);
             RpgManager.syncSpellBar(player);
+            grantSkillItems(player);
+        }
+    }
+
+    // --- general-skill hotbar items ---
+
+    private static void grantSkillItems(ServerPlayer player) {
+        giveIfMissing(player, RpgItems.SKILL_REST.get());
+        giveIfMissing(player, RpgItems.SKILL_RECALL.get());
+    }
+
+    private static void giveIfMissing(ServerPlayer player, Item item) {
+        var inv = player.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            if (inv.getItem(i).is(item)) {
+                return;
+            }
+        }
+        if (!player.getInventory().add(new ItemStack(item))) {
+            player.drop(new ItemStack(item), false); // inventory somehow full - drop at feet
+        }
+    }
+
+    @SubscribeEvent
+    public static void onSkillItemToss(ItemTossEvent event) {
+        if (event.getEntity().getItem().getItem() instanceof SkillItem) {
+            event.setCanceled(true);
+            event.getPlayer().getInventory().add(event.getEntity().getItem());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onSkillItemDrops(LivingDropsEvent event) {
+        if (event.getEntity() instanceof ServerPlayer) {
+            event.getDrops().removeIf(e -> e.getItem().getItem() instanceof SkillItem);
         }
     }
 

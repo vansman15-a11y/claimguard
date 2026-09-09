@@ -182,10 +182,10 @@ public class PlayerStats {
         if (slot < 0 || slot >= spellBar.length) {
             return;
         }
-        // only a real spell/skill name or a clear - never arbitrary client text
+        // only a real spell name or a clear - never arbitrary client text (skills aren't spells)
         if (name == null || name.isEmpty()) {
             spellBar[slot] = "";
-        } else if (Spell.byName(name) != null || Skill.byName(name) != null) {
+        } else if (Spell.byName(name) != null) {
             spellBar[slot] = name;
         }
     }

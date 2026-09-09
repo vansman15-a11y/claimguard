@@ -10,7 +10,6 @@ import net.robmc.claimguard.network.SetSpellSlotPacket;
 import net.robmc.rpgstats.StatFormulas;
 import net.robmc.rpgstats.magic.School;
 import net.robmc.rpgstats.magic.Spell;
-import net.robmc.rpgstats.skill.Skill;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,9 +19,8 @@ import java.util.Set;
 
 /**
  * Press U. A scrolling list of every magic school (expand one to see its spells)
- * plus a Skills section, and your two 9-slot casting bars on the right. Drag a
- * spell or skill row onto a slot to bind it; drag a bound slot off to clear it.
- * Only Weak Magic has spells so far.
+ * and your two 9-slot casting bars on the right. Drag a spell row onto a slot to
+ * bind it; drag a bound slot off to clear it. Only Weak Magic has spells so far.
  */
 public class SpellbookScreen extends Screen {
 
@@ -30,14 +28,13 @@ public class SpellbookScreen extends Screen {
     private static final int PANEL_H = 248;
     private static final int ROW_H = 22;
     private static final int LIST_W = 250;
-    private static final String SKILLS = "SKILLS";
 
-    private enum Kind { HEADER, SPELL, SKILL, EMPTY }
+    private enum Kind { HEADER, SPELL, EMPTY }
 
     private record Row(Kind kind, String group, String name, int y) {
     }
 
-    private final Set<String> expanded = new HashSet<>(Arrays.asList(School.WEAK.name(), SKILLS));
+    private final Set<String> expanded = new HashSet<>(Arrays.asList(School.WEAK.name()));
     private int scroll;
 
     private String draggingName;
@@ -101,14 +98,6 @@ public class SpellbookScreen extends Screen {
                 }
             }
         }
-        list.add(new Row(Kind.HEADER, SKILLS, "Skills", y));
-        y += ROW_H;
-        if (expanded.contains(SKILLS)) {
-            for (Skill skill : Skill.values()) {
-                list.add(new Row(Kind.SKILL, SKILLS, skill.name(), y));
-                y += ROW_H;
-            }
-        }
         return list;
     }
 
@@ -148,7 +137,7 @@ public class SpellbookScreen extends Screen {
                                 expanded.add(row.group);
                             }
                             scroll = Math.min(scroll, maxScroll());
-                        } else if (row.kind == Kind.SPELL || row.kind == Kind.SKILL) {
+                        } else if (row.kind == Kind.SPELL) {
                             draggingName = row.name;
                         }
                         return true;
@@ -241,11 +230,8 @@ public class SpellbookScreen extends Screen {
         String ghost = draggingName != null ? draggingName
                 : (draggingSlot >= 0 ? ClientSpells.slotName(draggingSlot) : "");
         Spell gs = Spell.byName(ghost);
-        Skill gk = Skill.byName(ghost);
         if (gs != null) {
             SpellIcons.draw(g, gs, mouseX - 8, mouseY - 8, 16);
-        } else if (gk != null) {
-            SkillIcons.draw(g, gk, mouseX - 8, mouseY - 8);
         }
 
         super.render(g, mouseX, mouseY, partialTick);
@@ -257,12 +243,10 @@ public class SpellbookScreen extends Screen {
                 boolean open = expanded.contains(row.group);
                 g.fill(x, y, x + LIST_W, y + ROW_H - 3, 0xC02A3346);
                 g.drawString(this.font, (open ? "[-] " : "[+] ") + row.name, x + 6, y + 6, 0xFFDDE6F5, false);
-                if (!SKILLS.equals(row.group)) {
-                    School school = School.valueOf(row.group);
-                    long have = Arrays.stream(Spell.values()).filter(s -> s.school() == school).count();
-                    String tag = have > 0 ? have + "/" + School.SPELLS_PER_SCHOOL : "—";
-                    g.drawString(this.font, tag, x + LIST_W - 4 - this.font.width(tag), y + 6, 0xFF8FA0B4, false);
-                }
+                School school = School.valueOf(row.group);
+                long have = Arrays.stream(Spell.values()).filter(s -> s.school() == school).count();
+                String tag = have > 0 ? have + "/" + School.SPELLS_PER_SCHOOL : "—";
+                g.drawString(this.font, tag, x + LIST_W - 4 - this.font.width(tag), y + 6, 0xFF8FA0B4, false);
             }
             case EMPTY -> {
                 g.fill(x + 12, y, x + LIST_W, y + ROW_H - 3, 0x50202838);
@@ -276,15 +260,6 @@ public class SpellbookScreen extends Screen {
                 g.drawString(this.font, spell.displayName(), x + 36, y + 3, 0xFFFFFFFF, false);
                 String lt = "Lv " + lvl + " (" + StatFormulas.effectivenessPercent(lvl) + "%)";
                 g.drawString(this.font, lt, x + LIST_W - 4 - this.font.width(lt), y + 3, 0xFFB9A9E3, false);
-            }
-            case SKILL -> {
-                Skill skill = Skill.valueOf(row.name);
-                int lvl = ClientSpells.skillLevel(skill);
-                g.fill(x + 12, y, x + LIST_W, y + ROW_H - 3, 0xC0202838);
-                SkillIcons.draw(g, skill, x + 14, y + 1);
-                g.drawString(this.font, skill.displayName(), x + 36, y + 3, 0xFFFFFFFF, false);
-                String lt = "Lv " + lvl + " (" + StatFormulas.effectivenessPercent(lvl) + "%)";
-                g.drawString(this.font, lt, x + LIST_W - 4 - this.font.width(lt), y + 3, 0xFF9BE7A0, false);
             }
         }
     }
