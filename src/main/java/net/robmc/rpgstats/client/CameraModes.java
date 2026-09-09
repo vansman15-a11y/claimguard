@@ -9,6 +9,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.TridentItem;
+import net.robmc.rpgstats.item.StaffItem;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -70,9 +71,9 @@ public final class CameraModes {
         return i instanceof SwordItem || i instanceof AxeItem || i instanceof TridentItem;
     }
 
-    /** Whether spells can be cast with this in hand. Empty for now; a staff item will qualify here later. */
+    /** Whether spells can be cast (and the camera locks to first person) with this in hand. */
     public static boolean isCastingHand(ItemStack stack) {
-        return stack.isEmpty();
+        return stack.isEmpty() || stack.getItem() instanceof StaffItem;
     }
 
     private static Mode modeFor(ItemStack held) {

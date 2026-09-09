@@ -1,10 +1,13 @@
 package net.robmc.rpgstats;
 
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.food.FoodData;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
@@ -22,6 +25,7 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.ShieldBlockEvent;
 import net.robmc.rpgstats.item.SkillItem;
+import net.robmc.rpgstats.item.TwoHandedWeapon;
 import net.robmc.rpgstats.magic.SpellCasting;
 import net.robmc.rpgstats.registry.RpgItems;
 import net.robmc.rpgstats.skill.RecallManager;
@@ -84,6 +88,32 @@ public class RpgEvents {
             RpgManager.sync(player);
             RpgManager.syncSpellBar(player);
             grantSkillItems(player);
+        }
+    }
+
+    // --- two-handed weapons: never in the offhand, and clear the offhand while wielded ---
+
+    private static void enforceTwoHanded(ServerPlayer player) {
+        ItemStack off = player.getOffhandItem();
+        ItemStack main = player.getMainHandItem();
+        boolean offIsTwoHanded = off.getItem() instanceof TwoHandedWeapon;
+        boolean mainIsTwoHanded = main.getItem() instanceof TwoHandedWeapon;
+
+        if (offIsTwoHanded) {
+            player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+            // put it in the main hand if that's free, else back into the pack
+            if (main.isEmpty()) {
+                player.setItemInHand(InteractionHand.MAIN_HAND, off);
+            } else if (!player.getInventory().add(off)) {
+                player.drop(off, false);
+            }
+            player.displayClientMessage(
+                    Component.literal("That weapon needs both hands.").withStyle(ChatFormatting.GRAY), true);
+        } else if (mainIsTwoHanded && !off.isEmpty()) {
+            player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+            if (!player.getInventory().add(off)) {
+                player.drop(off, false);
+            }
         }
     }
 
@@ -178,6 +208,7 @@ public class RpgEvents {
         }
 
         Exhaustion.update(player, s.getStamina(), StatFormulas.maxStamina(s));
+        enforceTwoHanded(player);
 
         // Swinging your arm in combat costs stamina, hit or miss. Mining (crosshair on
         // a nearby block) doesn't count, and a landed hit is charged in onLivingHurt instead.
@@ -271,9 +302,8 @@ public class RpgEvents {
         }
     }
 
-    private static net.minecraft.network.chat.Component exhaustedMsg() {
-        return net.minecraft.network.chat.Component.literal("Too exhausted.")
-                .withStyle(net.minecraft.ChatFormatting.RED);
+    private static Component exhaustedMsg() {
+        return Component.literal("Too exhausted.").withStyle(ChatFormatting.RED);
     }
 
     // --- combat: scale damage to the pool, apply stat multipliers, award XP ---

@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  G",
+    " I ",
+    "S  "
+  ],
+  "key": {
+    "G": { "item": "minecraft:amethyst_shard" },
+    "I": { "item": "minecraft:iron_ingot" },
+    "S": { "item": "minecraft:stick" }
+  },
+  "result": { "item": "rpgstats:staff" }
+}

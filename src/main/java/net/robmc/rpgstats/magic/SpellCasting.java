@@ -8,16 +8,19 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 import net.minecraftforge.network.PacketDistributor;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
 import net.robmc.claimguard.network.CastStatePacket;
 import net.robmc.claimguard.network.SpellCooldownPacket;
+import net.robmc.claimguard.network.StaffGlowPacket;
 import net.robmc.rpgstats.RpgManager;
 import net.robmc.rpgstats.PlayerStats;
 import net.robmc.rpgstats.Stat;
 import net.robmc.rpgstats.StatFormulas;
+import net.robmc.rpgstats.item.StaffItem;
 import net.robmc.rpgstats.registry.RpgSounds;
 
 import java.util.ArrayList;
@@ -67,10 +70,18 @@ public final class SpellCasting {
         if (spell == null) {
             return;
         }
-        // Spells need a free hand (a staff item will be allowed here later).
-        if (!player.getMainHandItem().isEmpty()) {
+        // Transfers can be cast bare-handed or with a staff. Everything else needs a staff.
+        ItemStack hand = player.getMainHandItem();
+        boolean staff = hand.getItem() instanceof StaffItem;
+        if (spell.isTransfer()) {
+            if (!staff && !hand.isEmpty()) {
+                player.displayClientMessage(
+                        Component.literal("Transfers need a free hand or a staff.").withStyle(ChatFormatting.GRAY), true);
+                return;
+            }
+        } else if (!staff) {
             player.displayClientMessage(
-                    Component.literal("You need an empty hand to cast.").withStyle(ChatFormatting.GRAY), true);
+                    Component.literal("That spell can only be cast with a staff.").withStyle(ChatFormatting.GRAY), true);
             return;
         }
         long now = player.serverLevel().getGameTime();
@@ -92,6 +103,10 @@ public final class SpellCasting {
         casting.put(player.getUUID(), new Pending(spell, now + castTicks));
         ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                 new CastStatePacket(spell.name(), castTicks));
+        if (staff) {
+            ClaimGuardNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
+                    new StaffGlowPacket(player.getId(), castTicks + 8));
+        }
         player.level().playSound(null, player.blockPosition(), SoundEvents.ILLUSIONER_PREPARE_MIRROR, SoundSource.PLAYERS, 0.6f, 1.4f);
     }
 

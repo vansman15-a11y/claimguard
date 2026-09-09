@@ -1,0 +1,9 @@
+{
+  "parent": "grokweapons:item/staff",
+  "overrides": [
+    {
+      "predicate": { "rpgstats:casting": 1 },
+      "model": "grokweapons:item/staff_glow"
+    }
+  ]
+}

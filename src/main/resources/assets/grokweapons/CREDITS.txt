@@ -1,0 +1,6 @@
+Dagger / Polearm / Staff models and textures are from the
+"Minecraft Reimagined" resource pack by Reijvi (https://www.patreon.com/c/Reijvi).
+
+Bundled here only as a fallback so the rpgstats weapons still render when the
+server resource pack isn't loaded. If you run that pack on your server, its
+copies take priority over these.
