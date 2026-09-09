@@ -80,7 +80,7 @@ public class HudEditorScreen extends Screen {
     private int[] targetFrameBox() {
         int x = TargetFrameOverlay.defaultLeft(width) + HudLayout.offX(HudLayout.TARGET_FRAME);
         int y = TargetFrameOverlay.defaultTop(height) + HudLayout.offY(HudLayout.TARGET_FRAME);
-        return new int[]{x - 4, y - 4, TargetFrameOverlay.W + 8, TargetFrameOverlay.H + 8};
+        return new int[]{x - 2, y - 2, TargetFrameOverlay.W + 4, TargetFrameOverlay.H + 4};
     }
 
     private int hotbarX() {
@@ -361,13 +361,14 @@ public class HudEditorScreen extends Screen {
         net.robmc.rpgstats.client.magic.CastBarOverlay.render(g, this.font, cbX, cbY, null, 0.6f, false);
         outline(g, castBarBox(), 0xFFEAD37A, "Cast bar");
 
-        int[] tf = targetFrameBox();
-        g.fill(tf[0], tf[1], tf[0] + tf[2], tf[1] + tf[3], 0xB6000000);
-        g.drawString(this.font, "[RNG] Target", tf[0] + 4, tf[1] + 4, 0xFFE1533E, true);
-        int tfBarY = tf[1] + tf[3] - 12;
-        g.fill(tf[0] + 4, tfBarY, tf[0] + tf[2] - 4, tfBarY + 8, 0xC0301010);
-        g.fill(tf[0] + 4, tfBarY, tf[0] + 4 + (tf[2] - 8) * 6 / 10, tfBarY + 8, 0xFFC0392B);
-        outline(g, tf, 0xFFE1533E, "Target frame");
+        int tfX = TargetFrameOverlay.defaultLeft(width) + HudLayout.offX(HudLayout.TARGET_FRAME);
+        int tfY = TargetFrameOverlay.defaultTop(height) + HudLayout.offY(HudLayout.TARGET_FRAME);
+        int tfBarY = tfY + TargetFrameOverlay.STRIP_H;
+        g.fill(tfX - 1, tfY, tfX + TargetFrameOverlay.W + 1, tfBarY, 0xC8000000);
+        g.drawString(this.font, "[RNG] Target", tfX + 2, tfY + 2, 0xFFE1533E, true);
+        g.fill(tfX, tfBarY, tfX + TargetFrameOverlay.W, tfBarY + TargetFrameOverlay.BAR_H, 0xC0301010);
+        g.fill(tfX, tfBarY, tfX + TargetFrameOverlay.W * 6 / 10, tfBarY + TargetFrameOverlay.BAR_H, 0xFFC0392B);
+        outline(g, targetFrameBox(), 0xFFE1533E, "Target frame  (drag me)");
 
         // hotbar ghost with 9 slots
         int hbX = hotbarX();

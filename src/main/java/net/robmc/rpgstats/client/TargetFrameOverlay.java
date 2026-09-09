@@ -41,8 +41,10 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = RpgStats.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class TargetFrameOverlay {
 
-    public static final int W = 148;
-    public static final int H = 40;
+    public static final int W = 122;
+    public static final int STRIP_H = 11;  // the name / debuff row that sits on top of the bar
+    public static final int BAR_H = 9;
+    public static final int H = STRIP_H + BAR_H;
 
     private static final int PICK_RANGE = 45;
     private static final int GRACE_TICKS = 25; // keep the frame ~1.25 s after you look away
@@ -139,6 +141,8 @@ public final class TargetFrameOverlay {
 
     // --- rendering ---
 
+    private static final int ICON = 10; // debuff icon size in the strip
+
     private static void render(GuiGraphics g, Minecraft mc, Font font, int x, int y, LivingEntity t) {
         int colour;
         String name;
@@ -159,33 +163,39 @@ public final class TargetFrameOverlay {
         float max = Math.max(1f, t.getMaxHealth());
         float absorb = t.getAbsorptionAmount();
 
-        g.fill(x - 4, y - 4, x + W + 4, y + H + 4, 0xB6000000);
-        g.renderOutline(x - 4, y - 4, W + 8, H + 8, 0x40FFFFFF);
+        int barY = y + STRIP_H;
 
-        g.drawString(font, clip(font, name, W), x, y, colour, true);
+        // the name / debuff strip, sitting directly on top of the bar
+        g.fill(x - 1, y, x + W + 1, barY, 0xC8000000);
 
-        int rowY = y + 11;
-        int dx = x;
-        for (TargetInfoPacket.Debuff d : ClientTargetInfo.forEntity(t.getId())) {
-            if (dx + 16 > x + W) {
+        // debuffs: right-aligned in the strip, flowing left
+        java.util.List<TargetInfoPacket.Debuff> debuffs = ClientTargetInfo.forEntity(t.getId());
+        int dx = x + W - 1;
+        int shown = 0;
+        for (TargetInfoPacket.Debuff d : debuffs) {
+            if (shown >= 6 || dx - (ICON + 1) < x + 1) {
                 break;
             }
-            drawDebuff(g, mc, font, dx, rowY, d);
-            dx += 18;
+            dx -= ICON + 1;
+            drawDebuff(g, mc, font, dx, y + (STRIP_H - ICON) / 2, d);
+            shown++;
         }
 
-        int barY = y + H - 8;
-        int barH = 8;
-        g.fill(x - 1, barY - 1, x + W + 1, barY + barH + 1, 0xFF000000);
-        g.fill(x, barY, x + W, barY + barH, 0xC0301010);
+        // name, clipped so it never runs under the icons
+        int nameMaxW = Math.max(24, (dx - 2) - (x + 2));
+        g.drawString(font, clip(font, name, nameMaxW), x + 2, y + 2, colour, true);
+
+        // health bar
+        g.fill(x - 1, barY - 1, x + W + 1, barY + BAR_H + 1, 0xFF000000);
+        g.fill(x, barY, x + W, barY + BAR_H, 0xC0301010);
         int hpFill = Math.round(W * Math.min(1f, hp / max));
-        g.fill(x, barY, x + hpFill, barY + barH, 0xFFC0392B);
+        g.fill(x, barY, x + hpFill, barY + BAR_H, 0xFFC0392B);
         if (absorb > 0f) {
             int aFill = Math.min(W - hpFill, Math.round(W * Math.min(1f, absorb / max)));
-            g.fill(x + hpFill, barY, x + hpFill + aFill, barY + barH, 0xFFE8C349);
+            g.fill(x + hpFill, barY, x + hpFill + aFill, barY + BAR_H, 0xFFE8C349);
         }
-        String hpText = Mth.ceil(hp) + " / " + Mth.ceil(max) + (absorb > 0f ? "  (+" + Mth.ceil(absorb) + ")" : "");
-        g.drawString(font, hpText, x + (W - font.width(hpText)) / 2, barY, 0xFFFFFFFF, true);
+        String hpText = Mth.ceil(hp) + " / " + Mth.ceil(max) + (absorb > 0f ? " (+" + Mth.ceil(absorb) + ")" : "");
+        g.drawString(font, hpText, x + (W - font.width(hpText)) / 2, barY + 1, 0xFFFFFFFF, true);
     }
 
     private static void drawDebuff(GuiGraphics g, Minecraft mc, Font font, int x, int y, TargetInfoPacket.Debuff d) {
@@ -193,28 +203,32 @@ public final class TargetFrameOverlay {
             MobEffect eff = BuiltInRegistries.MOB_EFFECT.byId(d.id);
             if (eff != null) {
                 TextureAtlasSprite sprite = mc.getMobEffectTextures().get(eff);
-                g.blit(x, y, 0, 16, 16, sprite);
+                g.blit(x, y, 0, ICON, ICON, sprite);
             } else {
-                g.fill(x, y, x + 16, y + 16, 0xFF503050);
+                g.fill(x, y, x + ICON, y + ICON, 0xFF503050);
             }
         } else if (d.kind == TargetInfoPacket.KIND_BURN) {
-            g.blit(BURN_ICON, x, y, 0, 0, 16, 16, 16, 16);
-            for (int i = 0; i < d.stacks && i < 3; i++) {
-                g.fill(x + 1 + i * 5, y - 2, x + 5 + i * 5, y, 0xFFFFC24B);
+            g.blit(BURN_ICON, x, y, ICON, ICON, 0f, 0f, 16, 16, 16, 16);
+            if (d.stacks > 1) {
+                tiny(g, font, Integer.toString(d.stacks), x - 0.5f, y - 1.0f, 0xFFFFE0A0);
             }
         } else {
-            g.blit(BLEED_ICON, x, y, 0, 0, 16, 16, 16, 16);
+            g.blit(BLEED_ICON, x, y, ICON, ICON, 0f, 0f, 16, 16, 16, 16);
         }
 
         int secs = ClientTargetInfo.secondsLeft(d);
         if (secs > 0) {
             String s = Integer.toString(secs);
-            g.pose().pushPose();
-            g.pose().translate(x + 16 - font.width(s) * 0.6f - 0.5f, y + 16 - 5.5f, 0);
-            g.pose().scale(0.6f, 0.6f, 1f);
-            g.drawString(font, s, 0, 0, 0xFFFFFFFF, true);
-            g.pose().popPose();
+            tiny(g, font, s, x + ICON - font.width(s) * 0.6f, y + ICON - 4f, 0xFFFFFFFF);
         }
+    }
+
+    private static void tiny(GuiGraphics g, Font font, String s, float x, float y, int colour) {
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0);
+        g.pose().scale(0.6f, 0.6f, 1f);
+        g.drawString(font, s, 0, 0, colour, true);
+        g.pose().popPose();
     }
 
     private static String clip(Font font, String s, int maxW) {
