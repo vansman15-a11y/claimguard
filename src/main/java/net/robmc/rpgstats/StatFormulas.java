@@ -136,9 +136,19 @@ public final class StatFormulas {
 
     // --- stamina cost of physical actions (raw pool points) ---
 
+    public static final double STAMINA_WALK_PER_TICK = 0.08;     // ~1.6 / second just walking around
     public static final double STAMINA_SPRINT_PER_TICK = 0.5;    // ~10 / second while sprinting
     public static final double STAMINA_JUMP = 3.0;               // per jump
     public static final double STAMINA_MELEE_SWING = 6.0;        // per landed hit with a weapon
+
+    // --- taking a hit also bleeds stamina/mana ---
+
+    /** Fraction of damage taken (from a mob or player) that is also drained from stamina + mana. */
+    public static final double DAMAGE_POOL_LEECH_FRACTION = 0.08;
+    /** Of that leech, how much comes out of stamina (the rest out of mana), by damage kind. */
+    public static final double LEECH_PHYSICAL_STAMINA = 0.80;
+    public static final double LEECH_PROJECTILE_STAMINA = 0.55;
+    public static final double LEECH_MAGIC_STAMINA = 0.20;
     /** Vanilla blocks sprinting below 6 food and self-heals at/above 18; hold food here so it does neither. */
     public static final int PINNED_FOOD_LEVEL = 17;
 

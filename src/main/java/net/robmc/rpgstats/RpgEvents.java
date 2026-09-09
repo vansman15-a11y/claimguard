@@ -83,14 +83,16 @@ public class RpgEvents {
             return;
         }
 
-        // Quickness: distance travelled since last tick.
+        // distance travelled since last tick (for Quickness XP and movement stamina cost)
         double[] prev = lastPos.get(player.getUUID());
         double x = player.getX();
         double y = player.getY();
         double z = player.getZ();
+        boolean moved = false;
         if (prev != null) {
             double dist = Math.sqrt(Math.pow(x - prev[0], 2) + Math.pow(y - prev[1], 2) + Math.pow(z - prev[2], 2));
             if (dist > 0.05 && dist < 20) { // ignore teleports and jitter
+                moved = true;
                 boolean inWater = player.isInWater() || player.isSwimming();
                 double rate = inWater ? StatFormulas.XP_SWIM_PER_METRE : StatFormulas.XP_MOVE_PER_METRE;
                 RpgManager.addXp(player, Stat.QUICKNESS, dist * rate);
@@ -105,17 +107,20 @@ public class RpgEvents {
         }
         food.setExhaustion(0.0f);
 
-        // Sprinting burns stamina; it cuts out when you're empty.
-        if (player.isSprinting()) {
-            PlayerStats s = RpgManager.stats(player);
-            if (s.getStamina() <= 0) {
-                player.setSprinting(false);
-            } else {
-                s.setStamina(s.getStamina() - StatFormulas.STAMINA_SPRINT_PER_TICK);
-                if (player.tickCount % 3 == 0) {
-                    RpgManager.sync(player);
-                }
+        // Moving on foot drains stamina - a trickle for walking, much more for sprinting.
+        PlayerStats s = RpgManager.stats(player);
+        boolean onFoot = player.onGround() || player.isInWater();
+        if (moved && onFoot && s.getStamina() > 0) {
+            double cost = player.isSprinting()
+                    ? StatFormulas.STAMINA_SPRINT_PER_TICK
+                    : StatFormulas.STAMINA_WALK_PER_TICK;
+            s.setStamina(s.getStamina() - cost);
+            if (player.tickCount % 4 == 0) {
+                RpgManager.sync(player);
             }
+        }
+        if (player.isSprinting() && s.getStamina() <= 0) {
+            player.setSprinting(false); // out of gas
         }
 
         if (player.tickCount % StatFormulas.REGEN_INTERVAL_TICKS == 0) {
@@ -140,11 +145,12 @@ public class RpgEvents {
     public static void onLivingHurt(LivingHurtEvent event) {
         float amount = event.getAmount();
         boolean magic = event.getSource().is(DamageTypes.INDIRECT_MAGIC) || event.getSource().is(DamageTypes.MAGIC);
+        boolean projectile = event.getSource().is(DamageTypeTags.IS_PROJECTILE)
+                || event.getSource().getDirectEntity() instanceof Projectile;
+        boolean fromAttacker = event.getSource().getEntity() != null;
 
         if (!magic && event.getSource().getEntity() instanceof ServerPlayer attacker && attacker.isAlive()) {
             PlayerStats as = RpgManager.stats(attacker);
-            boolean projectile = event.getSource().is(DamageTypeTags.IS_PROJECTILE)
-                    || event.getSource().getDirectEntity() instanceof Projectile;
             if (projectile) {
                 amount *= (float) StatFormulas.rangedDamageMultiplier(as);
                 RpgManager.addXp(attacker, Stat.DEXTERITY, StatFormulas.XP_RANGED_HIT);
@@ -167,6 +173,18 @@ public class RpgEvents {
                 amount *= (float) (1.0 - StatFormulas.spellDamageResist(RpgManager.stats(victim)));
             }
             SpellCasting.interrupt(victim); // taking a hit breaks your cast
+
+            // A slice of any hit from a mob or player also bleeds your other pools.
+            if (fromAttacker && amount > 0) {
+                double leech = amount * StatFormulas.DAMAGE_POOL_LEECH_FRACTION;
+                double staminaShare = magic ? StatFormulas.LEECH_MAGIC_STAMINA
+                        : projectile ? StatFormulas.LEECH_PROJECTILE_STAMINA
+                        : StatFormulas.LEECH_PHYSICAL_STAMINA;
+                PlayerStats vs = RpgManager.stats(victim);
+                vs.setStamina(vs.getStamina() - leech * staminaShare);
+                vs.setMana(vs.getMana() - leech * (1.0 - staminaShare));
+                RpgManager.sync(victim);
+            }
         }
 
         event.setAmount(amount);
