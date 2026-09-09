@@ -141,8 +141,8 @@ public final class StatFormulas {
 
     // --- stamina cost of physical actions (raw pool points) ---
 
-    public static final double STAMINA_WALK_PER_TICK = 0.08;     // ~1.6 / second just walking around
-    public static final double STAMINA_SPRINT_PER_TICK = 0.5;    // ~10 / second while sprinting
+    public static final double STAMINA_WALK_PER_TICK = 0.04;     // ~0.8 / second - roughly cancels natural regen
+    public static final double STAMINA_SPRINT_PER_TICK = 0.4;    // ~8 / second while sprinting
     public static final double STAMINA_JUMP = 3.0;               // per jump
     public static final double STAMINA_MELEE_SWING = 6.0;        // per landed hit with a weapon
 

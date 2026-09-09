@@ -66,6 +66,12 @@ public class HudEditorScreen extends Screen {
         return new int[]{x - 1, y - 1, RpgHudOverlay.BAR_W + 2, RpgHudOverlay.BARS_TOTAL_H + 2};
     }
 
+    private int[] statusBox() {
+        int x = RpgHudOverlay.statusDefaultLeft(width) + HudLayout.offX(HudLayout.STATUS);
+        int y = RpgHudOverlay.statusDefaultTop(height) + HudLayout.offY(HudLayout.STATUS);
+        return new int[]{x, y - 1, RpgHudOverlay.STATUS_W, RpgHudOverlay.STATUS_H};
+    }
+
     private int hotbarX() {
         return (width - HOTBAR_W) / 2 + HudLayout.offX(HudLayout.HOTBAR);
     }
@@ -122,6 +128,10 @@ public class HudEditorScreen extends Screen {
             }
             if (inside(statBarsBox(), mx, my)) {
                 startDrag(HudLayout.STAT_BARS, mx, my);
+                return true;
+            }
+            if (inside(statusBox(), mx, my)) {
+                startDrag(HudLayout.STATUS, mx, my);
                 return true;
             }
             if (inside(hotbarBox(), mx, my)) {
@@ -320,6 +330,11 @@ public class HudEditorScreen extends Screen {
         int[] bars = statBarsBox();
         RpgHudOverlay.renderBars(g, this.font, bars[0] + 1, bars[1] + 1);
         outline(g, bars, 0xFF57C97A, "Stat bars");
+
+        int[] status = statusBox();
+        g.fill(status[0], status[1], status[0] + status[2], status[1] + status[3], 0x60000000);
+        g.drawCenteredString(this.font, "EXHAUSTED", status[0] + status[2] / 2, status[1] + 2, 0xFFFF7777);
+        outline(g, status, 0xFFFF7777, "Status");
 
         // hotbar ghost with 9 slots
         int hbX = hotbarX();

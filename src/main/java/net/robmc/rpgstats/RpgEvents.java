@@ -9,8 +9,6 @@ import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ShieldItem;
-import net.minecraft.world.item.SwordItem;
-import net.minecraft.world.item.TridentItem;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.phys.Vec3;
@@ -45,6 +43,10 @@ public class RpgEvents {
 
     /** Per-player last position, to measure distance travelled for Quickness. */
     private static final Map<UUID, double[]> lastPos = new HashMap<>();
+    /** Per-player swing state last tick, for edge-detecting a fresh melee swing. */
+    private static final Map<UUID, Boolean> wasSwinging = new HashMap<>();
+    /** Game time of a player's last landed melee hit, so a hit isn't also charged as a whiffed swing. */
+    private static final Map<UUID, Long> lastMeleeHitTick = new HashMap<>();
 
     // --- lifecycle ---
 
@@ -135,6 +137,20 @@ public class RpgEvents {
 
         Exhaustion.update(player, s.getStamina(), StatFormulas.maxStamina(s));
 
+        // Swinging your arm in combat costs stamina, hit or miss. Mining (crosshair on
+        // a nearby block) doesn't count, and a landed hit is charged in onLivingHurt instead.
+        boolean swinging = player.swinging;
+        if (swinging && !wasSwinging.getOrDefault(player.getUUID(), false)) {
+            long now = player.serverLevel().getGameTime();
+            boolean justHit = now == lastMeleeHitTick.getOrDefault(player.getUUID(), -1L);
+            if (!justHit && s.getStamina() > 0
+                    && player.pick(4.5, 1.0f, false).getType() != net.minecraft.world.phys.HitResult.Type.BLOCK) {
+                s.setStamina(s.getStamina() - StatFormulas.STAMINA_MELEE_SWING);
+                RpgManager.sync(player);
+            }
+        }
+        wasSwinging.put(player.getUUID(), swinging);
+
         RestManager.tick(player);
         RecallManager.tick(player);
 
@@ -147,9 +163,13 @@ public class RpgEvents {
 
     @SubscribeEvent
     public static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        RestManager.clear(event.getEntity().getUUID());
-        RecallManager.clear(event.getEntity().getUUID());
-        Exhaustion.clear(event.getEntity().getUUID());
+        UUID id = event.getEntity().getUUID();
+        RestManager.clear(id);
+        RecallManager.clear(id);
+        Exhaustion.clear(id);
+        lastPos.remove(id);
+        wasSwinging.remove(id);
+        lastMeleeHitTick.remove(id);
     }
 
     @SubscribeEvent
@@ -233,11 +253,10 @@ public class RpgEvents {
                 amount *= (float) StatFormulas.meleeDamageMultiplier(as);
                 RpgManager.addXp(attacker, Stat.STRENGTH, StatFormulas.XP_MELEE_HIT);
                 RpgManager.addXp(attacker, Stat.VITALITY, StatFormulas.XP_MELEE_HIT * 0.6);
-                var weapon = attacker.getMainHandItem().getItem();
-                if (weapon instanceof SwordItem || weapon instanceof AxeItem || weapon instanceof TridentItem) {
-                    as.setStamina(as.getStamina() - StatFormulas.STAMINA_MELEE_SWING);
-                    RpgManager.sync(attacker);
-                }
+                // any landed melee hit (fist or weapon) costs stamina
+                as.setStamina(as.getStamina() - StatFormulas.STAMINA_MELEE_SWING);
+                lastMeleeHitTick.put(attacker.getUUID(), attacker.serverLevel().getGameTime());
+                RpgManager.sync(attacker);
             }
         }
 

@@ -76,7 +76,7 @@ public final class RpgManager {
                 s.getMana(), StatFormulas.maxMana(s),
                 s.getLevel(Stat.STRENGTH), s.getLevel(Stat.VITALITY), s.getLevel(Stat.DEXTERITY),
                 s.getLevel(Stat.QUICKNESS), s.getLevel(Stat.INTELLIGENCE), s.getLevel(Stat.WISDOM),
-                RestManager.isResting(player.getUUID())));
+                RestManager.isResting(player.getUUID()), Exhaustion.is(player.getUUID())));
     }
 
     public static void syncSpellBar(ServerPlayer player) {

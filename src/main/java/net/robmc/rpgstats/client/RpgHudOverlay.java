@@ -37,6 +37,7 @@ public class RpgHudOverlay {
     static float hp, maxHp = 300, stam, maxStam = 300, mana, maxMana = 300;
     static int str, vit, dex, qui, intel, wis;
     public static boolean resting;
+    public static boolean exhausted;
 
     public static void update(SyncRpgStatsPacket p) {
         hp = p.health;
@@ -52,6 +53,7 @@ public class RpgHudOverlay {
         intel = p.intel;
         wis = p.wis;
         resting = p.resting;
+        exhausted = p.exhausted;
     }
 
     /** Default top-left of the bar stack, before the layout offset. */
@@ -63,9 +65,22 @@ public class RpgHudOverlay {
         return screenH - 22 - 6 - BARS_TOTAL_H;
     }
 
+    // --- status line (movable on its own) ---
+    public static final int STATUS_W = 90;
+    public static final int STATUS_H = 11;
+
+    public static int statusDefaultLeft(int screenW) {
+        return (screenW - STATUS_W) / 2;
+    }
+
+    public static int statusDefaultTop(int screenH) {
+        return defaultTop(screenH) - STATUS_H - 3;
+    }
+
     @SubscribeEvent
     public static void register(RegisterGuiOverlaysEvent event) {
         event.registerAbove(VanillaGuiOverlay.HOTBAR.id(), "rpg_bars", BARS);
+        event.registerAbove(VanillaGuiOverlay.HOTBAR.id(), "rpg_status", STATUS);
     }
 
     private static final IGuiOverlay BARS = (gui, g, partialTick, screenW, screenH) -> {
@@ -78,6 +93,28 @@ public class RpgHudOverlay {
         renderBars(g, mc.font, left, top);
     };
 
+    private static final IGuiOverlay STATUS = (gui, g, partialTick, screenW, screenH) -> {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.options.hideGui || !exhausted) {
+            return;
+        }
+        int left = statusDefaultLeft(screenW) + HudLayout.offX(HudLayout.STATUS);
+        int top = statusDefaultTop(screenH) + HudLayout.offY(HudLayout.STATUS);
+        renderStatus(g, mc.font, left, top);
+    };
+
+    /** Active RPG statuses. Currently just Exhausted; drawn centred in a STATUS_W-wide strip. */
+    public static void renderStatus(GuiGraphics g, Font font, int left, int top) {
+        if (!exhausted) {
+            return;
+        }
+        String text = "EXHAUSTED";
+        int w = font.width(text);
+        int x = left + (STATUS_W - w) / 2;
+        g.fill(x - 3, top - 1, x + w + 3, top + STATUS_H - 1, 0xC0000000);
+        g.drawString(font, text, x, top + 1, 0xFFFF5555, true);
+    }
+
     static void renderBars(GuiGraphics g, Font font, int left, int top) {
         drawBar(g, font, left, top, hp, maxHp, COL_HP);
         drawBar(g, font, left, top + BAR_H + GAP, stam, maxStam, COL_STAM);
@@ -89,10 +126,8 @@ public class RpgHudOverlay {
         g.fill(x, y, x + BAR_W, y + BAR_H, COL_BG);
         int fill = (int) (BAR_W * Math.max(0f, Math.min(1f, value / max)));
         g.fill(x, y, x + fill, y + BAR_H, colour);
-        boolean exhausted = colour == COL_STAM && value <= 0f;
-        String text = exhausted ? "EXHAUSTED" : Math.round(value) + " / " + Math.round(max);
-        g.drawString(font, text, x + (BAR_W - font.width(text)) / 2, y + 1,
-                exhausted ? 0xFFFF5555 : 0xFFFFFFFF, true);
+        String text = Math.round(value) + " / " + Math.round(max);
+        g.drawString(font, text, x + (BAR_W - font.width(text)) / 2, y + 1, 0xFFFFFFFF, true);
     }
 
     /** Hides vanilla bars, and nudges the hotbar group by its saved layout offset. */
