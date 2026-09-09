@@ -295,8 +295,8 @@ public final class StatFormulas {
     }
 
     // Pyroclasm: slow-cast arcing bolt that falls like an arrow; ~Sunburst damage, ~2x the knock-up (fall damage on landing)
-    public static final double PYROCLASM_SPEED = 1.4;
-    public static final double PYROCLASM_ARC_LIFT = 0.35;        // how much the shot is angled up on release
+    public static final double PYROCLASM_SPEED = 2.1;            // fast - was 1.4
+    public static final double PYROCLASM_ARC_LIFT = 0.10;        // only a slight lob now, so it lands near the crosshair up close
     public static final double PYROCLASM_LAUNCH = 1.15;          // ~2x Sunburst - high enough that the drop hurts
     private static final double PYROCLASM_DMG_MIN = 3.0;
     private static final double PYROCLASM_DMG_MAX = 6.0;

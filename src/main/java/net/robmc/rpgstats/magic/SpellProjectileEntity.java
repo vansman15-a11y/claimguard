@@ -78,6 +78,11 @@ public class SpellProjectileEntity extends ThrowableProjectile {
     }
 
     @Override
+    protected float getGravity() {
+        return spell() == Spell.PYROCLASM ? 0.045f : 0.03f; // a touch heavier than default so the fast shot still drops
+    }
+
+    @Override
     public void tick() {
         super.tick();
         if (this.level().isClientSide()) {
