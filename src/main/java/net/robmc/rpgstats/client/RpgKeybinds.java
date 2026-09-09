@@ -55,6 +55,11 @@ public class RpgKeybinds {
 
     @Mod.EventBusSubscriber(modid = RpgStats.MOD_ID, value = Dist.CLIENT)
     public static class Handler {
+
+        /** The bar slot whose key is currently being held for a charged cast, or -1. */
+        private static int heldSlot = -1;
+        private static int heldSinceTick = 0;
+
         @SubscribeEvent
         public static void onClientTick(TickEvent.ClientTickEvent event) {
             if (event.phase != TickEvent.Phase.END) {
@@ -76,10 +81,31 @@ public class RpgKeybinds {
                     mc.setScreen(null);
                 }
             }
-            if (mc.screen == null && mc.player != null) {
+
+            // hold-to-charge: press starts the cast, releasing the key fires it
+            if (heldSlot >= 0 && (mc.screen != null || mc.player == null || !CAST[heldSlot].isDown())) {
+                ClaimGuardNetwork.CHANNEL.sendToServer(new CastSpellPacket(heldSlot, true));
+                net.robmc.rpgstats.client.magic.ClientSpells.setCastHeld(false);
+                heldSlot = -1;
+            } else if (heldSlot >= 0 && mc.player != null
+                    && mc.player.tickCount - heldSinceTick > 10
+                    && !net.robmc.rpgstats.client.magic.ClientSpells.isCasting()) {
+                // the server cancelled it (interrupted / rejected) - stop tracking without a release
+                net.robmc.rpgstats.client.magic.ClientSpells.setCastHeld(false);
+                heldSlot = -1;
+            }
+
+            if (mc.screen == null && mc.player != null && heldSlot < 0) {
                 for (int i = 0; i < CAST.length; i++) {
+                    boolean pressed = false;
                     while (CAST[i].consumeClick()) {
-                        ClaimGuardNetwork.CHANNEL.sendToServer(new CastSpellPacket(i));
+                        pressed = true;
+                    }
+                    if (pressed && heldSlot < 0) {
+                        heldSlot = i;
+                        heldSinceTick = mc.player.tickCount;
+                        net.robmc.rpgstats.client.magic.ClientSpells.setCastHeld(true);
+                        ClaimGuardNetwork.CHANNEL.sendToServer(new CastSpellPacket(i, false));
                     }
                 }
             }

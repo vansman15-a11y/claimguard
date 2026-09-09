@@ -43,17 +43,21 @@ public final class CastBarOverlay {
         }
         int x = defaultLeft(screenW) + HudLayout.offX(HudLayout.CAST_BAR);
         int y = defaultTop(screenH) + HudLayout.offY(HudLayout.CAST_BAR);
-        render(g, mc.font, x, y, ClientSpells.castingSpell(), ClientSpells.castProgress());
+        render(g, mc.font, x, y, ClientSpells.castingSpell(), ClientSpells.castProgress(), ClientSpells.isCharged());
     };
 
-    public static void render(GuiGraphics g, Font font, int x, int y, Spell spell, float progress) {
+    public static void render(GuiGraphics g, Font font, int x, int y, Spell spell, float progress, boolean charged) {
         String name = spell != null ? spell.displayName() : "Casting";
-        g.drawString(font, name, x + (W - font.width(name)) / 2, y - 11, 0xFFE8E8E8, true);
+        if (charged) {
+            name = name + "  -  release to cast";
+        }
+        g.drawString(font, name, x + (W - font.width(name)) / 2, y - 11,
+                charged ? 0xFFA8F0A0 : 0xFFE8E8E8, true);
 
         g.fill(x - 1, y - 1, x + W + 1, y + H + 1, 0xFF000000);
         g.fill(x, y, x + W, y + H, 0xC0202024);
         int fill = (int) (W * Math.max(0f, Math.min(1f, progress)));
-        g.fill(x, y, x + fill, y + H, 0xFFEAD37A);
-        g.renderOutline(x, y, W, H, 0xFF5A5A5A);
+        g.fill(x, y, x + fill, y + H, charged ? 0xFF6FD36A : 0xFFEAD37A);
+        g.renderOutline(x, y, W, H, charged ? 0xFFB8F0B0 : 0xFF5A5A5A);
     }
 }

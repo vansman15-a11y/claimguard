@@ -32,7 +32,17 @@ import java.util.UUID;
 /** Server-side spellcasting: start a cast, finish it after its cast time, apply the effect. */
 public final class SpellCasting {
 
-    private record Pending(Spell spell, long endTick) {
+    /** A cast in progress: charges until {@code endTick}, then holds (charged) until the key is released. */
+    private static final class Pending {
+        final Spell spell;
+        final long endTick;
+        boolean charged;
+        long chargedAt;
+
+        Pending(Spell spell, long endTick) {
+            this.spell = spell;
+            this.endTick = endTick;
+        }
     }
 
     /** A transfer's gain, paid out a little each tick instead of all at once. */
@@ -150,6 +160,20 @@ public final class SpellCasting {
         }
     }
 
+    /** The key was released: fire a fully-charged cast, or cancel one that hadn't finished. */
+    public static void releaseCast(ServerPlayer player, int slot) {
+        Pending p = casting.get(player.getUUID());
+        if (p == null) {
+            return;
+        }
+        if (p.charged) {
+            casting.remove(player.getUUID());
+            complete(player, p.spell);
+        } else {
+            interrupt(player); // let go too early
+        }
+    }
+
     /** Called every server tick from RpgEvents. */
     public static void tick(MinecraftServer server) {
         long now = server.overworld().getGameTime();
@@ -157,14 +181,26 @@ public final class SpellCasting {
 
         if (!casting.isEmpty()) {
             casting.entrySet().removeIf(entry -> {
-                if (now < entry.getValue().endTick()) {
+                Pending p = entry.getValue();
+                ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+                if (!p.charged) {
+                    if (now < p.endTick) {
+                        return false; // still charging
+                    }
+                    p.charged = true;
+                    p.chargedAt = now;
+                    if (player != null) {
+                        ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                                new CastStatePacket(p.spell.name(), -1)); // -1 = charged, hold the bar full
+                    }
                     return false;
                 }
-                ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
-                if (player != null && player.isAlive()) {
-                    complete(player, entry.getValue().spell());
+                // charged - wait for the release, but fire on its own after the max hold
+                if (player != null && player.isAlive() && now - p.chargedAt >= StatFormulas.CHARGED_MAX_HOLD_TICKS) {
+                    complete(player, p.spell);
+                    return true;
                 }
-                return true;
+                return player == null; // drop a stale entry for someone who left
             });
         }
 

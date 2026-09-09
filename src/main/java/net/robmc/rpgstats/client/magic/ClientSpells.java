@@ -29,6 +29,8 @@ public final class ClientSpells {
     private static Spell castingSpell;
     private static long castStartTick;
     private static int castDurationTicks;
+    private static boolean castCharged;   // finished charging, waiting on key release
+    private static boolean castHeld;      // the client is still holding the cast key
 
     private static final long[] cdStart = new long[Spell.values().length];
     private static final int[] cdDuration = new int[Spell.values().length];
@@ -54,9 +56,21 @@ public final class ClientSpells {
             castingSpell = spell;
             castStartTick = clientTick();
             castDurationTicks = p.durationTicks;
+            castCharged = false;
+        } else if (spell != null && p.durationTicks == -1) {
+            castCharged = true; // fully charged - keep the bar full until the key is released
         } else {
             castingSpell = null;
+            castCharged = false;
         }
+    }
+
+    public static void setCastHeld(boolean held) {
+        castHeld = held;
+    }
+
+    public static boolean isCharged() {
+        return castingSpell != null && castCharged;
     }
 
     public static void onSpellCooldown(SpellCooldownPacket p) {
@@ -130,7 +144,8 @@ public final class ClientSpells {
     }
 
     public static boolean isCasting() {
-        return castingSpell != null && castProgress() < 1.0f;
+        // shown while charging, and kept full while charged/held until the server clears it
+        return castingSpell != null;
     }
 
     public static Spell castingSpell() {

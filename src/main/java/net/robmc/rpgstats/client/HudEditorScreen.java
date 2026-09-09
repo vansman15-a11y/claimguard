@@ -348,7 +348,7 @@ public class HudEditorScreen extends Screen {
 
         int cbX = net.robmc.rpgstats.client.magic.CastBarOverlay.defaultLeft(width) + HudLayout.offX(HudLayout.CAST_BAR);
         int cbY = net.robmc.rpgstats.client.magic.CastBarOverlay.defaultTop(height) + HudLayout.offY(HudLayout.CAST_BAR);
-        net.robmc.rpgstats.client.magic.CastBarOverlay.render(g, this.font, cbX, cbY, null, 0.6f);
+        net.robmc.rpgstats.client.magic.CastBarOverlay.render(g, this.font, cbX, cbY, null, 0.6f, false);
         outline(g, castBarBox(), 0xFFEAD37A, "Cast bar");
 
         // hotbar ghost with 9 slots

@@ -166,6 +166,8 @@ public final class StatFormulas {
     // --- transfer spells: the spell's own level scales both how much moves and the return rate ---
 
     public static final int TRANSFER_DURATION_TICKS = 40;         // the gain is paid out over ~2 seconds
+    /** A fully-charged spell fires on its own after this long if you never let go of the key. */
+    public static final int CHARGED_MAX_HOLD_TICKS = 80;
     private static final double TRANSFER_AMOUNT_MIN = 12.0;       // spent per cast at spell level 0
     private static final double TRANSFER_AMOUNT_MAX = 26.0;       // ... at the level cap
     private static final double TRANSFER_RATIO_MIN = 0.75;        // level 0: you LOSE value in the exchange
