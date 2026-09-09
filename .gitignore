@@ -38,3 +38,6 @@ Thumbs.db
 
 # Stray nested clone (empty repo)
 minecraft/
+
+# Stray root-level build artifacts (real output is build/libs/, already ignored)
+/*.jar
