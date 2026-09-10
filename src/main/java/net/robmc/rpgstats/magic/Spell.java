@@ -34,11 +34,12 @@ public enum Spell {
     PESTILENCE("Pestilence", School.CHAOS, 4, Kind.PESTILENCE, Pool.MANA, null, 10, 2, 200),
     HEXDRAIN("Hexdrain", School.CHAOS, 5, Kind.HEXDRAIN, Pool.MANA, null, 40, 30, 1200),
 
-    // --- Incantation Magic (utility chants; 4 tiers like Weak Magic) ---
+    // --- Incantation Magic (utility chants) ---
     CHANT_OF_GROWTH("Chant of Growth", School.INCANTATION, 1, Kind.CHANT_OF_GROWTH, Pool.MANA, null, 5, 24, 200),
     BATTLE_HYMN("Battle Hymn", School.INCANTATION, 2, Kind.BATTLE_HYMN, Pool.MANA, null, 15, 60, 600),
     WORD_OF_UNMAKING("Word of Unmaking", School.INCANTATION, 3, Kind.WORD_OF_UNMAKING, Pool.MANA, null, 8, 6, 300),
-    SILENCING_WHISPER("Silencing Whisper", School.INCANTATION, 4, Kind.SILENCING_WHISPER, Pool.MANA, null, 9, 2, 900);
+    FEARCRAFT("Fearcraft", School.INCANTATION, 4, Kind.FEARCRAFT, Pool.MANA, null, 8, 60, 1600),
+    SILENCING_WHISPER("Silencing Whisper", School.INCANTATION, 5, Kind.SILENCING_WHISPER, Pool.MANA, null, 9, 2, 900);
 
     public enum Pool { HEALTH, STAMINA, MANA }
 
@@ -47,7 +48,7 @@ public enum Spell {
         TRANSFER, MAGIC_BOLT, SUNDER, HEAL_OTHER, AWAY, WARD, BRIGHT_LIGHT,
         EMBER_DART, SERPENTS_PLUME, SUNBURST, PYROCLASM, CINDER_MAELSTROM,
         HEARTWELL, WITHER, SLUMP, PESTILENCE, HEXDRAIN,
-        CHANT_OF_GROWTH, BATTLE_HYMN, WORD_OF_UNMAKING, SILENCING_WHISPER
+        CHANT_OF_GROWTH, BATTLE_HYMN, WORD_OF_UNMAKING, FEARCRAFT, SILENCING_WHISPER
     }
 
     private final String displayName;

@@ -46,6 +46,6 @@ public enum School {
     }
 
     public int tierCount() {
-        return (this == WEAK || this == INCANTATION) ? 4 : MAX_TIERS;
+        return this == WEAK ? 4 : MAX_TIERS;
     }
 }

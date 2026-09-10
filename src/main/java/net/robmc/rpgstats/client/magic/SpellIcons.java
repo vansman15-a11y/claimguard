@@ -41,6 +41,7 @@ public final class SpellIcons {
             case CHANT_OF_GROWTH -> tex("chant_of_growth");
             case BATTLE_HYMN -> tex("battle_hymn");
             case WORD_OF_UNMAKING -> tex("word_of_unmaking");
+            case FEARCRAFT -> tex("fearcraft");
             case SILENCING_WHISPER -> tex("silencing_whisper");
         };
     }

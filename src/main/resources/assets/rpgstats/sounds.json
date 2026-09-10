@@ -104,6 +104,11 @@
     "subtitle": "rpgstats.subtitle.spell.word_of_unmaking",
     "sounds": [ "rpgstats:spell/word_of_unmaking" ]
   },
+  "spell.fearcraft": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.fearcraft",
+    "sounds": [ "rpgstats:spell/fearcraft" ]
+  },
   "spell.silencing_whisper": {
     "category": "player",
     "subtitle": "rpgstats.subtitle.spell.silencing_whisper",

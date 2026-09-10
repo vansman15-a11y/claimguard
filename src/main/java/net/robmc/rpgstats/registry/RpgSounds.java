@@ -37,6 +37,7 @@ public final class RpgSounds {
     public static final RegistryObject<SoundEvent> CHANT_OF_GROWTH = reg("spell.chant_of_growth");
     public static final RegistryObject<SoundEvent> BATTLE_HYMN = reg("spell.battle_hymn");
     public static final RegistryObject<SoundEvent> WORD_OF_UNMAKING = reg("spell.word_of_unmaking");
+    public static final RegistryObject<SoundEvent> FEARCRAFT = reg("spell.fearcraft");
     public static final RegistryObject<SoundEvent> SILENCING_WHISPER = reg("spell.silencing_whisper");
 
     private RpgSounds() {
@@ -71,6 +72,7 @@ public final class RpgSounds {
             case CHANT_OF_GROWTH -> CHANT_OF_GROWTH.get();
             case BATTLE_HYMN -> BATTLE_HYMN.get();
             case WORD_OF_UNMAKING -> WORD_OF_UNMAKING.get();
+            case FEARCRAFT -> FEARCRAFT.get();
             case SILENCING_WHISPER -> SILENCING_WHISPER.get();
         };
     }

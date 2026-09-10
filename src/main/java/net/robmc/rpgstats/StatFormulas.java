@@ -380,6 +380,12 @@ public final class StatFormulas {
     public static final int UNMAKING_DEPTH = 2;                  // blocks removed straight down from the aim point
     public static final int UNMAKING_SPREAD = 1;                 // + a 1-block ring around the top
 
+    // Fearcraft: a 3 s chant that sends nearby monsters running for 5 s
+    public static final double FEARCRAFT_RADIUS = 10.0;         // monsters within this at cast time are frightened
+    public static final int FEARCRAFT_DURATION_TICKS = 100;     // 5 s
+    public static final double FEARCRAFT_FLEE_SPEED = 1.35;     // navigation speed multiplier while fleeing
+    public static final double FEARCRAFT_FLEE_DISTANCE = 12.0;  // how far ahead the flee path is aimed
+
     // Silencing Whisper: interrupt an enemy's cast and lock that school for a beat
     public static final double SILENCE_RANGE = 32.0;
     public static final int SILENCE_LOCK_TICKS = 40;            // 2 s

@@ -91,6 +91,7 @@ public class RpgEvents {
             net.robmc.rpgstats.magic.Afflictions.tick(event.getServer());
             net.robmc.rpgstats.magic.HymnBuff.tick(event.getServer());
             net.robmc.rpgstats.magic.Silence.tick(event.getServer());
+            net.robmc.rpgstats.magic.FearManager.tick(event.getServer());
         }
     }
 

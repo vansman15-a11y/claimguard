@@ -298,6 +298,10 @@ public final class SpellCasting {
                 spend(player, s, spell.costPool(), spell.flatCost());
                 castWordOfUnmaking(player);
             }
+            case FEARCRAFT -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castFearcraft(player);
+            }
             case SILENCING_WHISPER -> {
                 spend(player, s, spell.costPool(), spell.flatCost());
                 castSilencingWhisper(player);
@@ -568,6 +572,30 @@ public final class SpellCasting {
         level.levelEvent(2001, pos, net.minecraft.world.level.block.Block.getId(st)); // vanilla break fx
         level.removeBlock(pos, false);
         return true;
+    }
+
+    /** Fearcraft: send every monster near the caster running for a few seconds. */
+    private static void castFearcraft(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        double r = StatFormulas.FEARCRAFT_RADIUS;
+        int hit = 0;
+        for (net.minecraft.world.entity.Mob mob : level.getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
+                player.getBoundingBox().inflate(r))) {
+            if (!(mob instanceof net.minecraft.world.entity.monster.Enemy) || !mob.isAlive()) {
+                continue;
+            }
+            if (mob.distanceToSqr(player) > r * r) {
+                continue;
+            }
+            net.robmc.rpgstats.magic.FearManager.frighten(mob, player, StatFormulas.FEARCRAFT_DURATION_TICKS);
+            hit++;
+        }
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.WITCH,
+                player.getX(), player.getY() + 1.0, player.getZ(), 40, r * 0.5, 0.9, r * 0.5, 0.02);
+        level.playSound(null, player.blockPosition(), SoundEvents.WARDEN_ROAR, SoundSource.PLAYERS, 0.8f, 1.4f);
+        player.displayClientMessage(Component.literal(
+                hit == 0 ? "Fearcraft finds no prey." : "Fearcraft scatters " + hit + " " + (hit == 1 ? "monster" : "monsters") + "!")
+                .withStyle(ChatFormatting.DARK_PURPLE), true);
     }
 
     /** Silencing Whisper: interrupt an enemy's cast and seal that school (or all schools) for 2 s. */
