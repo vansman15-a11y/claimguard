@@ -1,5 +1,6 @@
 package net.robmc.rpgstats.registry;
 
+import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -8,6 +9,7 @@ import net.minecraftforge.registries.RegistryObject;
 import net.robmc.rpgstats.RpgStats;
 import net.robmc.rpgstats.item.DaggerItem;
 import net.robmc.rpgstats.item.PolearmItem;
+import net.robmc.rpgstats.item.RpgArmorMaterials;
 import net.robmc.rpgstats.item.SkillItem;
 import net.robmc.rpgstats.item.StaffItem;
 import net.robmc.rpgstats.skill.Skill;
@@ -32,6 +34,34 @@ public final class RpgItems {
 
     public static final RegistryObject<Item> STAFF = ITEMS.register(
             "staff", () -> new StaffItem(new Item.Properties().durability(400)));
+
+    public static final RegistryObject<Item> COBRA_STAFF = ITEMS.register(
+            "cobra_staff", () -> new StaffItem(new Item.Properties().durability(440)));
+
+    public static final RegistryObject<Item> BLACKBOLT_STAFF = ITEMS.register(
+            "blackbolt_staff", () -> new StaffItem(new Item.Properties().durability(440)));
+
+    // --- Dragon armour (Netherite-grade stats, fire resistant) ---
+    public static final RegistryObject<Item> DRAGON_HELMET = armor("dragon_helmet", RpgArmorMaterials.DRAGON, ArmorItem.Type.HELMET, true);
+    public static final RegistryObject<Item> DRAGON_CHESTPLATE = armor("dragon_chestplate", RpgArmorMaterials.DRAGON, ArmorItem.Type.CHESTPLATE, true);
+    public static final RegistryObject<Item> DRAGON_LEGGINGS = armor("dragon_leggings", RpgArmorMaterials.DRAGON, ArmorItem.Type.LEGGINGS, true);
+    public static final RegistryObject<Item> DRAGON_BOOTS = armor("dragon_boots", RpgArmorMaterials.DRAGON, ArmorItem.Type.BOOTS, true);
+
+    // --- Infernal armour (Diamond-grade stats, fire resistant) ---
+    public static final RegistryObject<Item> INFERNAL_HELMET = armor("infernal_helmet", RpgArmorMaterials.INFERNAL, ArmorItem.Type.HELMET, true);
+    public static final RegistryObject<Item> INFERNAL_CHESTPLATE = armor("infernal_chestplate", RpgArmorMaterials.INFERNAL, ArmorItem.Type.CHESTPLATE, true);
+    public static final RegistryObject<Item> INFERNAL_LEGGINGS = armor("infernal_leggings", RpgArmorMaterials.INFERNAL, ArmorItem.Type.LEGGINGS, true);
+    public static final RegistryObject<Item> INFERNAL_BOOTS = armor("infernal_boots", RpgArmorMaterials.INFERNAL, ArmorItem.Type.BOOTS, true);
+
+    private static RegistryObject<Item> armor(String name, RpgArmorMaterials material, ArmorItem.Type type, boolean fireResistant) {
+        return ITEMS.register(name, () -> {
+            Item.Properties props = new Item.Properties();
+            if (fireResistant) {
+                props = props.fireResistant();
+            }
+            return new ArmorItem(material, type, props);
+        });
+    }
 
     private RpgItems() {
     }

@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [ " G", "R ", "R " ],
+  "key": {
+    "G": { "item": "minecraft:gold_ingot" },
+    "R": { "item": "minecraft:blaze_rod" }
+  },
+  "result": { "item": "rpgstats:cobra_staff" }
+}

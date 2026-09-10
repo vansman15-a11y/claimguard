@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [ "XXX", "X X", "X X" ],
+  "key": { "X": { "item": "minecraft:netherite_ingot" } },
+  "result": { "item": "rpgstats:dragon_leggings" }
+}

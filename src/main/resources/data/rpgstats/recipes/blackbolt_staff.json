@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [ " O", "R ", "R " ],
+  "key": {
+    "O": { "item": "minecraft:obsidian" },
+    "R": { "item": "minecraft:blaze_rod" }
+  },
+  "result": { "item": "rpgstats:blackbolt_staff" }
+}
