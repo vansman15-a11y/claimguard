@@ -32,7 +32,13 @@ public enum Spell {
     WITHER("Wither", School.CHAOS, 2, Kind.WITHER, Pool.MANA, null, 10, 26, 400),
     SLUMP("Slump", School.CHAOS, 3, Kind.SLUMP, Pool.MANA, null, 15, 26, 300),
     PESTILENCE("Pestilence", School.CHAOS, 4, Kind.PESTILENCE, Pool.MANA, null, 10, 2, 200),
-    HEXDRAIN("Hexdrain", School.CHAOS, 5, Kind.HEXDRAIN, Pool.MANA, null, 40, 30, 1200);
+    HEXDRAIN("Hexdrain", School.CHAOS, 5, Kind.HEXDRAIN, Pool.MANA, null, 40, 30, 1200),
+
+    // --- Incantation Magic (utility chants; 4 tiers like Weak Magic) ---
+    CHANT_OF_GROWTH("Chant of Growth", School.INCANTATION, 1, Kind.CHANT_OF_GROWTH, Pool.MANA, null, 10, 24, 200),
+    BATTLE_HYMN("Battle Hymn", School.INCANTATION, 2, Kind.BATTLE_HYMN, Pool.MANA, null, 35, 60, 600),
+    WORD_OF_UNMAKING("Word of Unmaking", School.INCANTATION, 3, Kind.WORD_OF_UNMAKING, Pool.MANA, null, 22, 6, 300),
+    SILENCING_WHISPER("Silencing Whisper", School.INCANTATION, 4, Kind.SILENCING_WHISPER, Pool.MANA, null, 28, 2, 900);
 
     public enum Pool { HEALTH, STAMINA, MANA }
 
@@ -40,7 +46,8 @@ public enum Spell {
     public enum Kind {
         TRANSFER, MAGIC_BOLT, SUNDER, HEAL_OTHER, AWAY, WARD, BRIGHT_LIGHT,
         EMBER_DART, SERPENTS_PLUME, SUNBURST, PYROCLASM, CINDER_MAELSTROM,
-        HEARTWELL, WITHER, SLUMP, PESTILENCE, HEXDRAIN
+        HEARTWELL, WITHER, SLUMP, PESTILENCE, HEXDRAIN,
+        CHANT_OF_GROWTH, BATTLE_HYMN, WORD_OF_UNMAKING, SILENCING_WHISPER
     }
 
     private final String displayName;

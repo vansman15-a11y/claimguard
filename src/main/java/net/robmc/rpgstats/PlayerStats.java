@@ -35,6 +35,9 @@ public class PlayerStats {
     private double mana = StatFormulas.BASE_POOL;
     private boolean initialised = false;
 
+    /** Battle Hymn's temporary +N to Strength / Vitality / Quickness (0 = not buffed). Not persisted. */
+    private int hymnBonus = 0;
+
     /** The two casting bars' slots (bar 1 = 0..8, bar 2 = 9..17), each holding a Spell/Skill enum name or "". */
     private final String[] spellBar = new String[StatFormulas.TOTAL_BAR_SLOTS];
 
@@ -61,7 +64,24 @@ public class PlayerStats {
     // --- stats ---
 
     public int getLevel(Stat stat) {
+        int base = levels.get(stat);
+        if (hymnBonus > 0 && (stat == Stat.STRENGTH || stat == Stat.VITALITY || stat == Stat.QUICKNESS)) {
+            base += hymnBonus;
+        }
+        return Math.min(base, StatFormulas.LEVEL_CAP);
+    }
+
+    /** The stat level as trained, ignoring any Battle Hymn buff (for XP / level-up / save). */
+    public int getBaseLevel(Stat stat) {
         return levels.get(stat);
+    }
+
+    public void setHymnBonus(int bonus) {
+        this.hymnBonus = Math.max(0, bonus);
+    }
+
+    public boolean hasHymn() {
+        return hymnBonus > 0;
     }
 
     public double getXp(Stat stat) {

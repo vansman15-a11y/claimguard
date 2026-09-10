@@ -88,5 +88,25 @@
     "category": "player",
     "subtitle": "rpgstats.subtitle.spell.hexdrain",
     "sounds": [ "rpgstats:spell/hexdrain" ]
+  },
+  "spell.chant_of_growth": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.chant_of_growth",
+    "sounds": [ "rpgstats:spell/chant_of_growth" ]
+  },
+  "spell.battle_hymn": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.battle_hymn",
+    "sounds": [ "rpgstats:spell/battle_hymn" ]
+  },
+  "spell.word_of_unmaking": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.word_of_unmaking",
+    "sounds": [ "rpgstats:spell/word_of_unmaking" ]
+  },
+  "spell.silencing_whisper": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.silencing_whisper",
+    "sounds": [ "rpgstats:spell/silencing_whisper" ]
   }
 }

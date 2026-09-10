@@ -89,6 +89,8 @@ public class RpgEvents {
             net.robmc.rpgstats.magic.FireFieldManager.tick(event.getServer());
             net.robmc.rpgstats.magic.DiseaseManager.tick(event.getServer());
             net.robmc.rpgstats.magic.Afflictions.tick(event.getServer());
+            net.robmc.rpgstats.magic.HymnBuff.tick(event.getServer());
+            net.robmc.rpgstats.magic.Silence.tick(event.getServer());
         }
     }
 
@@ -284,6 +286,8 @@ public class RpgEvents {
         RestManager.clear(id);
         RecallManager.clear(id);
         Exhaustion.clear(id);
+        net.robmc.rpgstats.magic.HymnBuff.clear(id);
+        net.robmc.rpgstats.magic.Silence.clear(id);
         lastPos.remove(id);
         wasSwinging.remove(id);
         lastMeleeHitTick.remove(id);

@@ -94,6 +94,11 @@ public final class SpellCasting {
                     .withStyle(ChatFormatting.GRAY), true);
             return;
         }
+        if (Silence.blocks(player, spell.school())) {
+            player.displayClientMessage(Component.literal(spell.school().displayName() + " is silenced!")
+                    .withStyle(ChatFormatting.DARK_PURPLE), true);
+            return;
+        }
         // Transfers can be cast bare-handed or with a staff. Everything else needs a staff.
         ItemStack hand = player.getMainHandItem();
         boolean staff = Weapons.isStaff(hand);
@@ -281,6 +286,22 @@ public final class SpellCasting {
                 spend(player, s, spell.costPool(), spell.flatCost());
                 castPestilence(player, s, lvl);
             }
+            case CHANT_OF_GROWTH -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castChantOfGrowth(player);
+            }
+            case BATTLE_HYMN -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castBattleHymn(player);
+            }
+            case WORD_OF_UNMAKING -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castWordOfUnmaking(player);
+            }
+            case SILENCING_WHISPER -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castSilencingWhisper(player);
+            }
             default -> { // every projectile spell (Adept + Fire + Chaos bolts)
                 spend(player, s, spell.costPool(), spell.flatCost());
                 SpellProjectiles.launch(player, spell, lvl);
@@ -458,6 +479,134 @@ public final class SpellCasting {
             level.sendParticles(net.minecraft.core.particles.ParticleTypes.SNEEZE,
                     hit.getLocation().x, hit.getLocation().y, hit.getLocation().z, 16, 0.25, 0.35, 0.25, 0.03);
             RpgManager.addSpellXp(player, Spell.PESTILENCE, StatFormulas.spellHitXp(1));
+        }
+    }
+
+    /** Chant of Growth: give nearby crops and saplings a shove along. */
+    private static void castChantOfGrowth(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        net.minecraft.util.RandomSource rand = level.random;
+        net.minecraft.core.BlockPos origin = player.blockPosition();
+        int r = (int) StatFormulas.GROWTH_RADIUS;
+        for (net.minecraft.core.BlockPos pos : net.minecraft.core.BlockPos.betweenClosed(
+                origin.offset(-r, -3, -r), origin.offset(r, 3, r))) {
+            net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+            if (state.getBlock() instanceof net.minecraft.world.level.block.BonemealableBlock b
+                    && b.isValidBonemealTarget(level, pos, state, false)
+                    && rand.nextDouble() < StatFormulas.GROWTH_TICK_CHANCE) {
+                net.minecraft.core.BlockPos p = pos.immutable();
+                if (b.isBonemealSuccess(level, rand, p, state)) {
+                    b.performBonemeal(level, rand, p, level.getBlockState(p));
+                    level.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER,
+                            p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5, 3, 0.3, 0.3, 0.3, 0.0);
+                }
+            }
+        }
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.COMPOSTER,
+                player.getX(), player.getY() + 1.0, player.getZ(), 30, r * 0.4, 1.0, r * 0.4, 0.0);
+    }
+
+    /** Battle Hymn: empower yourself and nearby friendlies with +stats for 15 minutes. */
+    private static void castBattleHymn(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        net.robmc.rpgstats.magic.HymnBuff.grant(player);
+        double rad = StatFormulas.BATTLE_HYMN_RADIUS;
+        for (ServerPlayer ally : level.getEntitiesOfClass(ServerPlayer.class,
+                player.getBoundingBox().inflate(rad))) {
+            if (ally == player || !ally.isAlive() || ally.distanceToSqr(player) > rad * rad) {
+                continue;
+            }
+            if (net.robmc.claimguard.clan.ClanActions.areFriendly(player.server, player.getUUID(), ally.getUUID())) {
+                net.robmc.rpgstats.magic.HymnBuff.grant(ally);
+            }
+        }
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.NOTE,
+                player.getX(), player.getY() + 1.3, player.getZ(), 26, rad * 0.4, 0.8, rad * 0.4, 1.0);
+    }
+
+    /** Word of Unmaking: erase a small cluster of unclaimed blocks - drop someone through the floor. */
+    private static void castWordOfUnmaking(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getViewVector(1.0f);
+        Vec3 far = eye.add(look.scale(StatFormulas.UNMAKING_RANGE));
+        net.minecraft.world.phys.BlockHitResult bhr = level.clip(new net.minecraft.world.level.ClipContext(
+                eye, far, net.minecraft.world.level.ClipContext.Block.OUTLINE,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+        if (bhr.getType() == net.minecraft.world.phys.HitResult.Type.MISS) {
+            player.displayClientMessage(Component.literal("Nothing to unmake.").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        net.minecraft.core.BlockPos hit = bhr.getBlockPos();
+        int spread = StatFormulas.UNMAKING_SPREAD;
+        int removed = 0;
+        for (int dx = -spread; dx <= spread; dx++) {
+            for (int dz = -spread; dz <= spread; dz++) {
+                if (Math.abs(dx) + Math.abs(dz) > spread) {
+                    continue;
+                }
+                for (int dy = 0; dy < StatFormulas.UNMAKING_DEPTH; dy++) {
+                    if (unmakeBlock(level, player, hit.offset(dx, -dy, dz))) {
+                        removed++;
+                    }
+                }
+            }
+        }
+        if (removed == 0) {
+            player.displayClientMessage(Component.literal("That's protected.").withStyle(ChatFormatting.GRAY), true);
+        }
+    }
+
+    private static boolean unmakeBlock(ServerLevel level, ServerPlayer player, net.minecraft.core.BlockPos pos) {
+        net.minecraft.world.level.block.state.BlockState st = level.getBlockState(pos);
+        if (st.isAir() || st.hasBlockEntity() || st.getDestroySpeed(level, pos) < 0) {
+            return false; // air, block entities (chests etc.), or unbreakable (bedrock)
+        }
+        if (!net.robmc.claimguard.event.ProtectionEvents.canModifyBlock(level, pos, player)) {
+            return false; // claim / admin-zone protected
+        }
+        level.levelEvent(2001, pos, net.minecraft.world.level.block.Block.getId(st)); // vanilla break fx
+        level.removeBlock(pos, false);
+        return true;
+    }
+
+    /** Silencing Whisper: interrupt an enemy's cast and seal that school (or all schools) for 2 s. */
+    private static void castSilencingWhisper(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getViewVector(1.0f);
+        Vec3 far = eye.add(look.scale(StatFormulas.SILENCE_RANGE));
+        net.minecraft.world.phys.BlockHitResult block = level.clip(new net.minecraft.world.level.ClipContext(
+                eye, far, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+        Vec3 end = block.getType() != net.minecraft.world.phys.HitResult.Type.MISS ? block.getLocation() : far;
+
+        net.minecraft.world.phys.EntityHitResult hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(
+                level, player, eye, end,
+                new net.minecraft.world.phys.AABB(eye, end).inflate(1.0),
+                e -> e instanceof ServerPlayer && e != player && e.isAlive() && !e.isSpectator());
+
+        Vec3 impact = hit != null ? hit.getLocation() : end;
+        int steps = (int) Math.max(4, eye.distanceTo(impact) * 2);
+        for (int i = 0; i <= steps; i++) {
+            Vec3 p = eye.lerp(impact, i / (double) steps);
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.WITCH, p.x, p.y, p.z, 1, 0.02, 0.02, 0.02, 0.0);
+        }
+        level.playSound(null, player.blockPosition(), SoundEvents.ALLAY_ITEM_GIVEN, SoundSource.PLAYERS, 1.0f, 0.5f);
+
+        if (hit != null && hit.getEntity() instanceof ServerPlayer victim) {
+            Pending pending = casting.get(victim.getUUID());
+            School lockSchool = pending != null ? pending.spell.school() : null;
+            interrupt(victim);
+            if (lockSchool != null) {
+                Silence.apply(victim, lockSchool, StatFormulas.SILENCE_LOCK_TICKS);
+                victim.displayClientMessage(Component.literal("Silenced - " + lockSchool.displayName() + " sealed!")
+                        .withStyle(ChatFormatting.DARK_PURPLE), true);
+            } else {
+                Silence.applyAll(victim, StatFormulas.SILENCE_LOCK_TICKS);
+                victim.displayClientMessage(Component.literal("Silenced!").withStyle(ChatFormatting.DARK_PURPLE), true);
+            }
+            RpgManager.addSpellXp(player, Spell.SILENCING_WHISPER, StatFormulas.spellHitXp(1));
         }
     }
 

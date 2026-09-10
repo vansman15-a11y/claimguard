@@ -166,6 +166,14 @@ public class ProtectionEvents {
      * a member (with build access) of the clan that owns the claim. Claims with no
      * clan (legacy) fall back to the single owner UUID.
      */
+    /**
+     * Public gate for code that edits blocks directly (spells, tools) and so never
+     * fires a {@link BlockEvent.BreakEvent}. Same rule as normal block protection.
+     */
+    public static boolean canModifyBlock(ServerLevel level, net.minecraft.core.BlockPos pos, Player player) {
+        return isAllowed(level, pos, player);
+    }
+
     private static boolean isAllowed(ServerLevel level, net.minecraft.core.BlockPos pos, Player player) {
         if (player == null) {
             return true;

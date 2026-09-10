@@ -43,5 +43,9 @@
   "rpgstats.subtitle.spell.wither": "Wither cast",
   "rpgstats.subtitle.spell.slump": "Slump cast",
   "rpgstats.subtitle.spell.pestilence": "Pestilence cast",
-  "rpgstats.subtitle.spell.hexdrain": "Hexdrain cast"
+  "rpgstats.subtitle.spell.hexdrain": "Hexdrain cast",
+  "rpgstats.subtitle.spell.chant_of_growth": "Chant of Growth",
+  "rpgstats.subtitle.spell.battle_hymn": "Battle Hymn",
+  "rpgstats.subtitle.spell.word_of_unmaking": "Word of Unmaking",
+  "rpgstats.subtitle.spell.silencing_whisper": "Silencing Whisper"
 }

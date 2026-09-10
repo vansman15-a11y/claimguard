@@ -307,6 +307,10 @@ public class SpellbookScreen extends Screen {
             case SLUMP -> "bolt: cuts their max HP and stamina for a while";
             case PESTILENCE -> "instant disease ray, damage over 5s";
             case HEXDRAIN -> "bolt: steal mana from a player (1 min CD)";
+            case CHANT_OF_GROWTH -> "hurry nearby crops & saplings along";
+            case BATTLE_HYMN -> "channel: +10 STR/QUI/VIT to allies, 15 min";
+            case WORD_OF_UNMAKING -> "erase a few blocks (drop them through)";
+            case SILENCING_WHISPER -> "interrupt + seal a caster's school 2s";
         };
     }
 

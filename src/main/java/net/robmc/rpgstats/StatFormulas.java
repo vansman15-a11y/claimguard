@@ -364,6 +364,26 @@ public final class StatFormulas {
         return HEXDRAIN_MANA_MIN + (HEXDRAIN_MANA_MAX - HEXDRAIN_MANA_MIN) * effectiveness(spellLevel);
     }
 
+    // --- Incantation Magic (utility chants) ---
+
+    // Chant of Growth: nudge nearby crops / saplings along
+    public static final double GROWTH_RADIUS = 6.0;
+    public static final double GROWTH_TICK_CHANCE = 0.6;         // chance to advance each growable block in range
+
+    // Battle Hymn: a channelled team buff - +N to Strength / Quickness / Vitality for 15 minutes
+    public static final int BATTLE_HYMN_STAT_BONUS = 10;
+    public static final int BATTLE_HYMN_DURATION_TICKS = 18000;  // 15 minutes
+    public static final double BATTLE_HYMN_RADIUS = 9.0;         // allies within this of the caster are empowered
+
+    // Word of Unmaking: delete a small cluster of unclaimed blocks (drop someone through the floor)
+    public static final double UNMAKING_RANGE = 6.0;
+    public static final int UNMAKING_DEPTH = 2;                  // blocks removed straight down from the aim point
+    public static final int UNMAKING_SPREAD = 1;                 // + a 1-block ring around the top
+
+    // Silencing Whisper: interrupt an enemy's cast and lock that school for a beat
+    public static final double SILENCE_RANGE = 32.0;
+    public static final int SILENCE_LOCK_TICKS = 40;            // 2 s
+
     // --- Rest skill (a semi-AFK downtime action; deliberately mild) ---
 
     public static final int REST_REGEN_INTERVAL_TICKS = 20;      // rest tops your pools up every ~1s
