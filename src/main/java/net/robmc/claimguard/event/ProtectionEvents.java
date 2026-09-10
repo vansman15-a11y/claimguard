@@ -174,6 +174,12 @@ public class ProtectionEvents {
         return isAllowed(level, pos, player);
     }
 
+    /** True if this spot sits inside an admin claim - a safe zone / newbie-protected area. */
+    public static boolean inSafeZone(ServerLevel level, net.minecraft.core.BlockPos pos) {
+        ClaimManager manager = ClaimManager.get(level);
+        return manager.hasAdminClaims() && manager.isInAdminClaim(pos);
+    }
+
     private static boolean isAllowed(ServerLevel level, net.minecraft.core.BlockPos pos, Player player) {
         if (player == null) {
             return true;

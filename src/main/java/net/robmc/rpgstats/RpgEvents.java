@@ -436,6 +436,16 @@ public class RpgEvents {
         if (event.getSource().is(DamageTypes.THORNS)) {
             return;
         }
+        // a raised minion never hits its own necromancer or that player's clan / party
+        if (event.getSource().getEntity() != null && event.getEntity().getServer() != null) {
+            UUID minionOwner = net.robmc.rpgstats.magic.RaiseMinionManager.ownerOf(event.getSource().getEntity().getId());
+            if (minionOwner != null && event.getEntity() instanceof net.minecraft.world.entity.player.Player hit
+                    && (hit.getUUID().equals(minionOwner)
+                        || net.robmc.claimguard.clan.ClanActions.areFriendly(event.getEntity().getServer(), minionOwner, hit.getUUID()))) {
+                event.setCanceled(true);
+                return;
+            }
+        }
         boolean magic = event.getSource().is(DamageTypes.INDIRECT_MAGIC) || event.getSource().is(DamageTypes.MAGIC);
         boolean projectile = event.getSource().is(DamageTypeTags.IS_PROJECTILE)
                 || event.getSource().getDirectEntity() instanceof Projectile;

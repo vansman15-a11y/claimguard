@@ -140,6 +140,11 @@ public final class SpellCasting {
                         .withStyle(ChatFormatting.GRAY), true);
                 return;
             }
+            if (RaiseMinionManager.blockedHere(player)) {
+                player.displayClientMessage(Component.literal("The dead won't rise in a warded place.")
+                        .withStyle(ChatFormatting.GRAY), true);
+                return;
+            }
         }
         // Swarm of the Wild has a long cooldown - don't let it burn on a cast with no enemy in view
         if (spell == Spell.SWARM_OF_THE_WILD
