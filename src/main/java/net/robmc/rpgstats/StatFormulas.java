@@ -364,6 +364,53 @@ public final class StatFormulas {
         return HEXDRAIN_MANA_MIN + (HEXDRAIN_MANA_MAX - HEXDRAIN_MANA_MIN) * effectiveness(spellLevel);
     }
 
+    // --- Earth Magic ---
+
+    // Earthen Path: a mossy hazard patch - slows and chips at anyone on it; a fire spell sets it off
+    public static final double EARTHEN_PATH_RANGE = 20.0;
+    public static final double EARTHEN_PATH_RADIUS = 2.6;
+    public static final int EARTHEN_PATH_TICKS = 360;          // 18 s if never ignited
+    public static final int EARTHEN_PATH_DAMAGE_INTERVAL = 20; // a chip every 1 s
+    public static final double EARTHEN_PATH_SLOW = 0.15;       // -15% move speed while standing on it
+    private static final double EARTHEN_PATH_DPT_MIN = 0.30;   // raw per chip at spell level 1
+    private static final double EARTHEN_PATH_DPT_MAX = 0.70;   // ... at the cap
+    public static final int EARTHEN_PATH_COMBUST_TICKS = 60;   // 3 s of burning once lit
+    public static final double EARTHEN_PATH_COMBUST_BONUS = 2.5; // combust hits do this much extra raw
+
+    public static double earthenPathChipDamage(int spellLevel) {
+        return EARTHEN_PATH_DPT_MIN + (EARTHEN_PATH_DPT_MAX - EARTHEN_PATH_DPT_MIN) * effectiveness(spellLevel);
+    }
+
+    // Seismic Pillar: erupt the ground and fling the target the way they were moving
+    public static final double SEISMIC_PILLAR_RANGE = 22.0;
+    public static final double SEISMIC_PILLAR_UP = 1.05;
+    public static final double SEISMIC_PILLAR_FORWARD = 1.25;
+    public static final int SEISMIC_PILLAR_STONE_TICKS = 80;   // the conjured stone lingers ~4 s
+
+    // Quake Stomp: lift, hover, then dive to where you're aiming and crash down
+    public static final int QUAKE_STOMP_HOLD_TICKS = 60;       // 3 s hover before the dive
+    public static final double QUAKE_STOMP_LIFT = 0.85;        // upward kick to get airborne
+    public static final double QUAKE_STOMP_MIN_RANGE = 20.0;
+    public static final double QUAKE_STOMP_MAX_RANGE = 40.0;
+    public static final double QUAKE_STOMP_DIVE_SPEED = 2.2;
+    public static final double QUAKE_STOMP_CRASH_RADIUS = 3.6;
+    public static final double QUAKE_STOMP_KNOCKBACK = 0.7;
+    private static final double QUAKE_STOMP_DMG_MIN = 4.0;
+    private static final double QUAKE_STOMP_DMG_MAX = 7.5;
+
+    public static double quakeStompDamage(int spellLevel) {
+        return QUAKE_STOMP_DMG_MIN + (QUAKE_STOMP_DMG_MAX - QUAKE_STOMP_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    // Bark Skin: -X% incoming melee and archery damage for a spell
+    public static final double BARK_SKIN_RANGE = 24.0;
+    public static final int BARK_SKIN_TICKS = 900;             // 45 s
+    public static final double BARK_SKIN_REDUCTION = 0.25;     // -25% melee / projectile damage
+
+    // Fissure: rip a trench along your look direction
+    public static final int FISSURE_LENGTH = 6;
+    public static final int FISSURE_DEPTH = 3;
+
     // --- Water Magic ---
 
     // Water Breathing: aimed self/ally buff
@@ -415,6 +462,16 @@ public final class StatFormulas {
     }
 
     // --- Air Magic (lightning & wind) ---
+
+    // Lightning / Chain Shock / Howling Impact all conduct through water
+    public static final double WATER_CONDUCT_RADIUS = 2.5;    // ~5x5 of water around the strike
+    public static final double WATER_CONDUCT_MULT = 1.4;      // +40% to a target that's standing in water
+    private static final double WATER_CONDUCT_SPLASH_MIN = 1.5; // raw, to others in the water
+    private static final double WATER_CONDUCT_SPLASH_MAX = 3.0;
+
+    public static double waterConductSplashDamage(int spellLevel) {
+        return WATER_CONDUCT_SPLASH_MIN + (WATER_CONDUCT_SPLASH_MAX - WATER_CONDUCT_SPLASH_MIN) * effectiveness(spellLevel);
+    }
 
     // Lightning Strike: aimed - calls a (visual-only) bolt down onto the target and deals our own scaled damage
     public static final double LIGHTNING_STRIKE_RANGE = 40.0;

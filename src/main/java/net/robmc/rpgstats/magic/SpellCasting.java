@@ -348,6 +348,26 @@ public final class SpellCasting {
                 spend(player, s, spell.costPool(), spell.flatCost());
                 RiptideWave.launch(player, lvl);
             }
+            case EARTHEN_PATH -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castEarthenPath(player, lvl);
+            }
+            case SEISMIC_PILLAR -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castSeismicPillar(player);
+            }
+            case QUAKE_STOMP -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                QuakeStomp.start(player, lvl);
+            }
+            case BARK_SKIN -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castBarkSkin(player);
+            }
+            case FISSURE -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castFissure(player);
+            }
             case SILENCING_WHISPER -> {
                 spend(player, s, spell.costPool(), spell.flatCost());
                 castSilencingWhisper(player);
@@ -441,6 +461,7 @@ public final class SpellCasting {
         }
         level.playSound(null, player.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.0f, 0.9f);
         FireMelt.meltAround(level, impact, 1.5); // Serpent's Plume melts the ice / snow it hits
+        EarthenPathManager.tryIgnite(level, impact);
 
         if (hit != null && hit.getEntity() instanceof net.minecraft.world.entity.LivingEntity target) {
             float dmg = (float) (StatFormulas.serpentsPlumeDamage(spellLevel)
@@ -471,6 +492,7 @@ public final class SpellCasting {
 
         FireFieldManager.spawn(player, center, spellLevel);
         FireMelt.meltAround(level, center, StatFormulas.CINDER_FIELD_RADIUS);
+        EarthenPathManager.tryIgnite(level, center);
         level.sendParticles(net.minecraft.core.particles.ParticleTypes.EXPLOSION,
                 center.x, center.y + 0.2, center.z, 3, 1.0, 0.2, 1.0, 0.0);
         level.playSound(null, net.minecraft.core.BlockPos.containing(center), SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 2.0f, 0.6f);
@@ -680,11 +702,16 @@ public final class SpellCasting {
             level.addFreshEntity(bolt);
         }
         float dmg = (float) (StatFormulas.lightningStrikeDamage(spellLevel) * StatFormulas.spellDamageMultiplier(RpgManager.stats(player))
-                * Afflictions.spellDamageMult(player));
+                * Afflictions.spellDamageMult(player) * AirConduction.directMult(target));
         target.hurt(player.damageSources().indirectMagic(player, player), dmg);
-        target.setSecondsOnFire(StatFormulas.LIGHTNING_STRIKE_FIRE_SECONDS);
-        if (isEnemyOf(player, target)) {
-            RpgManager.addSpellXp(player, Spell.LIGHTNING_STRIKE, StatFormulas.spellHitXp(1));
+        if (!AirConduction.inWater(target)) {
+            target.setSecondsOnFire(StatFormulas.LIGHTNING_STRIKE_FIRE_SECONDS);
+        }
+        java.util.Set<Integer> zapped = new java.util.HashSet<>();
+        zapped.add(target.getId());
+        int extra = AirConduction.conduct(level, player, target.position(), spellLevel, zapped);
+        if (isEnemyOf(player, target) || extra > 0) {
+            RpgManager.addSpellXp(player, Spell.LIGHTNING_STRIKE, StatFormulas.spellHitXp(1 + extra));
         }
     }
 
@@ -712,7 +739,8 @@ public final class SpellCasting {
             return;
         }
         float primary = (float) (StatFormulas.chainShockDamage(spellLevel)
-                * StatFormulas.spellDamageMultiplier(s) * Afflictions.spellDamageMult(player));
+                * StatFormulas.spellDamageMultiplier(s) * Afflictions.spellDamageMult(player)
+                * AirConduction.directMult(first));
 
         java.util.List<net.minecraft.world.entity.LivingEntity> hitChain = new java.util.ArrayList<>();
         hitChain.add(first);
@@ -749,7 +777,14 @@ public final class SpellCasting {
             from = next;
         }
 
-        int enemies = 0;
+        // if the first target's in water, the whole strike arcs through the pool
+        java.util.Set<Integer> zapped = new java.util.HashSet<>();
+        for (var le : hitChain) {
+            zapped.add(le.getId());
+        }
+        int waterExtra = AirConduction.conduct(level, player, first.position(), spellLevel, zapped);
+
+        int enemies = waterExtra;
         for (net.minecraft.world.entity.LivingEntity le : hitChain) {
             if (isEnemyOf(player, le)) {
                 enemies++;
@@ -803,6 +838,126 @@ public final class SpellCasting {
             return !net.robmc.claimguard.clan.ClanActions.areFriendly(caster.server, caster.getUUID(), other.getUUID());
         }
         return target instanceof net.minecraft.world.entity.monster.Enemy;
+    }
+
+    /** Earthen Path: lay a mossy hazard patch on the ground where you're aiming. */
+    private static void castEarthenPath(ServerPlayer player, int spellLevel) {
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition();
+        Vec3 far = eye.add(player.getViewVector(1.0f).scale(StatFormulas.EARTHEN_PATH_RANGE));
+        net.minecraft.world.phys.BlockHitResult bhr = level.clip(new net.minecraft.world.level.ClipContext(
+                eye, far, net.minecraft.world.level.ClipContext.Block.OUTLINE,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+        Vec3 centre = bhr.getType() != net.minecraft.world.phys.HitResult.Type.MISS ? bhr.getLocation() : far;
+        EarthenPathManager.create(player, centre, spellLevel);
+    }
+
+    /** Seismic Pillar: erupt the ground and fling the target the way they were moving. */
+    private static void castSeismicPillar(ServerPlayer player) {
+        net.minecraft.world.entity.LivingEntity aimed = aimedTarget(player, StatFormulas.SEISMIC_PILLAR_RANGE,
+                e -> e instanceof net.minecraft.world.entity.player.Player);
+        net.minecraft.world.entity.LivingEntity who = aimed != null ? aimed : player;
+        ServerLevel level = player.serverLevel();
+
+        Vec3 vel = who.getDeltaMovement();
+        Vec3 flat = new Vec3(vel.x, 0, vel.z);
+        if (flat.lengthSqr() < 1.0e-3) {
+            Vec3 look = who.getViewVector(1.0f);
+            flat = new Vec3(look.x, 0, look.z);
+        }
+        Vec3 fwd = flat.normalize().scale(StatFormulas.SEISMIC_PILLAR_FORWARD);
+        who.setDeltaMovement(fwd.x, StatFormulas.SEISMIC_PILLAR_UP, fwd.z);
+        who.hurtMarked = true;
+        who.fallDistance = 0.0f;
+
+        net.minecraft.core.BlockPos foot = who.blockPosition().below();
+        java.util.List<net.minecraft.core.BlockPos> ring = new java.util.ArrayList<>();
+        ring.add(foot);
+        for (net.minecraft.core.Direction d : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+            ring.add(foot.relative(d));
+        }
+        ConjuredBlocks.place(player, ring, net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),
+                StatFormulas.SEISMIC_PILLAR_STONE_TICKS);
+        level.sendParticles(new net.minecraft.core.particles.BlockParticleOption(
+                        net.minecraft.core.particles.ParticleTypes.BLOCK,
+                        net.minecraft.world.level.block.Blocks.STONE.defaultBlockState()),
+                who.getX(), who.getY() + 0.2, who.getZ(), 50, 0.5, 0.4, 0.5, 0.25);
+        level.playSound(null, who.blockPosition(), SoundEvents.PISTON_EXTEND, SoundSource.PLAYERS, 1.2f, 0.6f);
+    }
+
+    /** Bark Skin: aim at an ally to shield them, at nothing to shield yourself. */
+    private static void castBarkSkin(ServerPlayer player) {
+        net.minecraft.world.entity.LivingEntity aimed = aimedTarget(player, StatFormulas.BARK_SKIN_RANGE,
+                e -> e instanceof ServerPlayer);
+        ServerPlayer who = aimed instanceof ServerPlayer sp ? sp : player;
+        BarkSkin.grant(who, StatFormulas.BARK_SKIN_TICKS);
+        who.displayClientMessage(Component.literal("Your skin hardens like bark.").withStyle(ChatFormatting.DARK_GREEN), true);
+        if (who != player) {
+            player.displayClientMessage(Component.literal("Bark Skin granted to " + who.getGameProfile().getName() + ".")
+                    .withStyle(ChatFormatting.DARK_GREEN), true);
+        }
+        player.serverLevel().sendParticles(new net.minecraft.core.particles.BlockParticleOption(
+                        net.minecraft.core.particles.ParticleTypes.BLOCK,
+                        net.minecraft.world.level.block.Blocks.OAK_LOG.defaultBlockState()),
+                who.getX(), who.getY() + 1.0, who.getZ(), 30, 0.4, 0.8, 0.4, 0.02);
+    }
+
+    /** Fissure: rip a 1-wide trench through natural ground along your look direction. */
+    private static void castFissure(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        Vec3 look = player.getViewVector(1.0f);
+        Vec3 flat = new Vec3(look.x, 0, look.z);
+        if (flat.lengthSqr() < 1.0e-4) {
+            player.displayClientMessage(Component.literal("Aim along the ground.").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        flat = flat.normalize();
+        int torn = 0;
+        for (int step = 1; step <= StatFormulas.FISSURE_LENGTH; step++) {
+            double fx = player.getX() + flat.x * step;
+            double fz = player.getZ() + flat.z * step;
+            net.minecraft.core.BlockPos surf = topGround(level, fx, player.getY(), fz);
+            if (surf == null) {
+                continue;
+            }
+            for (int d = 0; d < StatFormulas.FISSURE_DEPTH; d++) {
+                net.minecraft.core.BlockPos p = surf.below(d);
+                if (isDiggable(level.getBlockState(p))
+                        && net.robmc.claimguard.event.ProtectionEvents.canModifyBlock(level, p, player)) {
+                    level.destroyBlock(p, false);
+                    torn++;
+                }
+            }
+            level.sendParticles(new net.minecraft.core.particles.BlockParticleOption(
+                            net.minecraft.core.particles.ParticleTypes.BLOCK,
+                            net.minecraft.world.level.block.Blocks.DIRT.defaultBlockState()),
+                    surf.getX() + 0.5, surf.getY(), surf.getZ() + 0.5, 24, 0.3, 0.4, 0.3, 0.2);
+        }
+        level.playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.9f, 0.55f);
+        if (torn == 0) {
+            player.displayClientMessage(Component.literal("Nothing here to tear open.").withStyle(ChatFormatting.GRAY), true);
+        }
+    }
+
+    private static net.minecraft.core.BlockPos topGround(ServerLevel level, double x, double y, double z) {
+        net.minecraft.core.BlockPos p = net.minecraft.core.BlockPos.containing(x, y + 2, z);
+        for (int i = 0; i < 8; i++) {
+            if (!level.getBlockState(p).isAir() && level.getBlockState(p.above()).isAir()) {
+                return p;
+            }
+            p = p.below();
+        }
+        return null;
+    }
+
+    private static boolean isDiggable(net.minecraft.world.level.block.state.BlockState state) {
+        return state.is(net.minecraft.tags.BlockTags.DIRT)
+                || state.is(net.minecraft.tags.BlockTags.SAND)
+                || state.is(net.minecraft.tags.BlockTags.BASE_STONE_OVERWORLD)
+                || state.is(net.minecraft.tags.BlockTags.TERRACOTTA)
+                || state.is(net.minecraft.world.level.block.Blocks.GRAVEL)
+                || state.is(net.minecraft.world.level.block.Blocks.CLAY)
+                || state.is(net.minecraft.world.level.block.Blocks.COBBLESTONE);
     }
 
     /** Water Breathing: aim at an ally to buff them, at nothing to buff yourself. */

@@ -275,7 +275,10 @@ public class SpellProjectileEntity extends ThrowableProjectile {
                 level.sendParticles(ParticleTypes.WITCH, at.x, at.y, at.z, 12, 0.25, 0.25, 0.25, 0.02);
             }
             case HOWLING_IMPACT -> {
-                float splash = damage * 0.45f; // the gust hits everything else for less than a direct blow
+                boolean overWater = !level.getFluidState(net.minecraft.core.BlockPos.containing(at)).isEmpty()
+                        && level.getFluidState(net.minecraft.core.BlockPos.containing(at)).is(net.minecraft.tags.FluidTags.WATER);
+                float directDmg = overWater ? damage * (float) StatFormulas.WATER_CONDUCT_MULT : damage;
+                float splash = directDmg * 0.45f; // the gust hits everything else for less than a direct blow
                 double r = StatFormulas.HOWLING_RADIUS;
                 for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class,
                         new AABB(at, at).inflate(r), LivingEntity::isAlive)) {
@@ -283,7 +286,11 @@ public class SpellProjectileEntity extends ThrowableProjectile {
                         continue; // the caster isn't caught in their own gust
                     }
                     boolean direct = le == hit;
-                    le.hurt(damageSources().indirectMagic(this, owner), direct ? damage : splash);
+                    float d = direct ? directDmg : splash;
+                    if (AirConduction.inWater(le)) {
+                        d *= (float) StatFormulas.WATER_CONDUCT_MULT;
+                    }
+                    le.hurt(damageSources().indirectMagic(this, owner), d);
                     net.minecraft.world.phys.Vec3 push = le.position().subtract(at);
                     if (push.lengthSqr() > 1.0e-4) {
                         push = push.normalize().scale(StatFormulas.HOWLING_KNOCKBACK);
@@ -293,6 +300,9 @@ public class SpellProjectileEntity extends ThrowableProjectile {
                     if (isEnemy(le, owner)) {
                         enemiesHit++;
                     }
+                }
+                if (getOwner() instanceof ServerPlayer sp) {
+                    AirConduction.conduct(level, sp, at, casterSpellLevel(spell), null);
                 }
                 level.sendParticles(ParticleTypes.CLOUD, at.x, at.y, at.z, 40, r * 0.4, 0.35, r * 0.4, 0.18);
                 level.sendParticles(ParticleTypes.EXPLOSION, at.x, at.y, at.z, 1, 0, 0, 0, 0);
@@ -363,6 +373,7 @@ public class SpellProjectileEntity extends ThrowableProjectile {
             FireMark.mark(le); // so a fire-spell kill cooks the drops
         }
         FireMelt.meltAround(level, at, r); // and it melts ice / snow it lands on
+        EarthenPathManager.tryIgnite(level, at); // ... and lights an Earthen Path it touches
         return list;
     }
 

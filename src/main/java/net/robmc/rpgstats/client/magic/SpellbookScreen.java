@@ -317,6 +317,11 @@ public class SpellbookScreen extends Screen {
             case WATER_ORB -> "ice bolt, shatters into slippery patches";
             case WATER_SPOUT -> "toggle beam, rewards steady tracking";
             case RIPTIDE -> "a wave that scoops enemies up, then bursts";
+            case EARTHEN_PATH -> "mossy patch: slows & chips; ignites if burned";
+            case SEISMIC_PILLAR -> "erupt the ground, fling a target's own way";
+            case QUAKE_STOMP -> "leap up, then dive-bomb where you aim";
+            case BARK_SKIN -> "aim: -25% melee & arrow damage, 45s";
+            case FISSURE -> "tear a trench through the ground you face";
             case CHANT_OF_GROWTH -> "hurry nearby crops & saplings along";
             case BATTLE_HYMN -> "channel: +10 STR/QUI/VIT to allies, 15 min";
             case WORD_OF_UNMAKING -> "erase a few blocks (drop them through)";

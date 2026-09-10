@@ -139,6 +139,31 @@
     "subtitle": "rpgstats.subtitle.spell.riptide",
     "sounds": [ "rpgstats:spell/riptide" ]
   },
+  "spell.earthen_path": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.earthen_path",
+    "sounds": [ "rpgstats:spell/earthen_path" ]
+  },
+  "spell.seismic_pillar": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.seismic_pillar",
+    "sounds": [ "rpgstats:spell/seismic_pillar" ]
+  },
+  "spell.quake_stomp": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.quake_stomp",
+    "sounds": [ "rpgstats:spell/quake_stomp" ]
+  },
+  "spell.bark_skin": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.bark_skin",
+    "sounds": [ "rpgstats:spell/bark_skin" ]
+  },
+  "spell.fissure": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.fissure",
+    "sounds": [ "rpgstats:spell/fissure" ]
+  },
   "spell.chant_of_growth": {
     "category": "player",
     "subtitle": "rpgstats.subtitle.spell.chant_of_growth",

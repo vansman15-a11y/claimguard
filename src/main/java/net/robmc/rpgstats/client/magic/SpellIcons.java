@@ -48,6 +48,11 @@ public final class SpellIcons {
             case WATER_ORB -> tex("water_orb");
             case WATER_SPOUT -> tex("water_spout");
             case RIPTIDE -> tex("riptide");
+            case EARTHEN_PATH -> tex("earthen_path");
+            case SEISMIC_PILLAR -> tex("seismic_pillar");
+            case QUAKE_STOMP -> tex("quake_stomp");
+            case BARK_SKIN -> tex("bark_skin");
+            case FISSURE -> tex("fissure");
             case CHANT_OF_GROWTH -> tex("chant_of_growth");
             case BATTLE_HYMN -> tex("battle_hymn");
             case WORD_OF_UNMAKING -> tex("word_of_unmaking");

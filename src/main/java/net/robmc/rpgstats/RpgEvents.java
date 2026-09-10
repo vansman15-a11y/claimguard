@@ -99,6 +99,10 @@ public class RpgEvents {
             net.robmc.rpgstats.magic.IceWallManager.tick(event.getServer());
             net.robmc.rpgstats.magic.WaterSpoutManager.tick(event.getServer());
             net.robmc.rpgstats.magic.RiptideWave.tick(event.getServer());
+            net.robmc.rpgstats.magic.EarthenPathManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.ConjuredBlocks.tick(event.getServer());
+            net.robmc.rpgstats.magic.QuakeStomp.tick(event.getServer());
+            net.robmc.rpgstats.magic.BarkSkin.tick(event.getServer());
         }
     }
 
@@ -326,6 +330,8 @@ public class RpgEvents {
         net.robmc.rpgstats.magic.WindChannel.stop(id, event.getEntity().getServer());
         net.robmc.rpgstats.magic.WaterSpoutManager.clear(id);
         net.robmc.rpgstats.magic.WaterBuff.clear(event.getEntity().getId());
+        net.robmc.rpgstats.magic.QuakeStomp.clear(id);
+        net.robmc.rpgstats.magic.BarkSkin.clear(id);
         lastPos.remove(id);
         wasSwinging.remove(id);
         lastMeleeHitTick.remove(id);
@@ -416,6 +422,13 @@ public class RpgEvents {
                 lastMeleeHitTick.put(attacker.getUUID(), attacker.serverLevel().getGameTime());
                 RpgManager.sync(attacker);
             }
+        }
+
+        // Bark Skin shrugs off part of a melee or arrow hit (not magic).
+        if (!magic && (projectile || event.getSource().getDirectEntity() == event.getSource().getEntity())
+                && event.getEntity() instanceof ServerPlayer barked
+                && net.robmc.rpgstats.magic.BarkSkin.isProtected(barked.getUUID(), barked.serverLevel().getGameTime())) {
+            amount *= (float) (1.0 - StatFormulas.BARK_SKIN_REDUCTION);
         }
 
         // Everything hitting a player is scaled to the big pool; Dexterity shaves a little off spells.

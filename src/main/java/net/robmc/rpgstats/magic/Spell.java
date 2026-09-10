@@ -48,6 +48,13 @@ public enum Spell {
     WATER_SPOUT("Water Spout", School.WATER, 4, Kind.WATER_SPOUT, Pool.MANA, null, 10, 2, 40),
     RIPTIDE("Riptide", School.WATER, 5, Kind.RIPTIDE, Pool.MANA, null, 25, 80, 400),
 
+    // --- Earth Magic (stone, terrain, displacement) ---
+    EARTHEN_PATH("Earthen Path", School.EARTH, 1, Kind.EARTHEN_PATH, Pool.MANA, null, 8, 40, 80),
+    SEISMIC_PILLAR("Seismic Pillar", School.EARTH, 2, Kind.SEISMIC_PILLAR, Pool.MANA, null, 15, 50, 1200),
+    QUAKE_STOMP("Quake Stomp", School.EARTH, 3, Kind.QUAKE_STOMP, Pool.MANA, null, 20, 80, 1800),
+    BARK_SKIN("Bark Skin", School.EARTH, 4, Kind.BARK_SKIN, Pool.MANA, null, 14, 40, 1200),
+    FISSURE("Fissure", School.EARTH, 5, Kind.FISSURE, Pool.MANA, null, 20, 80, 2400),
+
     // --- Incantation Magic (utility chants) ---
     CHANT_OF_GROWTH("Chant of Growth", School.INCANTATION, 1, Kind.CHANT_OF_GROWTH, Pool.MANA, null, 5, 24, 200),
     BATTLE_HYMN("Battle Hymn", School.INCANTATION, 2, Kind.BATTLE_HYMN, Pool.MANA, null, 15, 60, 600),
@@ -64,6 +71,7 @@ public enum Spell {
         HEARTWELL, WITHER, SLUMP, PESTILENCE, HEXDRAIN,
         LIGHTNING_STRIKE, SPEED_OF_WIND, CHAIN_SHOCK, WIND_LURE, HOWLING_IMPACT,
         WATER_BREATHING, ICE_WALL, WATER_ORB, WATER_SPOUT, RIPTIDE,
+        EARTHEN_PATH, SEISMIC_PILLAR, QUAKE_STOMP, BARK_SKIN, FISSURE,
         CHANT_OF_GROWTH, BATTLE_HYMN, WORD_OF_UNMAKING, FEARCRAFT, SILENCING_WHISPER
     }
 

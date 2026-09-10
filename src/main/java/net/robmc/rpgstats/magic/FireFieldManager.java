@@ -115,6 +115,7 @@ public final class FireFieldManager {
                     FireMark.mark(le);
                 }
                 FireMelt.meltAround(level, f.center, f.radius); // the field keeps melting ice / snow under it
+                EarthenPathManager.tryIgnite(level, f.center);
             }
             return now >= f.endTick;
         });
