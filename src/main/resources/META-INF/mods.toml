@@ -64,3 +64,29 @@ with ClaimGuard; install on the server and every client.
     versionRange="[1.20.1,1.21)"
     ordering="NONE"
     side="BOTH"
+
+[[mods]]
+modId="combat"
+version="0.1.0"
+displayName="Reforged Melee"
+authors="robmc"
+description='''
+A Darkfall / Rise-of-Agon style melee overhaul: forced third-person while a
+melee weapon is out, heavier and slower swings, a wide cleave arc that hits
+everything in front of you, and a 5-hit combo whose finisher crits. Standalone -
+no dependency on the other mods in this pack. Install on the server and every client.
+'''
+
+[[dependencies.combat]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.combat]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"
