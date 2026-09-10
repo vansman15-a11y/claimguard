@@ -21,11 +21,11 @@ public enum Spell {
     BRIGHT_LIGHT("Bright Light", School.ADEPT, 5, Kind.BRIGHT_LIGHT, Pool.MANA, null, 40, 24, 300),
 
     // --- Fire Magic (the first advanced school - end-game mage, higher cost & damage) ---
-    EMBER_DART("Ember Dart", School.FIRE, 1, Kind.EMBER_DART, Pool.MANA, null, 14, 40, 40),
-    SERPENTS_PLUME("Serpent's Plume", School.FIRE, 2, Kind.SERPENTS_PLUME, Pool.MANA, null, 24, 2, 200),
-    SUNBURST("Sunburst", School.FIRE, 3, Kind.SUNBURST, Pool.MANA, null, 32, 38, 100),
-    PYROCLASM("Pyroclasm", School.FIRE, 4, Kind.PYROCLASM, Pool.MANA, null, 42, 60, 200),
-    CINDER_MAELSTROM("Cinder Maelstrom", School.FIRE, 5, Kind.CINDER_MAELSTROM, Pool.MANA, null, 90, 50, 900),
+    EMBER_DART("Ember Dart", School.FIRE, 1, Kind.EMBER_DART, Pool.MANA, null, 9, 40, 40),
+    SERPENTS_PLUME("Serpent's Plume", School.FIRE, 2, Kind.SERPENTS_PLUME, Pool.MANA, null, 12, 2, 200),
+    SUNBURST("Sunburst", School.FIRE, 3, Kind.SUNBURST, Pool.MANA, null, 10, 38, 100),
+    PYROCLASM("Pyroclasm", School.FIRE, 4, Kind.PYROCLASM, Pool.MANA, null, 9, 60, 200),
+    CINDER_MAELSTROM("Cinder Maelstrom", School.FIRE, 5, Kind.CINDER_MAELSTROM, Pool.MANA, null, 16, 50, 900),
 
     // --- Chaos Magic (debuff school with one very strong heal) ---
     HEARTWELL("Heartwell", School.CHAOS, 1, Kind.HEARTWELL, Pool.MANA, null, 12, 20, 400),
