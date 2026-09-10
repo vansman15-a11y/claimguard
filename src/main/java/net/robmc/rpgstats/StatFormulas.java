@@ -364,6 +364,56 @@ public final class StatFormulas {
         return HEXDRAIN_MANA_MIN + (HEXDRAIN_MANA_MAX - HEXDRAIN_MANA_MIN) * effectiveness(spellLevel);
     }
 
+    // --- Water Magic ---
+
+    // Water Breathing: aimed self/ally buff
+    public static final double WATER_BREATHING_RANGE = 24.0;
+    public static final int WATER_BREATHING_TICKS = 2400;         // 2 minutes
+    public static final double WATER_BREATHING_SWIM_BONUS = 0.15; // +15% swim speed
+
+    // Ice Wall: a 3x3 slab of ice that rises where you aim, then melts away
+    public static final double ICE_WALL_RANGE = 12.0;
+    public static final int ICE_WALL_TICKS = 300;                 // 15 s
+
+    // Water Orb: slow-cast bolt that shatters into ice patches and hurts the target
+    public static final double WATER_ORB_SPEED = 0.9;
+    public static final double WATER_ORB_ICE_RADIUS = 2.2;        // frosted-ice patch around the impact
+    private static final double WATER_ORB_DMG_MIN = 3.0;
+    private static final double WATER_ORB_DMG_MAX = 6.0;
+
+    public static double waterOrbDamage(int spellLevel) {
+        return WATER_ORB_DMG_MIN + (WATER_ORB_DMG_MAX - WATER_ORB_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    // Water Spout: a toggled beam that only pays off while you keep it on target
+    public static final double WATER_SPOUT_RANGE = 26.0;
+    public static final double WATER_SPOUT_MANA_PER_TICK = 1.0;   // ~20 / s while it's on
+    private static final double WATER_SPOUT_DPT_MIN = 0.20;       // raw damage per tick on target, spell level 1
+    private static final double WATER_SPOUT_DPT_MAX = 0.38;       // ... at the cap
+
+    public static double waterSpoutDamagePerTick(int spellLevel) {
+        return WATER_SPOUT_DPT_MIN + (WATER_SPOUT_DPT_MAX - WATER_SPOUT_DPT_MIN) * effectiveness(spellLevel);
+    }
+
+    // Riptide: a travelling wave that scoops up whoever it rolls over, then bursts
+    public static final double RIPTIDE_SPEED = 1.15;              // blocks / tick the wave front advances
+    public static final int RIPTIDE_TICKS = 16;                   // ~18 blocks of travel
+    public static final double RIPTIDE_CATCH_RADIUS = 2.3;
+    public static final double RIPTIDE_LIFT = 0.9;                // upward scoop
+    public static final double RIPTIDE_BURST_RADIUS = 3.5;
+    private static final double RIPTIDE_WAVE_DMG_MIN = 2.5;       // raw, caught by the rolling wave
+    private static final double RIPTIDE_WAVE_DMG_MAX = 4.5;
+    private static final double RIPTIDE_BURST_DMG_MIN = 3.5;      // raw, the end explosion
+    private static final double RIPTIDE_BURST_DMG_MAX = 6.5;
+
+    public static double riptideWaveDamage(int spellLevel) {
+        return RIPTIDE_WAVE_DMG_MIN + (RIPTIDE_WAVE_DMG_MAX - RIPTIDE_WAVE_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    public static double riptideBurstDamage(int spellLevel) {
+        return RIPTIDE_BURST_DMG_MIN + (RIPTIDE_BURST_DMG_MAX - RIPTIDE_BURST_DMG_MIN) * effectiveness(spellLevel);
+    }
+
     // --- Air Magic (lightning & wind) ---
 
     // Lightning Strike: aimed - calls a (visual-only) bolt down onto the target and deals our own scaled damage

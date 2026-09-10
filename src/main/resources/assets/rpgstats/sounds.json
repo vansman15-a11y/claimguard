@@ -114,6 +114,31 @@
     "subtitle": "rpgstats.subtitle.spell.howling_impact",
     "sounds": [ "rpgstats:spell/howling_impact" ]
   },
+  "spell.water_breathing": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.water_breathing",
+    "sounds": [ "rpgstats:spell/water_breathing" ]
+  },
+  "spell.ice_wall": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.ice_wall",
+    "sounds": [ "rpgstats:spell/ice_wall" ]
+  },
+  "spell.water_orb": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.water_orb",
+    "sounds": [ "rpgstats:spell/water_orb" ]
+  },
+  "spell.water_spout": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.water_spout",
+    "sounds": [ "rpgstats:spell/water_spout" ]
+  },
+  "spell.riptide": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.riptide",
+    "sounds": [ "rpgstats:spell/riptide" ]
+  },
   "spell.chant_of_growth": {
     "category": "player",
     "subtitle": "rpgstats.subtitle.spell.chant_of_growth",

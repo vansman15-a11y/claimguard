@@ -64,6 +64,10 @@ public final class SpellProjectiles {
                 damage = (float) (StatFormulas.howlingDirectDamage(spellLevel) * spellMult);
                 speed = (float) StatFormulas.HOWLING_SPEED;
             }
+            case WATER_ORB -> {
+                damage = (float) (StatFormulas.waterOrbDamage(spellLevel) * spellMult);
+                speed = (float) StatFormulas.WATER_ORB_SPEED;
+            }
             default -> {
                 return;
             }

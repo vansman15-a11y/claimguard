@@ -39,6 +39,11 @@ public final class RpgSounds {
     public static final RegistryObject<SoundEvent> CHAIN_SHOCK = reg("spell.chain_shock");
     public static final RegistryObject<SoundEvent> WIND_LURE = reg("spell.wind_lure");
     public static final RegistryObject<SoundEvent> HOWLING_IMPACT = reg("spell.howling_impact");
+    public static final RegistryObject<SoundEvent> WATER_BREATHING = reg("spell.water_breathing");
+    public static final RegistryObject<SoundEvent> ICE_WALL = reg("spell.ice_wall");
+    public static final RegistryObject<SoundEvent> WATER_ORB = reg("spell.water_orb");
+    public static final RegistryObject<SoundEvent> WATER_SPOUT = reg("spell.water_spout");
+    public static final RegistryObject<SoundEvent> RIPTIDE = reg("spell.riptide");
     public static final RegistryObject<SoundEvent> CHANT_OF_GROWTH = reg("spell.chant_of_growth");
     public static final RegistryObject<SoundEvent> BATTLE_HYMN = reg("spell.battle_hymn");
     public static final RegistryObject<SoundEvent> WORD_OF_UNMAKING = reg("spell.word_of_unmaking");
@@ -79,6 +84,11 @@ public final class RpgSounds {
             case CHAIN_SHOCK -> CHAIN_SHOCK.get();
             case WIND_LURE -> WIND_LURE.get();
             case HOWLING_IMPACT -> HOWLING_IMPACT.get();
+            case WATER_BREATHING -> WATER_BREATHING.get();
+            case ICE_WALL -> ICE_WALL.get();
+            case WATER_ORB -> WATER_ORB.get();
+            case WATER_SPOUT -> WATER_SPOUT.get();
+            case RIPTIDE -> RIPTIDE.get();
             case CHANT_OF_GROWTH -> CHANT_OF_GROWTH.get();
             case BATTLE_HYMN -> BATTLE_HYMN.get();
             case WORD_OF_UNMAKING -> WORD_OF_UNMAKING.get();

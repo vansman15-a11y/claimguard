@@ -312,6 +312,11 @@ public class SpellbookScreen extends Screen {
             case CHAIN_SHOCK -> "instant ray, arcs to nearby targets for less";
             case WIND_LURE -> "yank a target up and toward you";
             case HOWLING_IMPACT -> "bolt bursts into a damaging wind gust";
+            case WATER_BREATHING -> "aim: water breathing + swim speed, 2 min";
+            case ICE_WALL -> "raise a 3x3 wall of ice for 15s";
+            case WATER_ORB -> "ice bolt, shatters into slippery patches";
+            case WATER_SPOUT -> "toggle beam, rewards steady tracking";
+            case RIPTIDE -> "a wave that scoops enemies up, then bursts";
             case CHANT_OF_GROWTH -> "hurry nearby crops & saplings along";
             case BATTLE_HYMN -> "channel: +10 STR/QUI/VIT to allies, 15 min";
             case WORD_OF_UNMAKING -> "erase a few blocks (drop them through)";

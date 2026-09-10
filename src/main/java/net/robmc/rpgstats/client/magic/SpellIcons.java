@@ -43,6 +43,11 @@ public final class SpellIcons {
             case CHAIN_SHOCK -> tex("chain_shock");
             case WIND_LURE -> tex("wind_lure");
             case HOWLING_IMPACT -> tex("howling_impact");
+            case WATER_BREATHING -> tex("water_breathing");
+            case ICE_WALL -> tex("ice_wall");
+            case WATER_ORB -> tex("water_orb");
+            case WATER_SPOUT -> tex("water_spout");
+            case RIPTIDE -> tex("riptide");
             case CHANT_OF_GROWTH -> tex("chant_of_growth");
             case BATTLE_HYMN -> tex("battle_hymn");
             case WORD_OF_UNMAKING -> tex("word_of_unmaking");

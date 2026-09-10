@@ -93,6 +93,13 @@ public final class SpellCasting {
             WindChannel.stop(player);
             return;
         }
+        // Water Spout is a toggle too, and casting anything else drops it
+        if (WaterSpoutManager.isActive(player.getUUID())) {
+            WaterSpoutManager.stop(player);
+            if (spell == Spell.WATER_SPOUT) {
+                return; // that press just turned it off
+            }
+        }
         if (s.getSchoolLevel(spell.school()) < spell.unlockLevel()) {
             player.displayClientMessage(Component.literal(spell.displayName() + " needs "
                     + spell.school().displayName() + " level " + spell.unlockLevel() + ".")
@@ -172,6 +179,7 @@ public final class SpellCasting {
 
     public static void interrupt(ServerPlayer player) {
         WindChannel.stop(player); // a hit / silence also drops a Speed of Wind channel
+        WaterSpoutManager.stop(player);
         if (casting.remove(player.getUUID()) != null) {
             player.displayClientMessage(Component.literal("Spell interrupted!").withStyle(ChatFormatting.RED), true);
             ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new CastStatePacket("", 0));
@@ -323,6 +331,22 @@ public final class SpellCasting {
             case WIND_LURE -> {
                 spend(player, s, spell.costPool(), spell.flatCost());
                 castWindLure(player);
+            }
+            case WATER_BREATHING -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castWaterBreathing(player);
+            }
+            case ICE_WALL -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castIceWall(player);
+            }
+            case WATER_SPOUT -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                WaterSpoutManager.start(player, lvl);
+            }
+            case RIPTIDE -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                RiptideWave.launch(player, lvl);
             }
             case SILENCING_WHISPER -> {
                 spend(player, s, spell.costPool(), spell.flatCost());
@@ -779,6 +803,35 @@ public final class SpellCasting {
             return !net.robmc.claimguard.clan.ClanActions.areFriendly(caster.server, caster.getUUID(), other.getUUID());
         }
         return target instanceof net.minecraft.world.entity.monster.Enemy;
+    }
+
+    /** Water Breathing: aim at an ally to buff them, at nothing to buff yourself. */
+    private static void castWaterBreathing(ServerPlayer player) {
+        net.minecraft.world.entity.LivingEntity aimed = aimedTarget(player, StatFormulas.WATER_BREATHING_RANGE,
+                e -> e instanceof ServerPlayer);
+        net.minecraft.world.entity.LivingEntity who = aimed != null ? aimed : player;
+        WaterBuff.grant(who);
+        player.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.BUBBLE_POP,
+                who.getX(), who.getY() + 1.0, who.getZ(), 26, 0.4, 0.7, 0.4, 0.02);
+        if (who != player && who instanceof ServerPlayer sp) {
+            player.displayClientMessage(Component.literal("Water Breathing granted to " + sp.getGameProfile().getName() + ".")
+                    .withStyle(ChatFormatting.AQUA), true);
+            sp.displayClientMessage(Component.literal("You can breathe underwater.").withStyle(ChatFormatting.AQUA), true);
+        }
+    }
+
+    /** Ice Wall: raise a 3x3 pane of ice where you're looking. */
+    private static void castIceWall(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition();
+        Vec3 far = eye.add(player.getViewVector(1.0f).scale(StatFormulas.ICE_WALL_RANGE));
+        net.minecraft.world.phys.BlockHitResult bhr = level.clip(new net.minecraft.world.level.ClipContext(
+                eye, far, net.minecraft.world.level.ClipContext.Block.OUTLINE,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+        Vec3 aim = bhr.getType() != net.minecraft.world.phys.HitResult.Type.MISS ? bhr.getLocation() : far;
+        if (!IceWallManager.raise(player, aim)) {
+            player.displayClientMessage(Component.literal("No room for an ice wall.").withStyle(ChatFormatting.GRAY), true);
+        }
     }
 
     /** Silencing Whisper: interrupt an enemy's cast and seal that school (or all schools) for 2 s. */

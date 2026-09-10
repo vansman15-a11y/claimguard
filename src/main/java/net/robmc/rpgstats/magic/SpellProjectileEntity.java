@@ -72,6 +72,7 @@ public class SpellProjectileEntity extends ThrowableProjectile {
             case SLUMP -> new Vector3f(0.72f, 0.45f, 0.85f);    // purple, yellow flecks added on hit
             case HEXDRAIN -> new Vector3f(0.5f, 0.12f, 0.68f);  // deep purple
             case HOWLING_IMPACT -> new Vector3f(0.78f, 0.9f, 1.0f); // pale wind-blue
+            case WATER_ORB -> new Vector3f(0.32f, 0.58f, 1.0f);     // deep water blue
             default -> new Vector3f(1.0f, 0.2f, 0.15f); // Sunder red
         };
     }
@@ -296,6 +297,40 @@ public class SpellProjectileEntity extends ThrowableProjectile {
                 level.sendParticles(ParticleTypes.CLOUD, at.x, at.y, at.z, 40, r * 0.4, 0.35, r * 0.4, 0.18);
                 level.sendParticles(ParticleTypes.EXPLOSION, at.x, at.y, at.z, 1, 0, 0, 0, 0);
                 level.playSound(null, blockPosition(), SoundEvents.ENDER_DRAGON_FLAP, SoundSource.PLAYERS, 1.1f, 1.3f);
+            }
+            case WATER_ORB -> {
+                if (hit != null) {
+                    hit.hurt(damageSources().indirectMagic(this, owner), damage);
+                    if (isEnemy(hit, owner)) {
+                        enemiesHit++;
+                    }
+                }
+                // scatter a few self-melting ice patches across the ground around the shatter
+                double ir = StatFormulas.WATER_ORB_ICE_RADIUS;
+                int ri = (int) Math.ceil(ir);
+                net.minecraft.core.BlockPos centre = net.minecraft.core.BlockPos.containing(at);
+                for (int dx = -ri; dx <= ri; dx++) {
+                    for (int dz = -ri; dz <= ri; dz++) {
+                        if (dx * dx + dz * dz > ir * ir) {
+                            continue;
+                        }
+                        net.minecraft.core.BlockPos col = centre.offset(dx, 1, dz);
+                        for (int dy = 0; dy < 4; dy++) {
+                            net.minecraft.core.BlockPos p = col.below(dy);
+                            var below = level.getBlockState(p.below());
+                            if (level.getBlockState(p).isAir() && !below.isAir()
+                                    && !below.is(net.minecraft.world.level.block.Blocks.ICE)
+                                    && !below.is(net.minecraft.world.level.block.Blocks.FROSTED_ICE)
+                                    && below.isFaceSturdy(level, p.below(), net.minecraft.core.Direction.UP)) {
+                                level.setBlockAndUpdate(p, net.minecraft.world.level.block.Blocks.FROSTED_ICE.defaultBlockState());
+                                break;
+                            }
+                        }
+                    }
+                }
+                level.sendParticles(ParticleTypes.SPLASH, at.x, at.y, at.z, 40, 0.5, 0.3, 0.5, 0.15);
+                level.sendParticles(ParticleTypes.ITEM_SNOWBALL, at.x, at.y, at.z, 16, 0.3, 0.2, 0.3, 0.1);
+                level.playSound(null, blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 0.8f, 1.4f);
             }
             default -> {
             }

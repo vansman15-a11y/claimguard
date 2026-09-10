@@ -41,6 +41,13 @@ public enum Spell {
     WIND_LURE("Wind Lure", School.AIR, 4, Kind.WIND_LURE, Pool.MANA, null, 9, 30, 160),
     HOWLING_IMPACT("Howling Impact", School.AIR, 5, Kind.HOWLING_IMPACT, Pool.MANA, null, 12, 50, 600),
 
+    // --- Water Magic (breathing, ice, sustained beams, big waves) ---
+    WATER_BREATHING("Water Breathing", School.WATER, 1, Kind.WATER_BREATHING, Pool.MANA, null, 8, 14, 200),
+    ICE_WALL("Ice Wall", School.WATER, 2, Kind.ICE_WALL, Pool.MANA, null, 16, 50, 1800),
+    WATER_ORB("Water Orb", School.WATER, 3, Kind.WATER_ORB, Pool.MANA, null, 9, 60, 100),
+    WATER_SPOUT("Water Spout", School.WATER, 4, Kind.WATER_SPOUT, Pool.MANA, null, 10, 2, 40),
+    RIPTIDE("Riptide", School.WATER, 5, Kind.RIPTIDE, Pool.MANA, null, 25, 80, 400),
+
     // --- Incantation Magic (utility chants) ---
     CHANT_OF_GROWTH("Chant of Growth", School.INCANTATION, 1, Kind.CHANT_OF_GROWTH, Pool.MANA, null, 5, 24, 200),
     BATTLE_HYMN("Battle Hymn", School.INCANTATION, 2, Kind.BATTLE_HYMN, Pool.MANA, null, 15, 60, 600),
@@ -56,6 +63,7 @@ public enum Spell {
         EMBER_DART, SERPENTS_PLUME, SUNBURST, PYROCLASM, CINDER_MAELSTROM,
         HEARTWELL, WITHER, SLUMP, PESTILENCE, HEXDRAIN,
         LIGHTNING_STRIKE, SPEED_OF_WIND, CHAIN_SHOCK, WIND_LURE, HOWLING_IMPACT,
+        WATER_BREATHING, ICE_WALL, WATER_ORB, WATER_SPOUT, RIPTIDE,
         CHANT_OF_GROWTH, BATTLE_HYMN, WORD_OF_UNMAKING, FEARCRAFT, SILENCING_WHISPER
     }
 

@@ -94,6 +94,10 @@ public class RpgEvents {
             net.robmc.rpgstats.magic.FearManager.tick(event.getServer());
             net.robmc.rpgstats.magic.WindChannel.tick(event.getServer());
             net.robmc.rpgstats.magic.FireMark.tick(event.getServer());
+            net.robmc.rpgstats.magic.WaterBuff.tick(event.getServer());
+            net.robmc.rpgstats.magic.IceWallManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.WaterSpoutManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.RiptideWave.tick(event.getServer());
         }
     }
 
@@ -319,6 +323,8 @@ public class RpgEvents {
         net.robmc.rpgstats.magic.HymnBuff.clear(id);
         net.robmc.rpgstats.magic.Silence.clear(id);
         net.robmc.rpgstats.magic.WindChannel.stop(id, event.getEntity().getServer());
+        net.robmc.rpgstats.magic.WaterSpoutManager.clear(id);
+        net.robmc.rpgstats.magic.WaterBuff.clear(event.getEntity().getId());
         lastPos.remove(id);
         wasSwinging.remove(id);
         lastMeleeHitTick.remove(id);
