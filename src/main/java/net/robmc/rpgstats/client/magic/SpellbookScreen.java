@@ -307,6 +307,11 @@ public class SpellbookScreen extends Screen {
             case SLUMP -> "bolt: cuts their max HP and stamina for a while";
             case PESTILENCE -> "instant disease ray, damage over 5s";
             case HEXDRAIN -> "bolt: steal mana from a player (1 min CD)";
+            case LIGHTNING_STRIKE -> "aimed - a bolt from the sky onto a target";
+            case SPEED_OF_WIND -> "channel: haste an ally, drains your mana";
+            case CHAIN_SHOCK -> "instant ray, arcs to nearby targets for less";
+            case WIND_LURE -> "yank a target up and toward you";
+            case HOWLING_IMPACT -> "bolt bursts into a damaging wind gust";
             case CHANT_OF_GROWTH -> "hurry nearby crops & saplings along";
             case BATTLE_HYMN -> "channel: +10 STR/QUI/VIT to allies, 15 min";
             case WORD_OF_UNMAKING -> "erase a few blocks (drop them through)";

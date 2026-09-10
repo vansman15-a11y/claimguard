@@ -364,6 +364,58 @@ public final class StatFormulas {
         return HEXDRAIN_MANA_MIN + (HEXDRAIN_MANA_MAX - HEXDRAIN_MANA_MIN) * effectiveness(spellLevel);
     }
 
+    // --- Air Magic (lightning & wind) ---
+
+    // Lightning Strike: aimed - calls a (visual-only) bolt down onto the target and deals our own scaled damage
+    public static final double LIGHTNING_STRIKE_RANGE = 40.0;
+    private static final double LIGHTNING_STRIKE_DMG_MIN = 1.5;   // raw at spell level 1
+    private static final double LIGHTNING_STRIKE_DMG_MAX = 3.2;   // ... at the cap
+    public static final int LIGHTNING_STRIKE_FIRE_SECONDS = 2;
+
+    public static double lightningStrikeDamage(int spellLevel) {
+        return LIGHTNING_STRIKE_DMG_MIN + (LIGHTNING_STRIKE_DMG_MAX - LIGHTNING_STRIKE_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    // Speed of Wind: a channelled beam onto an ally - faster attacks + move speed while it drains your mana
+    public static final double SPEED_OF_WIND_RANGE = 22.0;
+    public static final double SPEED_OF_WIND_MANA_PER_TICK = 0.9;   // ~18 / second
+    public static final double SPEED_OF_WIND_ATTACK_SPEED = 0.25;   // +25% weapon attack speed on the target
+    public static final double SPEED_OF_WIND_MOVE_SPEED = 0.10;     // +10% movement speed
+
+    // Chain Shock: instant hitscan; the hit arcs to nearby targets for less and less
+    public static final double CHAIN_SHOCK_RANGE = 34.0;
+    public static final double CHAIN_SHOCK_JUMP_RANGE = 5.5;        // how far the arc can jump between targets
+    public static final int CHAIN_SHOCK_MAX_JUMPS = 3;              // 1 primary + up to 3 chained
+    public static final double[] CHAIN_SHOCK_FALLOFF = {0.40, 0.30, 0.20};
+    private static final double CHAIN_SHOCK_DMG_MIN = 2.4;          // raw primary hit at spell level 1
+    private static final double CHAIN_SHOCK_DMG_MAX = 5.0;          // ... at the cap
+
+    public static double chainShockDamage(int spellLevel) {
+        return CHAIN_SHOCK_DMG_MIN + (CHAIN_SHOCK_DMG_MAX - CHAIN_SHOCK_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    // Wind Lure: yank the target up and toward the caster (allies or enemies)
+    public static final double WIND_LURE_RANGE = 30.0;
+    public static final double WIND_LURE_PULL = 1.5;               // horizontal velocity toward the caster
+    public static final double WIND_LURE_LIFT = 0.55;              // upward kick so they clear the ground
+
+    // Howling Impact: slow-cast bolt that bursts into a damaging gust; direct hits hurt more
+    public static final double HOWLING_SPEED = 1.6;
+    public static final double HOWLING_RADIUS = 3.6;
+    public static final double HOWLING_KNOCKBACK = 0.8;            // outward gust
+    private static final double HOWLING_DIRECT_MIN = 4.5;         // raw, taken by the entity struck directly
+    private static final double HOWLING_DIRECT_MAX = 8.0;
+    private static final double HOWLING_SPLASH_MIN = 2.0;        // raw, taken by everything else in the gust
+    private static final double HOWLING_SPLASH_MAX = 3.5;
+
+    public static double howlingDirectDamage(int spellLevel) {
+        return HOWLING_DIRECT_MIN + (HOWLING_DIRECT_MAX - HOWLING_DIRECT_MIN) * effectiveness(spellLevel);
+    }
+
+    public static double howlingSplashDamage(int spellLevel) {
+        return HOWLING_SPLASH_MIN + (HOWLING_SPLASH_MAX - HOWLING_SPLASH_MIN) * effectiveness(spellLevel);
+    }
+
     // --- Incantation Magic (utility chants) ---
 
     // Chant of Growth: nudge nearby crops / saplings along

@@ -60,6 +60,10 @@ public final class SpellProjectiles {
                 damage = (float) (StatFormulas.HEXDRAIN_MOB_DAMAGE * spellMult);
                 speed = (float) StatFormulas.CHAOS_BOLT_SPEED;
             }
+            case HOWLING_IMPACT -> {
+                damage = (float) (StatFormulas.howlingDirectDamage(spellLevel) * spellMult);
+                speed = (float) StatFormulas.HOWLING_SPEED;
+            }
             default -> {
                 return;
             }

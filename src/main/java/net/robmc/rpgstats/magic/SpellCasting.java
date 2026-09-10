@@ -88,6 +88,11 @@ public final class SpellCasting {
         if (spell == null) {
             return;
         }
+        // Speed of Wind is a toggle: press it again to end the channel
+        if (spell == Spell.SPEED_OF_WIND && WindChannel.isChanneling(player.getUUID())) {
+            WindChannel.stop(player);
+            return;
+        }
         if (s.getSchoolLevel(spell.school()) < spell.unlockLevel()) {
             player.displayClientMessage(Component.literal(spell.displayName() + " needs "
                     + spell.school().displayName() + " level " + spell.unlockLevel() + ".")
@@ -166,6 +171,7 @@ public final class SpellCasting {
     }
 
     public static void interrupt(ServerPlayer player) {
+        WindChannel.stop(player); // a hit / silence also drops a Speed of Wind channel
         if (casting.remove(player.getUUID()) != null) {
             player.displayClientMessage(Component.literal("Spell interrupted!").withStyle(ChatFormatting.RED), true);
             ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new CastStatePacket("", 0));
@@ -301,6 +307,22 @@ public final class SpellCasting {
             case FEARCRAFT -> {
                 spend(player, s, spell.costPool(), spell.flatCost());
                 castFearcraft(player);
+            }
+            case LIGHTNING_STRIKE -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castLightningStrike(player, lvl);
+            }
+            case SPEED_OF_WIND -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castSpeedOfWind(player);
+            }
+            case CHAIN_SHOCK -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castChainShock(player, s, lvl);
+            }
+            case WIND_LURE -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castWindLure(player);
             }
             case SILENCING_WHISPER -> {
                 spend(player, s, spell.costPool(), spell.flatCost());
@@ -596,6 +618,164 @@ public final class SpellCasting {
         player.displayClientMessage(Component.literal(
                 hit == 0 ? "Fearcraft finds no prey." : "Fearcraft scatters " + hit + " " + (hit == 1 ? "monster" : "monsters") + "!")
                 .withStyle(ChatFormatting.DARK_PURPLE), true);
+    }
+
+    /** Generic aimed raycast: the first living thing under the crosshair within {@code range}, LoS-blocked. */
+    private static net.minecraft.world.entity.LivingEntity aimedTarget(ServerPlayer player, double range,
+                                                                       java.util.function.Predicate<net.minecraft.world.entity.Entity> extra) {
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition();
+        Vec3 far = eye.add(player.getViewVector(1.0f).scale(range));
+        net.minecraft.world.phys.BlockHitResult block = level.clip(new net.minecraft.world.level.ClipContext(
+                eye, far, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+        Vec3 end = block.getType() != net.minecraft.world.phys.HitResult.Type.MISS ? block.getLocation() : far;
+        net.minecraft.world.phys.EntityHitResult hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(
+                level, player, eye, end, new net.minecraft.world.phys.AABB(eye, end).inflate(1.5),
+                e -> e instanceof net.minecraft.world.entity.LivingEntity && e != player && e.isAlive()
+                        && !e.isSpectator() && extra.test(e));
+        return hit != null && hit.getEntity() instanceof net.minecraft.world.entity.LivingEntity le ? le : null;
+    }
+
+    /** Lightning Strike: call a bolt down onto the aimed target. */
+    private static void castLightningStrike(ServerPlayer player, int spellLevel) {
+        ServerLevel level = player.serverLevel();
+        net.minecraft.world.entity.LivingEntity target = aimedTarget(player, StatFormulas.LIGHTNING_STRIKE_RANGE, e -> true);
+        if (target == null) {
+            player.displayClientMessage(Component.literal("No target in sight.").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        net.minecraft.world.entity.LightningBolt bolt = net.minecraft.world.entity.EntityType.LIGHTNING_BOLT.create(level);
+        if (bolt != null) {
+            bolt.moveTo(target.getX(), target.getY(), target.getZ());
+            bolt.setVisualOnly(true); // we do our own (scaled) damage
+            bolt.setCause(player);
+            level.addFreshEntity(bolt);
+        }
+        float dmg = (float) (StatFormulas.lightningStrikeDamage(spellLevel) * StatFormulas.spellDamageMultiplier(RpgManager.stats(player))
+                * Afflictions.spellDamageMult(player));
+        target.hurt(player.damageSources().indirectMagic(player, player), dmg);
+        target.setSecondsOnFire(StatFormulas.LIGHTNING_STRIKE_FIRE_SECONDS);
+        if (isEnemyOf(player, target)) {
+            RpgManager.addSpellXp(player, Spell.LIGHTNING_STRIKE, StatFormulas.spellHitXp(1));
+        }
+    }
+
+    /** Speed of Wind: open a channel that hastens an ally while it drains your mana. */
+    private static void castSpeedOfWind(ServerPlayer player) {
+        net.minecraft.world.entity.LivingEntity target = aimedTarget(player, StatFormulas.SPEED_OF_WIND_RANGE,
+                e -> e instanceof ServerPlayer);
+        if (!(target instanceof ServerPlayer ally)) {
+            player.displayClientMessage(Component.literal("Aim at a player to channel Speed of Wind.").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        if (ally != player && !net.robmc.claimguard.clan.ClanActions.areFriendly(player.server, player.getUUID(), ally.getUUID())) {
+            player.displayClientMessage(Component.literal("Speed of Wind only flows to allies.").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        WindChannel.start(player, ally);
+    }
+
+    /** Chain Shock: an instant bolt that arcs from the first target to nearby ones for less each jump. */
+    private static void castChainShock(ServerPlayer player, PlayerStats s, int spellLevel) {
+        ServerLevel level = player.serverLevel();
+        net.minecraft.world.entity.LivingEntity first = aimedTarget(player, StatFormulas.CHAIN_SHOCK_RANGE, e -> true);
+        if (first == null) {
+            player.displayClientMessage(Component.literal("No target in sight.").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        float primary = (float) (StatFormulas.chainShockDamage(spellLevel)
+                * StatFormulas.spellDamageMultiplier(s) * Afflictions.spellDamageMult(player));
+
+        java.util.List<net.minecraft.world.entity.LivingEntity> hitChain = new java.util.ArrayList<>();
+        hitChain.add(first);
+        first.hurt(player.damageSources().indirectMagic(player, player), primary);
+        arc(level, player.getEyePosition(), first.position().add(0, first.getBbHeight() * 0.5, 0));
+
+        net.minecraft.world.entity.LivingEntity from = first;
+        for (int jump = 0; jump < StatFormulas.CHAIN_SHOCK_MAX_JUMPS; jump++) {
+            net.minecraft.world.entity.LivingEntity next = null;
+            double best = Double.MAX_VALUE;
+            double r = StatFormulas.CHAIN_SHOCK_JUMP_RANGE;
+            for (net.minecraft.world.entity.LivingEntity le : level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
+                    from.getBoundingBox().inflate(r))) {
+                if (le == player || !le.isAlive() || hitChain.contains(le)) {
+                    continue;
+                }
+                if (!(le instanceof net.minecraft.world.entity.monster.Enemy || le instanceof net.minecraft.world.entity.player.Player)) {
+                    continue;
+                }
+                double d = le.distanceToSqr(from);
+                if (d < best && d <= r * r) {
+                    best = d;
+                    next = le;
+                }
+            }
+            if (next == null) {
+                break;
+            }
+            float chained = (float) (primary * StatFormulas.CHAIN_SHOCK_FALLOFF[jump]);
+            next.hurt(player.damageSources().indirectMagic(player, player), chained);
+            arc(level, from.position().add(0, from.getBbHeight() * 0.5, 0),
+                    next.position().add(0, next.getBbHeight() * 0.5, 0));
+            hitChain.add(next);
+            from = next;
+        }
+
+        int enemies = 0;
+        for (net.minecraft.world.entity.LivingEntity le : hitChain) {
+            if (isEnemyOf(player, le)) {
+                enemies++;
+            }
+        }
+        if (enemies > 0) {
+            RpgManager.addSpellXp(player, Spell.CHAIN_SHOCK, StatFormulas.spellHitXp(enemies));
+        }
+        level.playSound(null, player.blockPosition(), SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.7f, 1.6f);
+    }
+
+    private static void arc(ServerLevel level, Vec3 a, Vec3 b) {
+        int steps = (int) Math.max(3, a.distanceTo(b) * 2);
+        for (int i = 0; i <= steps; i++) {
+            Vec3 p = a.lerp(b, i / (double) steps);
+            double j = 0.15;
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK,
+                    p.x + (level.random.nextDouble() - 0.5) * j, p.y + (level.random.nextDouble() - 0.5) * j,
+                    p.z + (level.random.nextDouble() - 0.5) * j, 1, 0.0, 0.0, 0.0, 0.0);
+        }
+    }
+
+    /** Wind Lure: yank the aimed target up and toward the caster - allies or enemies, airborne or not. */
+    private static void castWindLure(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        net.minecraft.world.entity.LivingEntity target = aimedTarget(player, StatFormulas.WIND_LURE_RANGE, e -> true);
+        if (target == null) {
+            player.displayClientMessage(Component.literal("No target in sight.").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        Vec3 toCaster = player.position().subtract(target.position());
+        Vec3 flat = new Vec3(toCaster.x, 0, toCaster.z);
+        if (flat.lengthSqr() < 1.0e-4) {
+            flat = player.getViewVector(1.0f).scale(-1);
+        }
+        Vec3 pull = flat.normalize().scale(StatFormulas.WIND_LURE_PULL);
+        target.setDeltaMovement(pull.x, StatFormulas.WIND_LURE_LIFT, pull.z);
+        target.hurtMarked = true;
+        target.hasImpulse = true;
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD,
+                target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(), 20, 0.3, 0.4, 0.3, 0.05);
+        level.playSound(null, player.blockPosition(), SoundEvents.PHANTOM_FLAP, SoundSource.PLAYERS, 1.0f, 0.7f);
+    }
+
+    /** True if the mod treats {@code target} as an enemy of {@code caster} for XP purposes. */
+    private static boolean isEnemyOf(ServerPlayer caster, net.minecraft.world.entity.LivingEntity target) {
+        if (target == caster) {
+            return false;
+        }
+        if (target instanceof ServerPlayer other) {
+            return !net.robmc.claimguard.clan.ClanActions.areFriendly(caster.server, caster.getUUID(), other.getUUID());
+        }
+        return target instanceof net.minecraft.world.entity.monster.Enemy;
     }
 
     /** Silencing Whisper: interrupt an enemy's cast and seal that school (or all schools) for 2 s. */

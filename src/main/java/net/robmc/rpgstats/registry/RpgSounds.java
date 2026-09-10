@@ -34,6 +34,11 @@ public final class RpgSounds {
     public static final RegistryObject<SoundEvent> SLUMP = reg("spell.slump");
     public static final RegistryObject<SoundEvent> PESTILENCE = reg("spell.pestilence");
     public static final RegistryObject<SoundEvent> HEXDRAIN = reg("spell.hexdrain");
+    public static final RegistryObject<SoundEvent> LIGHTNING_STRIKE = reg("spell.lightning_strike");
+    public static final RegistryObject<SoundEvent> SPEED_OF_WIND = reg("spell.speed_of_wind");
+    public static final RegistryObject<SoundEvent> CHAIN_SHOCK = reg("spell.chain_shock");
+    public static final RegistryObject<SoundEvent> WIND_LURE = reg("spell.wind_lure");
+    public static final RegistryObject<SoundEvent> HOWLING_IMPACT = reg("spell.howling_impact");
     public static final RegistryObject<SoundEvent> CHANT_OF_GROWTH = reg("spell.chant_of_growth");
     public static final RegistryObject<SoundEvent> BATTLE_HYMN = reg("spell.battle_hymn");
     public static final RegistryObject<SoundEvent> WORD_OF_UNMAKING = reg("spell.word_of_unmaking");
@@ -69,6 +74,11 @@ public final class RpgSounds {
             case SLUMP -> SLUMP.get();
             case PESTILENCE -> PESTILENCE.get();
             case HEXDRAIN -> HEXDRAIN.get();
+            case LIGHTNING_STRIKE -> LIGHTNING_STRIKE.get();
+            case SPEED_OF_WIND -> SPEED_OF_WIND.get();
+            case CHAIN_SHOCK -> CHAIN_SHOCK.get();
+            case WIND_LURE -> WIND_LURE.get();
+            case HOWLING_IMPACT -> HOWLING_IMPACT.get();
             case CHANT_OF_GROWTH -> CHANT_OF_GROWTH.get();
             case BATTLE_HYMN -> BATTLE_HYMN.get();
             case WORD_OF_UNMAKING -> WORD_OF_UNMAKING.get();

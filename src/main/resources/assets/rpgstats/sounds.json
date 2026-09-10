@@ -89,6 +89,31 @@
     "subtitle": "rpgstats.subtitle.spell.hexdrain",
     "sounds": [ "rpgstats:spell/hexdrain" ]
   },
+  "spell.lightning_strike": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.lightning_strike",
+    "sounds": [ "rpgstats:spell/lightning_strike" ]
+  },
+  "spell.speed_of_wind": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.speed_of_wind",
+    "sounds": [ "rpgstats:spell/speed_of_wind" ]
+  },
+  "spell.chain_shock": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.chain_shock",
+    "sounds": [ "rpgstats:spell/chain_shock" ]
+  },
+  "spell.wind_lure": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.wind_lure",
+    "sounds": [ "rpgstats:spell/wind_lure" ]
+  },
+  "spell.howling_impact": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.howling_impact",
+    "sounds": [ "rpgstats:spell/howling_impact" ]
+  },
   "spell.chant_of_growth": {
     "category": "player",
     "subtitle": "rpgstats.subtitle.spell.chant_of_growth",

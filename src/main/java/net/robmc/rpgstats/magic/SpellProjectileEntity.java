@@ -71,6 +71,7 @@ public class SpellProjectileEntity extends ThrowableProjectile {
             case WITHER -> new Vector3f(0.32f, 0.08f, 0.42f);   // black-purple
             case SLUMP -> new Vector3f(0.72f, 0.45f, 0.85f);    // purple, yellow flecks added on hit
             case HEXDRAIN -> new Vector3f(0.5f, 0.12f, 0.68f);  // deep purple
+            case HOWLING_IMPACT -> new Vector3f(0.78f, 0.9f, 1.0f); // pale wind-blue
             default -> new Vector3f(1.0f, 0.2f, 0.15f); // Sunder red
         };
     }
@@ -271,6 +272,30 @@ public class SpellProjectileEntity extends ThrowableProjectile {
                 }
                 level.sendParticles(new DustParticleOptions(colour(), 1.5f), at.x, at.y, at.z, 20, 0.3, 0.3, 0.3, 0.03);
                 level.sendParticles(ParticleTypes.WITCH, at.x, at.y, at.z, 12, 0.25, 0.25, 0.25, 0.02);
+            }
+            case HOWLING_IMPACT -> {
+                float splash = damage * 0.45f; // the gust hits everything else for less than a direct blow
+                double r = StatFormulas.HOWLING_RADIUS;
+                for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class,
+                        new AABB(at, at).inflate(r), LivingEntity::isAlive)) {
+                    if (le == owner) {
+                        continue; // the caster isn't caught in their own gust
+                    }
+                    boolean direct = le == hit;
+                    le.hurt(damageSources().indirectMagic(this, owner), direct ? damage : splash);
+                    net.minecraft.world.phys.Vec3 push = le.position().subtract(at);
+                    if (push.lengthSqr() > 1.0e-4) {
+                        push = push.normalize().scale(StatFormulas.HOWLING_KNOCKBACK);
+                        le.push(push.x, 0.3, push.z);
+                        le.hurtMarked = true;
+                    }
+                    if (isEnemy(le, owner)) {
+                        enemiesHit++;
+                    }
+                }
+                level.sendParticles(ParticleTypes.CLOUD, at.x, at.y, at.z, 40, r * 0.4, 0.35, r * 0.4, 0.18);
+                level.sendParticles(ParticleTypes.EXPLOSION, at.x, at.y, at.z, 1, 0, 0, 0, 0);
+                level.playSound(null, blockPosition(), SoundEvents.ENDER_DRAGON_FLAP, SoundSource.PLAYERS, 1.1f, 1.3f);
             }
             default -> {
             }
