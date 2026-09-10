@@ -272,8 +272,11 @@ public final class WildShapeManager {
     }
 
     private static void sync(ServerPlayer p, int form) {
-        ClaimGuardNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> p),
-                new WildShapeSyncPacket(p.getId(), form));
+        WildShapeSyncPacket packet = new WildShapeSyncPacket(p.getId(), form);
+        // straight to the shifted player (drives their own camera + hand hiding)...
+        ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> p), packet);
+        // ...and to everyone who can see them (drives the model swap)
+        ClaimGuardNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> p), packet);
     }
 
     private static void burst(ServerPlayer p) {
