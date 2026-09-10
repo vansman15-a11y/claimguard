@@ -74,7 +74,14 @@ public enum Spell {
     BATTLE_HYMN("Battle Hymn", School.INCANTATION, 2, Kind.BATTLE_HYMN, Pool.MANA, null, 15, 60, 600),
     WORD_OF_UNMAKING("Word of Unmaking", School.INCANTATION, 3, Kind.WORD_OF_UNMAKING, Pool.MANA, null, 8, 6, 300),
     FEARCRAFT("Fearcraft", School.INCANTATION, 4, Kind.FEARCRAFT, Pool.MANA, null, 8, 60, 1600),
-    SILENCING_WHISPER("Silencing Whisper", School.INCANTATION, 5, Kind.SILENCING_WHISPER, Pool.MANA, null, 9, 2, 900);
+    SILENCING_WHISPER("Silencing Whisper", School.INCANTATION, 5, Kind.SILENCING_WHISPER, Pool.MANA, null, 9, 2, 900),
+
+    // --- Druid (nature buffs, shapeshifting, wildlife) ---
+    THORNS("Thorns", School.DRUID, 1, Kind.THORNS, Pool.MANA, null, 7, 30, 60),
+    WOLF_FORM("Wolf Form", School.DRUID, 2, Kind.WOLF_FORM, Pool.MANA, null, 17, 60, 1200),
+    DOLPHIN_FORM("Dolphin Form", School.DRUID, 3, Kind.DOLPHIN_FORM, Pool.MANA, null, 15, 60, 400),
+    BLOOM_OF_RENEWAL("Bloom of Renewal", School.DRUID, 4, Kind.BLOOM_OF_RENEWAL, Pool.MANA, null, 11, 40, 900),
+    SWARM_OF_THE_WILD("Swarm of the Wild", School.DRUID, 5, Kind.SWARM_OF_THE_WILD, Pool.MANA, null, 19, 80, 2400);
 
     public enum Pool { HEALTH, STAMINA, MANA }
 
@@ -88,7 +95,8 @@ public enum Spell {
         EARTHEN_PATH, SEISMIC_PILLAR, QUAKE_STOMP, BARK_SKIN, FISSURE,
         BONE_SPEAR, RAISE_MINION, SOUL_DRAIN, EYE_DECAY, WRAITH_STEP,
         STARLANCE, ILLUMINATE_VISION, LUMINOUS_PHASE, AEGIS_OF_STARS, ASTRAL_NOVA,
-        CHANT_OF_GROWTH, BATTLE_HYMN, WORD_OF_UNMAKING, FEARCRAFT, SILENCING_WHISPER
+        CHANT_OF_GROWTH, BATTLE_HYMN, WORD_OF_UNMAKING, FEARCRAFT, SILENCING_WHISPER,
+        THORNS, WOLF_FORM, DOLPHIN_FORM, BLOOM_OF_RENEWAL, SWARM_OF_THE_WILD
     }
 
     private final String displayName;

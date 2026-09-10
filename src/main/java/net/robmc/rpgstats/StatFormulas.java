@@ -364,6 +364,64 @@ public final class StatFormulas {
         return HEXDRAIN_MANA_MIN + (HEXDRAIN_MANA_MAX - HEXDRAIN_MANA_MIN) * effectiveness(spellLevel);
     }
 
+    // --- Druid ---
+
+    // Thorns: a reflect buff, cast on yourself or an ally
+    public static final double THORNS_RANGE = 20.0;
+    public static final int THORNS_TICKS = 1200;                  // 60 s
+    private static final double THORNS_REFLECT_MIN = 0.08;        // fraction of the hit bounced back at school level 1
+    private static final double THORNS_REFLECT_MAX = 0.18;        // ... at the cap
+
+    public static double thornsReflect(int schoolLevel) {
+        return THORNS_REFLECT_MIN + (THORNS_REFLECT_MAX - THORNS_REFLECT_MIN) * effectiveness(schoolLevel);
+    }
+
+    // Wolf Form: a toggled shapeshift - faster on land, with Bite and Leap
+    public static final double WOLF_FORM_SPEED_BONUS = 0.25;      // +25% movement speed
+    public static final double WOLF_BITE_REACH = 3.2;
+    public static final int WOLF_BITE_COOLDOWN_TICKS = 12;
+    private static final double WOLF_BITE_DMG_MIN = 3.0;
+    private static final double WOLF_BITE_DMG_MAX = 6.5;
+
+    public static double wolfBiteDamage(int spellLevel) {
+        return WOLF_BITE_DMG_MIN + (WOLF_BITE_DMG_MAX - WOLF_BITE_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    public static final float WOLF_BITE_BLEED_PER_TICK = 1.0f;
+    public static final int WOLF_BITE_BLEED_TICKS = 60;           // 3 s
+    public static final double WOLF_LEAP_DISTANCE = 8.0;
+    public static final double WOLF_LEAP_POWER = 1.05;
+    public static final int WOLF_LEAP_COOLDOWN_TICKS = 40;        // 2 s between leaps
+
+    // Dolphin Form: a toggled water-only shapeshift
+    public static final double DOLPHIN_FORM_SWIM_BONUS = 0.35;    // +35% swim speed
+    public static final int DOLPHIN_FORM_OUT_OF_WATER_GRACE = 60; // out of water this long and the form drops
+
+    // Bloom of Renewal: an ally heal-over-time that also cleanses
+    public static final double BLOOM_RANGE = 22.0;
+    public static final int BLOOM_TICKS = 120;                    // 6 s of regrowth
+    public static final int BLOOM_HEAL_INTERVAL = 20;
+    public static final int BLOOM_PATCH_RADIUS = 2;
+    private static final double BLOOM_HEAL_PER_TICK_MIN = 2.0;
+    private static final double BLOOM_HEAL_PER_TICK_MAX = 5.0;
+
+    public static double bloomHealPerTick(int schoolLevel) {
+        return BLOOM_HEAL_PER_TICK_MIN + (BLOOM_HEAL_PER_TICK_MAX - BLOOM_HEAL_PER_TICK_MIN) * effectiveness(schoolLevel);
+    }
+
+    // Swarm of the Wild: turn nearby peaceful animals on a target
+    public static final double SWARM_CAST_RANGE = 26.0;
+    public static final int SWARM_TICKS = 200;                    // 10 s
+    public static final double SWARM_RECRUIT_RADIUS = 16.0;
+    public static final int SWARM_MAX_ANIMALS = 8;
+    public static final int SWARM_ATTACK_INTERVAL = 16;
+    private static final double SWARM_ANIMAL_DMG_MIN = 1.0;
+    private static final double SWARM_ANIMAL_DMG_MAX = 2.5;
+
+    public static double swarmAnimalDamage(int spellLevel) {
+        return SWARM_ANIMAL_DMG_MIN + (SWARM_ANIMAL_DMG_MAX - SWARM_ANIMAL_DMG_MIN) * effectiveness(spellLevel);
+    }
+
     // --- Arcana ---
 
     // Starlance: a piercing skill-shot that leaves a sigil for a follow-up

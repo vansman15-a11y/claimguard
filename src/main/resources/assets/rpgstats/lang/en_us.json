@@ -83,5 +83,10 @@
   "rpgstats.subtitle.spell.illuminate_vision": "Illuminate Vision",
   "rpgstats.subtitle.spell.luminous_phase": "Luminous Phase",
   "rpgstats.subtitle.spell.aegis_of_stars": "Aegis of Stars",
-  "rpgstats.subtitle.spell.astral_nova": "Astral Nova"
+  "rpgstats.subtitle.spell.astral_nova": "Astral Nova",
+  "rpgstats.subtitle.spell.thorns": "Thorns",
+  "rpgstats.subtitle.spell.wolf_form": "Wolf Form",
+  "rpgstats.subtitle.spell.dolphin_form": "Dolphin Form",
+  "rpgstats.subtitle.spell.bloom_of_renewal": "Bloom of Renewal",
+  "rpgstats.subtitle.spell.swarm_of_the_wild": "Swarm of the Wild"
 }

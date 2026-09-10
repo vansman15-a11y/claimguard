@@ -238,5 +238,30 @@
     "category": "player",
     "subtitle": "rpgstats.subtitle.spell.astral_nova",
     "sounds": [ "rpgstats:spell/astral_nova" ]
+  },
+  "spell.thorns": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.thorns",
+    "sounds": [ "rpgstats:spell/thorns" ]
+  },
+  "spell.wolf_form": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.wolf_form",
+    "sounds": [ "rpgstats:spell/wolf_form" ]
+  },
+  "spell.dolphin_form": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.dolphin_form",
+    "sounds": [ "rpgstats:spell/dolphin_form" ]
+  },
+  "spell.bloom_of_renewal": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.bloom_of_renewal",
+    "sounds": [ "rpgstats:spell/bloom_of_renewal" ]
+  },
+  "spell.swarm_of_the_wild": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.swarm_of_the_wild",
+    "sounds": [ "rpgstats:spell/swarm_of_the_wild" ]
   }
 }

@@ -68,6 +68,11 @@ public final class SpellIcons {
             case LUMINOUS_PHASE -> tex("luminous_phase");
             case AEGIS_OF_STARS -> tex("aegis_of_stars");
             case ASTRAL_NOVA -> tex("astral_nova");
+            case THORNS -> tex("thorns");
+            case WOLF_FORM -> tex("wolf_form");
+            case DOLPHIN_FORM -> tex("dolphin_form");
+            case BLOOM_OF_RENEWAL -> tex("bloom_of_renewal");
+            case SWARM_OF_THE_WILD -> tex("swarm_of_the_wild");
         };
     }
 

@@ -49,6 +49,17 @@ public final class Afflictions {
         }
     }
 
+    /** Strip every affliction off a target (e.g. a cleanse), lifting the Slump modifier too. */
+    public static void clear(LivingEntity target) {
+        if (active.remove(target.getId()) == null) {
+            return;
+        }
+        AttributeInstance hp = target.getAttribute(Attributes.MAX_HEALTH);
+        if (hp != null) {
+            hp.removeModifier(SLUMP_HP_MOD);
+        }
+    }
+
     public static boolean has(LivingEntity entity, Kind kind) {
         return remainingTicks(entity.level().getGameTime(), entity.getId(), kind) > 0;
     }

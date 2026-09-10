@@ -64,6 +64,11 @@ public final class RpgSounds {
     public static final RegistryObject<SoundEvent> LUMINOUS_PHASE = reg("spell.luminous_phase");
     public static final RegistryObject<SoundEvent> AEGIS_OF_STARS = reg("spell.aegis_of_stars");
     public static final RegistryObject<SoundEvent> ASTRAL_NOVA = reg("spell.astral_nova");
+    public static final RegistryObject<SoundEvent> THORNS = reg("spell.thorns");
+    public static final RegistryObject<SoundEvent> WOLF_FORM = reg("spell.wolf_form");
+    public static final RegistryObject<SoundEvent> DOLPHIN_FORM = reg("spell.dolphin_form");
+    public static final RegistryObject<SoundEvent> BLOOM_OF_RENEWAL = reg("spell.bloom_of_renewal");
+    public static final RegistryObject<SoundEvent> SWARM_OF_THE_WILD = reg("spell.swarm_of_the_wild");
 
     private RpgSounds() {
     }
@@ -124,6 +129,11 @@ public final class RpgSounds {
             case LUMINOUS_PHASE -> LUMINOUS_PHASE.get();
             case AEGIS_OF_STARS -> AEGIS_OF_STARS.get();
             case ASTRAL_NOVA -> ASTRAL_NOVA.get();
+            case THORNS -> THORNS.get();
+            case WOLF_FORM -> WOLF_FORM.get();
+            case DOLPHIN_FORM -> DOLPHIN_FORM.get();
+            case BLOOM_OF_RENEWAL -> BLOOM_OF_RENEWAL.get();
+            case SWARM_OF_THE_WILD -> SWARM_OF_THE_WILD.get();
         };
     }
 

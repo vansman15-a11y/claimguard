@@ -337,6 +337,11 @@ public class SpellbookScreen extends Screen {
             case LUMINOUS_PHASE -> "blink 7 blocks along your aim";
             case AEGIS_OF_STARS -> "absorb shield, bursts light when broken";
             case ASTRAL_NOVA -> "4s gravity vortex, drags foes to centre";
+            case THORNS -> "buff: reflect part of melee/arrow hits";
+            case WOLF_FORM -> "toggle wolf: +25% speed, bite + leap";
+            case DOLPHIN_FORM -> "toggle dolphin (water): breathe, +35% swim";
+            case BLOOM_OF_RENEWAL -> "heal an ally over time, cleanse debuffs";
+            case SWARM_OF_THE_WILD -> "nearby animals maul your target 10s";
         };
     }
 

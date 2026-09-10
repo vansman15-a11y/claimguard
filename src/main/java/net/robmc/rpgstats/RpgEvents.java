@@ -107,6 +107,10 @@ public class RpgEvents {
             net.robmc.rpgstats.magic.ArcanaMark.tick(event.getServer());
             net.robmc.rpgstats.magic.AegisManager.tick(event.getServer());
             net.robmc.rpgstats.magic.AstralNovaManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.ThornsManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.WildShapeManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.BloomManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.SwarmManager.tick(event.getServer());
         }
     }
 
@@ -338,6 +342,10 @@ public class RpgEvents {
         net.robmc.rpgstats.magic.BarkSkin.clear(id);
         net.robmc.rpgstats.magic.RaiseMinionManager.clear(id);
         net.robmc.rpgstats.magic.AegisManager.clear(id);
+        net.robmc.rpgstats.magic.ThornsManager.clear(id);
+        net.robmc.rpgstats.magic.WildShapeManager.clear(id);
+        net.robmc.rpgstats.magic.BloomManager.clearTarget(event.getEntity().getId());
+        net.robmc.rpgstats.magic.SwarmManager.clearTarget(event.getEntity().getId());
         lastPos.remove(id);
         wasSwinging.remove(id);
         lastMeleeHitTick.remove(id);
@@ -409,6 +417,10 @@ public class RpgEvents {
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onLivingHurt(LivingHurtEvent event) {
         float amount = event.getAmount();
+        // Thorns reflect is already in pool units - let it through untouched, don't re-scale or leech
+        if (event.getSource().is(DamageTypes.THORNS)) {
+            return;
+        }
         boolean magic = event.getSource().is(DamageTypes.INDIRECT_MAGIC) || event.getSource().is(DamageTypes.MAGIC);
         boolean projectile = event.getSource().is(DamageTypeTags.IS_PROJECTILE)
                 || event.getSource().getDirectEntity() instanceof Projectile;
@@ -420,7 +432,18 @@ public class RpgEvents {
                 amount *= (float) StatFormulas.rangedDamageMultiplier(as);
                 RpgManager.addXp(attacker, Stat.DEXTERITY, StatFormulas.XP_RANGED_HIT);
             } else if (event.getSource().getDirectEntity() == attacker) {
-                amount *= (float) StatFormulas.meleeDamageMultiplier(as);
+                // Wolf Form turns a melee swing into a bleeding bite
+                if (net.robmc.rpgstats.magic.WildShapeManager.isWolf(attacker.getUUID())
+                        && net.robmc.rpgstats.magic.WildShapeManager.tryBite(attacker)) {
+                    int biteLvl = net.robmc.rpgstats.magic.WildShapeManager.wolfSpellLevel(attacker.getUUID());
+                    amount = (float) (StatFormulas.wolfBiteDamage(biteLvl) * StatFormulas.meleeDamageMultiplier(as));
+                    net.robmc.rpgstats.magic.BleedManager.start(event.getEntity(), attacker,
+                            StatFormulas.WOLF_BITE_BLEED_PER_TICK, StatFormulas.WOLF_BITE_BLEED_TICKS);
+                    attacker.serverLevel().playSound(null, event.getEntity().blockPosition(),
+                            net.minecraft.sounds.SoundEvents.WOLF_GROWL, net.minecraft.sounds.SoundSource.PLAYERS, 0.8f, 1.3f);
+                } else {
+                    amount *= (float) StatFormulas.meleeDamageMultiplier(as);
+                }
                 RpgManager.addXp(attacker, Stat.STRENGTH, StatFormulas.XP_MELEE_HIT);
                 RpgManager.addXp(attacker, Stat.VITALITY, StatFormulas.XP_MELEE_HIT * 0.6);
                 // any landed melee hit (fist or weapon) costs stamina
@@ -457,6 +480,20 @@ public class RpgEvents {
                 vs.setStamina(vs.getStamina() - leech * staminaShare);
                 vs.setMana(vs.getMana() - leech * (1.0 - staminaShare));
                 RpgManager.sync(victim);
+            }
+        }
+
+        // Thorns bounces a slice of a melee or arrow hit back at whoever landed it.
+        if (!magic && (projectile || event.getSource().getDirectEntity() == event.getSource().getEntity())
+                && event.getEntity() instanceof ServerPlayer thornsVictim
+                && event.getSource().getEntity() instanceof net.minecraft.world.entity.LivingEntity thornsAttacker
+                && thornsAttacker != thornsVictim && thornsAttacker.isAlive()) {
+            double frac = net.robmc.rpgstats.magic.ThornsManager.reflectFraction(
+                    thornsVictim.getUUID(), thornsVictim.serverLevel().getGameTime());
+            if (frac > 0 && amount > 0) {
+                float back = (float) Math.min(amount * frac, StatFormulas.DAMAGE_SCALE * 6.0);
+                thornsAttacker.hurt(thornsVictim.damageSources().thorns(thornsVictim), back);
+                net.robmc.rpgstats.magic.ThornsManager.reflectFx(thornsAttacker);
             }
         }
 

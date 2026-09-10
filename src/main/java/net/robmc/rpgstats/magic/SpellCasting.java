@@ -100,6 +100,15 @@ public final class SpellCasting {
                 return; // that press just turned it off
             }
         }
+        // Wolf / Dolphin Form are toggles: press the same key again to shift back
+        if (spell == Spell.WOLF_FORM && WildShapeManager.isWolf(player.getUUID())) {
+            WildShapeManager.stop(player);
+            return;
+        }
+        if (spell == Spell.DOLPHIN_FORM && WildShapeManager.isDolphin(player.getUUID())) {
+            WildShapeManager.stop(player);
+            return;
+        }
         if (s.getSchoolLevel(spell.school()) < spell.unlockLevel()) {
             player.displayClientMessage(Component.literal(spell.displayName() + " needs "
                     + spell.school().displayName() + " level " + spell.unlockLevel() + ".")
@@ -124,6 +133,14 @@ public final class SpellCasting {
                         .withStyle(ChatFormatting.GRAY), true);
                 return;
             }
+        }
+        // Swarm of the Wild has a long cooldown - don't let it burn on a cast with no enemy in view
+        if (spell == Spell.SWARM_OF_THE_WILD
+                && aimedTarget(player, StatFormulas.SWARM_CAST_RANGE,
+                        e -> e instanceof net.minecraft.world.entity.LivingEntity le && isEnemyOf(player, le)) == null) {
+            player.displayClientMessage(Component.literal("Swarm of the Wild needs an enemy in your sights.")
+                    .withStyle(ChatFormatting.GRAY), true);
+            return;
         }
         // Transfers can be cast bare-handed or with a staff. Everything else needs a staff.
         ItemStack hand = player.getMainHandItem();
@@ -409,6 +426,26 @@ public final class SpellCasting {
             case ASTRAL_NOVA -> {
                 spend(player, s, spell.costPool(), spell.flatCost());
                 castAstralNova(player, lvl);
+            }
+            case THORNS -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castThorns(player, s);
+            }
+            case WOLF_FORM -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                WildShapeManager.toggleWolf(player, lvl);
+            }
+            case DOLPHIN_FORM -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                WildShapeManager.toggleDolphin(player, lvl);
+            }
+            case BLOOM_OF_RENEWAL -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castBloomOfRenewal(player, s);
+            }
+            case SWARM_OF_THE_WILD -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castSwarmOfTheWild(player, lvl);
             }
             default -> { // every projectile spell (Adept + Fire + Chaos bolts)
                 spend(player, s, spell.costPool(), spell.flatCost());
@@ -984,6 +1021,38 @@ public final class SpellCasting {
         Vec3 centre = bhr.getType() != net.minecraft.world.phys.HitResult.Type.MISS
                 ? bhr.getLocation().subtract(look.scale(0.5)) : far;
         AstralNovaManager.create(player, centre, spellLevel);
+    }
+
+    /** Thorns: aim at an ally to shield them, at nothing to shield yourself. */
+    private static void castThorns(ServerPlayer player, PlayerStats s) {
+        net.minecraft.world.entity.LivingEntity aimed = aimedTarget(player, StatFormulas.THORNS_RANGE,
+                e -> e instanceof ServerPlayer);
+        ServerPlayer who = aimed instanceof ServerPlayer sp ? sp : player;
+        ThornsManager.grant(who, s.getSchoolLevel(net.robmc.rpgstats.magic.School.DRUID));
+        if (who != player) {
+            player.displayClientMessage(Component.literal("Thorns granted to " + who.getGameProfile().getName() + ".")
+                    .withStyle(ChatFormatting.DARK_GREEN), true);
+        }
+    }
+
+    /** Bloom of Renewal: aim at an ally to heal &amp; cleanse them, at nothing for yourself. */
+    private static void castBloomOfRenewal(ServerPlayer player, PlayerStats s) {
+        net.minecraft.world.entity.LivingEntity aimed = aimedTarget(player, StatFormulas.BLOOM_RANGE,
+                e -> e instanceof ServerPlayer);
+        net.minecraft.world.entity.LivingEntity who = aimed != null ? aimed : player;
+        BloomManager.create(player, who, s.getSchoolLevel(net.robmc.rpgstats.magic.School.DRUID));
+    }
+
+    /** Swarm of the Wild: aim at an enemy and set every peaceful animal nearby on them. */
+    private static void castSwarmOfTheWild(ServerPlayer player, int spellLevel) {
+        net.minecraft.world.entity.LivingEntity target = aimedTarget(player, StatFormulas.SWARM_CAST_RANGE,
+                e -> e instanceof net.minecraft.world.entity.LivingEntity le && isEnemyOf(player, le));
+        if (target == null) {
+            player.displayClientMessage(Component.literal("Swarm of the Wild needs an enemy in your sights.")
+                    .withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        SwarmManager.create(player, target, spellLevel);
     }
 
     /** Earthen Path: lay a mossy hazard patch on the ground where you're aiming. */
