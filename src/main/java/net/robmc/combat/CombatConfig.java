@@ -7,8 +7,8 @@ public final class CombatConfig {
     }
 
     // --- swing speed ---
-    /** Multiplier taken off ATTACK_SPEED while a melee weapon is held (0.35 = swing 35% slower). */
-    public static final double SWING_SLOWDOWN = 0.35;
+    /** Multiplier taken off ATTACK_SPEED while a melee weapon is held (0.48 = swing 48% slower). */
+    public static final double SWING_SLOWDOWN = 0.48;
 
     // --- cleave arc ---
     /** How far in front of you the cleave reaches (blocks). Vanilla melee is ~3. */

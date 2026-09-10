@@ -2,6 +2,7 @@ package net.robmc.combat;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.network.PacketDistributor;
 import net.robmc.combat.network.CombatNetwork;
 import net.robmc.combat.network.ComboSyncPacket;
@@ -20,6 +21,7 @@ public final class ComboTracker {
 
     private static final class Combo {
         int streak;
+        int targetId = -1;
         long lastHitTick;
         long lastSwingTick = -1;
         boolean critThisSwing;
@@ -31,24 +33,30 @@ public final class ComboTracker {
     }
 
     /**
-     * Call once per swing that lands at least one hit. Advances the streak (unless
-     * this swing was already counted this tick) and returns whether the swing crits.
+     * Call once per swing that lands. The combo only builds while every hit lands
+     * on the <i>same</i> {@code target}; hitting anything else (or nothing) starts
+     * it over. Returns whether this swing crits.
      */
-    public static boolean registerSwing(ServerPlayer player) {
+    public static boolean registerSwing(ServerPlayer player, LivingEntity target) {
         long now = player.serverLevel().getGameTime();
         Combo c = combos.computeIfAbsent(player.getUUID(), k -> new Combo());
         if (c.lastSwingTick == now) {
             return c.critThisSwing; // an arc cleave in the same tick as the primary hit
         }
         c.lastSwingTick = now;
-        if (now - c.lastHitTick > CombatConfig.COMBO_TIMEOUT_TICKS) {
+
+        int tid = target != null ? target.getId() : -1;
+        boolean sameTarget = tid != -1 && tid == c.targetId;
+        boolean inTime = now - c.lastHitTick <= CombatConfig.COMBO_TIMEOUT_TICKS;
+        if (!sameTarget || !inTime) {
             c.streak = 0;
         }
+        c.targetId = tid;
         c.lastHitTick = now;
         c.streak++;
         c.critThisSwing = c.streak >= CombatConfig.COMBO_HITS_FOR_CRIT;
         if (c.critThisSwing) {
-            c.streak = 0;
+            c.streak = 0; // finisher spent - keep hitting the same target to build the next one
         }
         sync(player, c);
         return c.critThisSwing;
@@ -73,6 +81,7 @@ public final class ComboTracker {
         combos.forEach((id, c) -> {
             if (c.streak > 0 && now - c.lastHitTick > CombatConfig.COMBO_TIMEOUT_TICKS) {
                 c.streak = 0;
+                c.targetId = -1;
                 c.critThisSwing = false;
                 ServerPlayer p = server.getPlayerList().getPlayer(id);
                 if (p != null) {

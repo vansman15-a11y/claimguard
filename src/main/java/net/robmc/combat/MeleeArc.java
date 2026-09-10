@@ -49,7 +49,10 @@ public final class MeleeArc {
             return 0;
         }
 
-        boolean crit = ComboTracker.registerSwing(player);
+        // the combo tracks one target: the one you aimed at, or - for a swing at air -
+        // whatever is most in front of you.
+        LivingEntity comboTarget = primary != null ? primary : mostCentred(player, targets);
+        boolean crit = ComboTracker.registerSwing(player, comboTarget);
         ServerLevel level = player.serverLevel();
         ItemStack weapon = player.getMainHandItem();
 
@@ -89,6 +92,26 @@ public final class MeleeArc {
                 eye.x + look.x, eye.y - 0.2 + look.y, eye.z + look.z, 1, 0, 0, 0, 0);
         level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.9f, 0.95f);
         return hits;
+    }
+
+    /** Of the cleaved targets, the one closest to dead-centre of the player's aim. */
+    private static LivingEntity mostCentred(ServerPlayer player, List<LivingEntity> targets) {
+        if (targets.isEmpty()) {
+            return null;
+        }
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getViewVector(1.0f).normalize();
+        LivingEntity best = null;
+        double bestDot = -1;
+        for (LivingEntity le : targets) {
+            Vec3 to = le.getBoundingBox().getCenter().subtract(eye).normalize();
+            double d = look.dot(to);
+            if (d > bestDot) {
+                bestDot = d;
+                best = le;
+            }
+        }
+        return best;
     }
 
     /** The valid living targets inside the cleave fan (does not touch them). */
