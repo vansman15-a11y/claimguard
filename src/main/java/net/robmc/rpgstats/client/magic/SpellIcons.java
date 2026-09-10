@@ -53,6 +53,11 @@ public final class SpellIcons {
             case QUAKE_STOMP -> tex("quake_stomp");
             case BARK_SKIN -> tex("bark_skin");
             case FISSURE -> tex("fissure");
+            case BONE_SPEAR -> tex("bone_spear");
+            case RAISE_MINION -> tex("raise_minion");
+            case SOUL_DRAIN -> tex("soul_drain");
+            case EYE_DECAY -> tex("eye_decay");
+            case WRAITH_STEP -> tex("wraith_step");
             case CHANT_OF_GROWTH -> tex("chant_of_growth");
             case BATTLE_HYMN -> tex("battle_hymn");
             case WORD_OF_UNMAKING -> tex("word_of_unmaking");

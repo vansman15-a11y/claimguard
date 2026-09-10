@@ -49,6 +49,11 @@ public final class RpgSounds {
     public static final RegistryObject<SoundEvent> QUAKE_STOMP = reg("spell.quake_stomp");
     public static final RegistryObject<SoundEvent> BARK_SKIN = reg("spell.bark_skin");
     public static final RegistryObject<SoundEvent> FISSURE = reg("spell.fissure");
+    public static final RegistryObject<SoundEvent> BONE_SPEAR = reg("spell.bone_spear");
+    public static final RegistryObject<SoundEvent> RAISE_MINION = reg("spell.raise_minion");
+    public static final RegistryObject<SoundEvent> SOUL_DRAIN = reg("spell.soul_drain");
+    public static final RegistryObject<SoundEvent> EYE_DECAY = reg("spell.eye_decay");
+    public static final RegistryObject<SoundEvent> WRAITH_STEP = reg("spell.wraith_step");
     public static final RegistryObject<SoundEvent> CHANT_OF_GROWTH = reg("spell.chant_of_growth");
     public static final RegistryObject<SoundEvent> BATTLE_HYMN = reg("spell.battle_hymn");
     public static final RegistryObject<SoundEvent> WORD_OF_UNMAKING = reg("spell.word_of_unmaking");
@@ -99,6 +104,11 @@ public final class RpgSounds {
             case QUAKE_STOMP -> QUAKE_STOMP.get();
             case BARK_SKIN -> BARK_SKIN.get();
             case FISSURE -> FISSURE.get();
+            case BONE_SPEAR -> BONE_SPEAR.get();
+            case RAISE_MINION -> RAISE_MINION.get();
+            case SOUL_DRAIN -> SOUL_DRAIN.get();
+            case EYE_DECAY -> EYE_DECAY.get();
+            case WRAITH_STEP -> WRAITH_STEP.get();
             case CHANT_OF_GROWTH -> CHANT_OF_GROWTH.get();
             case BATTLE_HYMN -> BATTLE_HYMN.get();
             case WORD_OF_UNMAKING -> WORD_OF_UNMAKING.get();

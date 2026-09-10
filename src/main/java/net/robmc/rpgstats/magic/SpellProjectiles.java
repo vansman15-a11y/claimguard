@@ -68,6 +68,18 @@ public final class SpellProjectiles {
                 damage = (float) (StatFormulas.waterOrbDamage(spellLevel) * spellMult);
                 speed = (float) StatFormulas.WATER_ORB_SPEED;
             }
+            case BONE_SPEAR -> {
+                damage = (float) (StatFormulas.boneSpearDamage(spellLevel) * spellMult);
+                speed = (float) StatFormulas.BONE_SPEAR_SPEED;
+            }
+            case SOUL_DRAIN -> {
+                damage = (float) (StatFormulas.SOUL_DRAIN_MOB_DAMAGE * spellMult);
+                speed = (float) StatFormulas.SOUL_DRAIN_SPEED;
+            }
+            case EYE_DECAY -> {
+                damage = (float) (StatFormulas.eyeDecayDamage(spellLevel) * spellMult);
+                speed = (float) StatFormulas.EYE_DECAY_SPEED;
+            }
             default -> {
                 return;
             }

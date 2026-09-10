@@ -16,7 +16,8 @@ public enum School {
     ADEPT("Adept Magic"),
     WEAK("Weak Magic"),
     CHAOS("Chaos Magic"),
-    INCANTATION("Incantation Magic");
+    INCANTATION("Incantation Magic"),
+    GRAVEMANCY("Gravemancy");
 
     /** Most schools fill 5 tiers; Weak Magic only has 4. */
     public static final int MAX_TIERS = 5;

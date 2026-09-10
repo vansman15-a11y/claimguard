@@ -103,6 +103,7 @@ public class RpgEvents {
             net.robmc.rpgstats.magic.ConjuredBlocks.tick(event.getServer());
             net.robmc.rpgstats.magic.QuakeStomp.tick(event.getServer());
             net.robmc.rpgstats.magic.BarkSkin.tick(event.getServer());
+            net.robmc.rpgstats.magic.RaiseMinionManager.tick(event.getServer());
         }
     }
 
@@ -332,6 +333,7 @@ public class RpgEvents {
         net.robmc.rpgstats.magic.WaterBuff.clear(event.getEntity().getId());
         net.robmc.rpgstats.magic.QuakeStomp.clear(id);
         net.robmc.rpgstats.magic.BarkSkin.clear(id);
+        net.robmc.rpgstats.magic.RaiseMinionManager.clear(id);
         lastPos.remove(id);
         wasSwinging.remove(id);
         lastMeleeHitTick.remove(id);

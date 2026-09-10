@@ -1,5 +1,6 @@
 package net.robmc.rpgstats.magic;
 
+import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -73,6 +74,9 @@ public class SpellProjectileEntity extends ThrowableProjectile {
             case HEXDRAIN -> new Vector3f(0.5f, 0.12f, 0.68f);  // deep purple
             case HOWLING_IMPACT -> new Vector3f(0.78f, 0.9f, 1.0f); // pale wind-blue
             case WATER_ORB -> new Vector3f(0.32f, 0.58f, 1.0f);     // deep water blue
+            case BONE_SPEAR -> new Vector3f(0.92f, 0.9f, 0.8f);     // bone
+            case SOUL_DRAIN -> new Vector3f(0.35f, 0.85f, 0.7f);    // sickly soul-green
+            case EYE_DECAY -> new Vector3f(0.85f, 0.1f, 0.12f);     // blood red
             default -> new Vector3f(1.0f, 0.2f, 0.15f); // Sunder red
         };
     }
@@ -341,6 +345,59 @@ public class SpellProjectileEntity extends ThrowableProjectile {
                 level.sendParticles(ParticleTypes.SPLASH, at.x, at.y, at.z, 40, 0.5, 0.3, 0.5, 0.15);
                 level.sendParticles(ParticleTypes.ITEM_SNOWBALL, at.x, at.y, at.z, 16, 0.3, 0.2, 0.3, 0.1);
                 level.playSound(null, blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 0.8f, 1.4f);
+            }
+            case BONE_SPEAR -> {
+                if (hit != null) {
+                    hit.hurt(damageSources().indirectMagic(this, owner), damage);
+                    if (isEnemy(hit, owner)) {
+                        enemiesHit++;
+                    }
+                }
+                level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK,
+                        net.minecraft.world.level.block.Blocks.BONE_BLOCK.defaultBlockState()),
+                        at.x, at.y, at.z, 14, 0.2, 0.2, 0.2, 0.1);
+                level.playSound(null, blockPosition(), SoundEvents.SKELETON_HURT, SoundSource.PLAYERS, 0.8f, 0.8f);
+            }
+            case SOUL_DRAIN -> {
+                if (hit != null) {
+                    if (hit instanceof net.minecraft.world.entity.player.Player && getOwner() instanceof ServerPlayer caster) {
+                        float steal = (float) StatFormulas.SOUL_DRAIN_HEAL;
+                        float actual = Math.min(steal, hit.getHealth() - 1.0f);
+                        if (actual > 0) {
+                            hit.hurt(damageSources().indirectMagic(this, owner), actual);
+                            caster.heal(actual);
+                        }
+                    } else {
+                        hit.hurt(damageSources().indirectMagic(this, owner), damage);
+                        if (getOwner() instanceof ServerPlayer caster) {
+                            caster.heal((float) (StatFormulas.SOUL_DRAIN_HEAL * 0.5));
+                        }
+                    }
+                    if (isEnemy(hit, owner)) {
+                        enemiesHit++;
+                    }
+                }
+                if (hit != null) {
+                    level.sendParticles(ParticleTypes.SOUL, hit.getX(), hit.getY() + hit.getBbHeight() * 0.5, hit.getZ(),
+                            20, 0.2, 0.3, 0.2, 0.03);
+                }
+                level.sendParticles(ParticleTypes.SCULK_SOUL, at.x, at.y, at.z, 12, 0.2, 0.2, 0.2, 0.02);
+                level.playSound(null, blockPosition(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0f, 0.8f);
+            }
+            case EYE_DECAY -> {
+                if (hit != null) {
+                    hit.hurt(damageSources().indirectMagic(this, owner), damage);
+                    if (hit instanceof ServerPlayer sp) {
+                        sp.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, StatFormulas.EYE_DECAY_BLIND_TICKS, 0, false, false, false));
+                        ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> sp),
+                                new net.robmc.claimguard.network.BloodBlindPacket(StatFormulas.EYE_DECAY_BLIND_TICKS));
+                    }
+                    if (isEnemy(hit, owner)) {
+                        enemiesHit++;
+                    }
+                }
+                level.sendParticles(new DustParticleOptions(colour(), 1.6f), at.x, at.y, at.z, 24, 0.3, 0.3, 0.3, 0.03);
+                level.playSound(null, blockPosition(), SoundEvents.WITHER_SHOOT, SoundSource.PLAYERS, 0.6f, 1.4f);
             }
             default -> {
             }

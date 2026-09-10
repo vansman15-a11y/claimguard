@@ -164,6 +164,31 @@
     "subtitle": "rpgstats.subtitle.spell.fissure",
     "sounds": [ "rpgstats:spell/fissure" ]
   },
+  "spell.bone_spear": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.bone_spear",
+    "sounds": [ "rpgstats:spell/bone_spear" ]
+  },
+  "spell.raise_minion": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.raise_minion",
+    "sounds": [ "rpgstats:spell/raise_minion" ]
+  },
+  "spell.soul_drain": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.soul_drain",
+    "sounds": [ "rpgstats:spell/soul_drain" ]
+  },
+  "spell.eye_decay": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.eye_decay",
+    "sounds": [ "rpgstats:spell/eye_decay" ]
+  },
+  "spell.wraith_step": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.wraith_step",
+    "sounds": [ "rpgstats:spell/wraith_step" ]
+  },
   "spell.chant_of_growth": {
     "category": "player",
     "subtitle": "rpgstats.subtitle.spell.chant_of_growth",

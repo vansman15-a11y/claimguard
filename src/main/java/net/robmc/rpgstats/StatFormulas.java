@@ -364,6 +364,51 @@ public final class StatFormulas {
         return HEXDRAIN_MANA_MIN + (HEXDRAIN_MANA_MAX - HEXDRAIN_MANA_MIN) * effectiveness(spellLevel);
     }
 
+    // --- Gravemancy ---
+
+    // Bone Spear: a plain damage bolt
+    public static final double BONE_SPEAR_SPEED = 1.2;
+    private static final double BONE_SPEAR_DMG_MIN = 2.5;
+    private static final double BONE_SPEAR_DMG_MAX = 5.5;
+
+    public static double boneSpearDamage(int spellLevel) {
+        return BONE_SPEAR_DMG_MIN + (BONE_SPEAR_DMG_MAX - BONE_SPEAR_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    // Raise Minion: a skeleton that fights for you for a while
+    public static final double RAISE_MINION_RANGE = 14.0;
+    public static final int RAISE_MINION_LIFETIME = 600;      // 30 s
+    public static final int RAISE_MINION_CHARGE_TICKS = 1200; // one charge back every 60 s
+    public static int raiseMinionCap(int spellLevel) {
+        return spellLevel >= 75 ? 2 : 1;
+    }
+
+    // Soul Drain: a fast bolt that steals health
+    public static final double SOUL_DRAIN_SPEED = 1.9;
+    public static final double SOUL_DRAIN_HEAL = 25.0;        // health moved from target to caster
+    public static final double SOUL_DRAIN_MOB_DAMAGE = 3.0;   // raw, if the thing hit has no "soul" to give
+
+    // Eye Decay: a blinding hex
+    public static final double EYE_DECAY_SPEED = 1.0;
+    public static final int EYE_DECAY_BLIND_TICKS = 30;       // 1.5 s
+    private static final double EYE_DECAY_DMG_MIN = 0.6;
+    private static final double EYE_DECAY_DMG_MAX = 1.4;
+
+    public static double eyeDecayDamage(int spellLevel) {
+        return EYE_DECAY_DMG_MIN + (EYE_DECAY_DMG_MAX - EYE_DECAY_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    // Wraith Step: a short blink with a blast where you land
+    public static final double WRAITH_STEP_DISTANCE = 5.0;
+    public static final double WRAITH_STEP_BLAST_RADIUS = 2.6;
+    public static final double WRAITH_STEP_KNOCKBACK = 0.6;
+    private static final double WRAITH_STEP_DMG_MIN = 2.5;
+    private static final double WRAITH_STEP_DMG_MAX = 4.5;
+
+    public static double wraithStepDamage(int spellLevel) {
+        return WRAITH_STEP_DMG_MIN + (WRAITH_STEP_DMG_MAX - WRAITH_STEP_DMG_MIN) * effectiveness(spellLevel);
+    }
+
     // --- Earth Magic ---
 
     // Earthen Path: a mossy hazard patch - slows and chips at anyone on it; a fire spell sets it off

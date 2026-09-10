@@ -55,6 +55,13 @@ public enum Spell {
     BARK_SKIN("Bark Skin", School.EARTH, 4, Kind.BARK_SKIN, Pool.MANA, null, 14, 40, 1200),
     FISSURE("Fissure", School.EARTH, 5, Kind.FISSURE, Pool.MANA, null, 20, 80, 2400),
 
+    // --- Gravemancy (bone, undead, life drain) ---
+    BONE_SPEAR("Bone Spear", School.GRAVEMANCY, 1, Kind.BONE_SPEAR, Pool.MANA, null, 7, 40, 60),
+    RAISE_MINION("Raise Minion", School.GRAVEMANCY, 2, Kind.RAISE_MINION, Pool.MANA, null, 18, 80, 0),
+    SOUL_DRAIN("Soul Drain", School.GRAVEMANCY, 3, Kind.SOUL_DRAIN, Pool.MANA, null, 12, 40, 1800),
+    EYE_DECAY("Eye Decay", School.GRAVEMANCY, 4, Kind.EYE_DECAY, Pool.MANA, null, 10, 40, 600),
+    WRAITH_STEP("Wraith Step", School.GRAVEMANCY, 5, Kind.WRAITH_STEP, Pool.MANA, null, 11, 20, 1200),
+
     // --- Incantation Magic (utility chants) ---
     CHANT_OF_GROWTH("Chant of Growth", School.INCANTATION, 1, Kind.CHANT_OF_GROWTH, Pool.MANA, null, 5, 24, 200),
     BATTLE_HYMN("Battle Hymn", School.INCANTATION, 2, Kind.BATTLE_HYMN, Pool.MANA, null, 15, 60, 600),
@@ -72,6 +79,7 @@ public enum Spell {
         LIGHTNING_STRIKE, SPEED_OF_WIND, CHAIN_SHOCK, WIND_LURE, HOWLING_IMPACT,
         WATER_BREATHING, ICE_WALL, WATER_ORB, WATER_SPOUT, RIPTIDE,
         EARTHEN_PATH, SEISMIC_PILLAR, QUAKE_STOMP, BARK_SKIN, FISSURE,
+        BONE_SPEAR, RAISE_MINION, SOUL_DRAIN, EYE_DECAY, WRAITH_STEP,
         CHANT_OF_GROWTH, BATTLE_HYMN, WORD_OF_UNMAKING, FEARCRAFT, SILENCING_WHISPER
     }
 

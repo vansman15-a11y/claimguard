@@ -322,6 +322,11 @@ public class SpellbookScreen extends Screen {
             case QUAKE_STOMP -> "leap up, then dive-bomb where you aim";
             case BARK_SKIN -> "aim: -25% melee & arrow damage, 45s";
             case FISSURE -> "tear a trench through the ground you face";
+            case BONE_SPEAR -> "a bone bolt - plain damage";
+            case RAISE_MINION -> "raise a skeleton to fight for you (30s)";
+            case SOUL_DRAIN -> "fast bolt, steals ~25 health from a player";
+            case EYE_DECAY -> "bolt: blinds their screen in blood 1.5s";
+            case WRAITH_STEP -> "blink 5 blocks, blast where you passed";
             case CHANT_OF_GROWTH -> "hurry nearby crops & saplings along";
             case BATTLE_HYMN -> "channel: +10 STR/QUI/VIT to allies, 15 min";
             case WORD_OF_UNMAKING -> "erase a few blocks (drop them through)";

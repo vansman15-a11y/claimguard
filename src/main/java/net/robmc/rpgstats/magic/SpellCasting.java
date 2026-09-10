@@ -111,6 +111,20 @@ public final class SpellCasting {
                     .withStyle(ChatFormatting.DARK_PURPLE), true);
             return;
         }
+        // Raise Minion runs on charges + a minion cap instead of a plain cooldown
+        if (spell == Spell.RAISE_MINION) {
+            int rl = s.getSpellLevel(spell);
+            if (RaiseMinionManager.atCap(player, rl)) {
+                player.displayClientMessage(Component.literal("You already command all the dead you can.")
+                        .withStyle(ChatFormatting.GRAY), true);
+                return;
+            }
+            if (!RaiseMinionManager.canCast(player, rl)) {
+                player.displayClientMessage(Component.literal("Raise Minion has no charge ready.")
+                        .withStyle(ChatFormatting.GRAY), true);
+                return;
+            }
+        }
         // Transfers can be cast bare-handed or with a staff. Everything else needs a staff.
         ItemStack hand = player.getMainHandItem();
         boolean staff = Weapons.isStaff(hand);
@@ -367,6 +381,14 @@ public final class SpellCasting {
             case FISSURE -> {
                 spend(player, s, spell.costPool(), spell.flatCost());
                 castFissure(player);
+            }
+            case RAISE_MINION -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                RaiseMinionManager.raise(player, lvl);
+            }
+            case WRAITH_STEP -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castWraithStep(player, lvl);
             }
             case SILENCING_WHISPER -> {
                 spend(player, s, spell.costPool(), spell.flatCost());
@@ -838,6 +860,57 @@ public final class SpellCasting {
             return !net.robmc.claimguard.clan.ClanActions.areFriendly(caster.server, caster.getUUID(), other.getUUID());
         }
         return target instanceof net.minecraft.world.entity.monster.Enemy;
+    }
+
+    /** Wraith Step: blink 5 blocks along your aim and blast the space you passed through. */
+    private static void castWraithStep(ServerPlayer player, int spellLevel) {
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getViewVector(1.0f);
+        Vec3 want = eye.add(look.scale(StatFormulas.WRAITH_STEP_DISTANCE));
+        net.minecraft.world.phys.BlockHitResult bhr = level.clip(new net.minecraft.world.level.ClipContext(
+                eye, want, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+        Vec3 landEye = bhr.getType() != net.minecraft.world.phys.HitResult.Type.MISS
+                ? bhr.getLocation().subtract(look.scale(0.7)) : want;
+        Vec3 origin = player.position();
+        double dy = landEye.y - eye.y;
+        Vec3 dest = new Vec3(landEye.x, origin.y + dy, landEye.z);
+
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.SCULK_SOUL,
+                origin.x, origin.y + 1.0, origin.z, 24, 0.3, 0.6, 0.3, 0.02);
+        player.teleportTo(dest.x, dest.y, dest.z);
+        player.fallDistance = 0.0f;
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.SCULK_SOUL,
+                dest.x, dest.y + 1.0, dest.z, 24, 0.3, 0.6, 0.3, 0.02);
+
+        // the blast lands just past where you stopped, in the direction you dashed
+        Vec3 flat = new Vec3(look.x, 0, look.z);
+        Vec3 blast = dest.add(0, 1.0, 0).add(flat.lengthSqr() > 1.0e-4 ? flat.normalize().scale(1.6) : Vec3.ZERO);
+        float dmg = (float) (StatFormulas.wraithStepDamage(spellLevel)
+                * StatFormulas.spellDamageMultiplier(RpgManager.stats(player)) * Afflictions.spellDamageMult(player));
+        int enemies = 0;
+        for (net.minecraft.world.entity.LivingEntity le : level.getEntitiesOfClass(
+                net.minecraft.world.entity.LivingEntity.class,
+                new net.minecraft.world.phys.AABB(blast, blast).inflate(StatFormulas.WRAITH_STEP_BLAST_RADIUS),
+                e -> e.isAlive() && e != player)) {
+            le.hurt(player.damageSources().indirectMagic(player, player), dmg);
+            Vec3 away = le.position().subtract(blast);
+            if (away.lengthSqr() > 1.0e-4) {
+                away = away.normalize().scale(StatFormulas.WRAITH_STEP_KNOCKBACK);
+                le.push(away.x, 0.3, away.z);
+                le.hurtMarked = true;
+            }
+            if (isEnemyOf(player, le)) {
+                enemies++;
+            }
+        }
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.EXPLOSION, blast.x, blast.y, blast.z, 2, 0.3, 0.2, 0.3, 0.0);
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME, blast.x, blast.y, blast.z, 20, 0.4, 0.3, 0.4, 0.05);
+        level.playSound(null, net.minecraft.core.BlockPos.containing(blast), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.7f, 1.6f);
+        if (enemies > 0) {
+            RpgManager.addSpellXp(player, Spell.WRAITH_STEP, StatFormulas.spellHitXp(enemies));
+        }
     }
 
     /** Earthen Path: lay a mossy hazard patch on the ground where you're aiming. */
