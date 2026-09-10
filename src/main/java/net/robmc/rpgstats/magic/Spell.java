@@ -28,10 +28,10 @@ public enum Spell {
     CINDER_MAELSTROM("Cinder Maelstrom", School.FIRE, 5, Kind.CINDER_MAELSTROM, Pool.MANA, null, 90, 50, 900),
 
     // --- Chaos Magic (debuff school with one very strong heal) ---
-    HEARTWELL("Heartwell", School.CHAOS, 1, Kind.HEARTWELL, Pool.MANA, null, 28, 20, 400),
-    WITHER("Wither", School.CHAOS, 2, Kind.WITHER, Pool.MANA, null, 24, 26, 400),
-    SLUMP("Slump", School.CHAOS, 3, Kind.SLUMP, Pool.MANA, null, 30, 26, 300),
-    PESTILENCE("Pestilence", School.CHAOS, 4, Kind.PESTILENCE, Pool.MANA, null, 34, 2, 200),
+    HEARTWELL("Heartwell", School.CHAOS, 1, Kind.HEARTWELL, Pool.MANA, null, 12, 20, 400),
+    WITHER("Wither", School.CHAOS, 2, Kind.WITHER, Pool.MANA, null, 10, 26, 400),
+    SLUMP("Slump", School.CHAOS, 3, Kind.SLUMP, Pool.MANA, null, 15, 26, 300),
+    PESTILENCE("Pestilence", School.CHAOS, 4, Kind.PESTILENCE, Pool.MANA, null, 10, 2, 200),
     HEXDRAIN("Hexdrain", School.CHAOS, 5, Kind.HEXDRAIN, Pool.MANA, null, 40, 30, 1200);
 
     public enum Pool { HEALTH, STAMINA, MANA }
