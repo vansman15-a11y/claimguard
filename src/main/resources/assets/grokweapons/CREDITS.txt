@@ -1,6 +1,7 @@
-Dagger / Polearm / Staff models and textures are from the
-"Minecraft Reimagined" resource pack by Reijvi (https://www.patreon.com/c/Reijvi).
+The `grokweapons` namespace is where the "Minecraft Reimagined" resource pack by
+Reijvi (https://www.patreon.com/c/Reijvi) puts its dagger / polearm / staff
+models and textures. Run that pack on the server and its 3D models take over.
 
-Bundled here only as a fallback so the rpgstats weapons still render when the
-server resource pack isn't loaded. If you run that pack on your server, its
-copies take priority over these.
+The files bundled here are only a plain-sprite fallback so the rpgstats weapons
+still render as recognizable items when that pack isn't loaded. They are simple
+placeholder art, not Reijvi's work.
