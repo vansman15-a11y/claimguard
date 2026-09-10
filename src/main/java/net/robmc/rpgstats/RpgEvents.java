@@ -94,6 +94,7 @@ public class RpgEvents {
             net.robmc.rpgstats.magic.FearManager.tick(event.getServer());
             net.robmc.rpgstats.magic.WindChannel.tick(event.getServer());
             net.robmc.rpgstats.magic.FireMark.tick(event.getServer());
+            net.robmc.rpgstats.magic.MeltedWater.tick(event.getServer());
             net.robmc.rpgstats.magic.WaterBuff.tick(event.getServer());
             net.robmc.rpgstats.magic.IceWallManager.tick(event.getServer());
             net.robmc.rpgstats.magic.WaterSpoutManager.tick(event.getServer());

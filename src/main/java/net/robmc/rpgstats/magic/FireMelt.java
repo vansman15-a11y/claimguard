@@ -33,8 +33,12 @@ public final class FireMelt {
         BlockState state = level.getBlockState(pos);
         var b = state.getBlock();
         if (b == Blocks.ICE || b == Blocks.FROSTED_ICE || b == Blocks.PACKED_ICE || b == Blocks.BLUE_ICE) {
-            level.setBlockAndUpdate(pos, level.dimensionType().ultraWarm()
-                    ? Blocks.AIR.defaultBlockState() : Blocks.WATER.defaultBlockState());
+            if (level.dimensionType().ultraWarm()) {
+                level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+            } else {
+                level.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState());
+                MeltedWater.mark(level, pos); // this water self-deletes after 20 s
+            }
             fizz(level, pos);
         } else if (b == Blocks.SNOW || b == Blocks.SNOW_BLOCK || b == Blocks.POWDER_SNOW) {
             level.removeBlock(pos, false);
