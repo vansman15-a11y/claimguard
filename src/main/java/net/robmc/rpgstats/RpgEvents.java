@@ -93,6 +93,7 @@ public class RpgEvents {
             net.robmc.rpgstats.magic.Silence.tick(event.getServer());
             net.robmc.rpgstats.magic.FearManager.tick(event.getServer());
             net.robmc.rpgstats.magic.WindChannel.tick(event.getServer());
+            net.robmc.rpgstats.magic.FireMark.tick(event.getServer());
         }
     }
 
@@ -196,6 +197,33 @@ public class RpgEvents {
     public static void onSkillItemDrops(LivingDropsEvent event) {
         if (event.getEntity() instanceof ServerPlayer) {
             event.getDrops().removeIf(e -> e.getItem().getItem() instanceof SkillItem);
+        }
+    }
+
+    /** A Fire Magic kill cooks the drops, same as Fire Aspect (raw pork -> cooked, etc.). */
+    @SubscribeEvent
+    public static void onFireKillCooksDrops(LivingDropsEvent event) {
+        if (!(event.getEntity().level() instanceof net.minecraft.server.level.ServerLevel level)) {
+            return;
+        }
+        boolean fireKill = net.robmc.rpgstats.magic.FireMark.isMarked(event.getEntity().getId(), level.getGameTime())
+                || event.getSource().is(DamageTypeTags.IS_FIRE);
+        if (!fireKill) {
+            return;
+        }
+        var recipes = level.getRecipeManager();
+        var access = level.registryAccess();
+        for (net.minecraft.world.entity.item.ItemEntity drop : event.getDrops()) {
+            ItemStack in = drop.getItem();
+            var smelted = recipes.getRecipeFor(net.minecraft.world.item.crafting.RecipeType.SMELTING,
+                    new net.minecraft.world.SimpleContainer(in), level);
+            if (smelted.isPresent()) {
+                ItemStack out = smelted.get().getResultItem(access).copy();
+                if (!out.isEmpty()) {
+                    out.setCount(in.getCount());
+                    drop.setItem(out);
+                }
+            }
         }
     }
 

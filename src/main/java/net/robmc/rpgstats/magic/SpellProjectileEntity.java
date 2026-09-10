@@ -324,6 +324,10 @@ public class SpellProjectileEntity extends ThrowableProjectile {
         if (direct != null && direct.isAlive() && !list.contains(direct)) {
             list.add(direct);
         }
+        for (LivingEntity le : list) {
+            FireMark.mark(le); // so a fire-spell kill cooks the drops
+        }
+        FireMelt.meltAround(level, at, r); // and it melts ice / snow it lands on
         return list;
     }
 

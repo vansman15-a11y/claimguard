@@ -112,7 +112,9 @@ public final class FireFieldManager {
                     // no exclusions - the caster and their allies take it just the same
                     le.hurt(le == owner ? selfHit : fromCaster, (float) f.tickDamage);
                     BurnManager.apply(le, f.burnPerStack);
+                    FireMark.mark(le);
                 }
+                FireMelt.meltAround(level, f.center, f.radius); // the field keeps melting ice / snow under it
             }
             return now >= f.endTick;
         });

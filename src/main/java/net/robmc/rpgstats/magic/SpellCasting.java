@@ -416,11 +416,13 @@ public final class SpellCasting {
             level.sendParticles(net.minecraft.core.particles.ParticleTypes.FLAME, p.x, p.y, p.z, 1, 0.0, 0.0, 0.0, 0.0);
         }
         level.playSound(null, player.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.0f, 0.9f);
+        FireMelt.meltAround(level, impact, 1.5); // Serpent's Plume melts the ice / snow it hits
 
         if (hit != null && hit.getEntity() instanceof net.minecraft.world.entity.LivingEntity target) {
             float dmg = (float) (StatFormulas.serpentsPlumeDamage(spellLevel)
                     * StatFormulas.spellDamageMultiplier(s) * Afflictions.spellDamageMult(player));
             target.hurt(player.damageSources().indirectMagic(player, player), dmg);
+            FireMark.mark(target);
             if (target instanceof net.minecraft.world.entity.player.Player) {
                 target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                         net.minecraft.world.effect.MobEffects.DARKNESS,
@@ -444,6 +446,7 @@ public final class SpellCasting {
         Vec3 center = block.getType() != net.minecraft.world.phys.HitResult.Type.MISS ? block.getLocation() : far;
 
         FireFieldManager.spawn(player, center, spellLevel);
+        FireMelt.meltAround(level, center, StatFormulas.CINDER_FIELD_RADIUS);
         level.sendParticles(net.minecraft.core.particles.ParticleTypes.EXPLOSION,
                 center.x, center.y + 0.2, center.z, 3, 1.0, 0.2, 1.0, 0.0);
         level.playSound(null, net.minecraft.core.BlockPos.containing(center), SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 2.0f, 0.6f);

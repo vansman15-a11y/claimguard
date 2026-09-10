@@ -45,6 +45,7 @@ public final class BurnManager {
         b.stacks = Math.min(StatFormulas.FIRE_BURN_MAX_STACKS, b.stacks + 1);
         b.endTick = now + StatFormulas.FIRE_BURN_DURATION_TICKS;
         b.perStackPerTick = Math.max(b.perStackPerTick, perStackPerTick);
+        FireMark.mark(target); // so its drops cook if the burn is what kills it
     }
 
     public static void clear(int entityId) {
@@ -80,7 +81,12 @@ public final class BurnManager {
             if (!(ent instanceof LivingEntity le) || !le.isAlive()) {
                 return true;
             }
+            if (le.isInWaterRainOrBubble()) {
+                le.clearFire();
+                return true; // water / rain puts the burn out, same as vanilla fire
+            }
             Burn b = entry.getValue();
+            FireMark.mark(le); // keep the "cook its drops" window open for as long as it's burning
             while (now >= b.nextTick) {
                 b.nextTick += StatFormulas.FIRE_BURN_INTERVAL;
                 float dmg = (float) (b.stacks * b.perStackPerTick);
