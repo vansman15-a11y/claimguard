@@ -69,6 +69,16 @@ public final class RpgSounds {
     public static final RegistryObject<SoundEvent> DOLPHIN_FORM = reg("spell.dolphin_form");
     public static final RegistryObject<SoundEvent> BLOOM_OF_RENEWAL = reg("spell.bloom_of_renewal");
     public static final RegistryObject<SoundEvent> SWARM_OF_THE_WILD = reg("spell.swarm_of_the_wild");
+    public static final RegistryObject<SoundEvent> DIVINE_SMITE = reg("spell.divine_smite");
+    public static final RegistryObject<SoundEvent> BLESSING_OF_PROTECTION = reg("spell.blessing_of_protection");
+    public static final RegistryObject<SoundEvent> PURIFYING_WAVE = reg("spell.purifying_wave");
+    public static final RegistryObject<SoundEvent> SACRIFICIAL_HEAL = reg("spell.sacrificial_heal");
+    public static final RegistryObject<SoundEvent> MASS_MEND = reg("spell.mass_mend");
+    public static final RegistryObject<SoundEvent> LIGHTNING_TOTEM = reg("spell.lightning_totem");
+    public static final RegistryObject<SoundEvent> HEX_OF_FRAILTY = reg("spell.hex_of_frailty");
+    public static final RegistryObject<SoundEvent> HEALING_TOTEM = reg("spell.healing_totem");
+    public static final RegistryObject<SoundEvent> FIRE_SHOCK = reg("spell.fire_shock");
+    public static final RegistryObject<SoundEvent> PLAGUE = reg("spell.plague");
 
     private RpgSounds() {
     }
@@ -134,6 +144,16 @@ public final class RpgSounds {
             case DOLPHIN_FORM -> DOLPHIN_FORM.get();
             case BLOOM_OF_RENEWAL -> BLOOM_OF_RENEWAL.get();
             case SWARM_OF_THE_WILD -> SWARM_OF_THE_WILD.get();
+            case DIVINE_SMITE -> DIVINE_SMITE.get();
+            case BLESSING_OF_PROTECTION -> BLESSING_OF_PROTECTION.get();
+            case PURIFYING_WAVE -> PURIFYING_WAVE.get();
+            case SACRIFICIAL_HEAL -> SACRIFICIAL_HEAL.get();
+            case MASS_MEND -> MASS_MEND.get();
+            case LIGHTNING_TOTEM -> LIGHTNING_TOTEM.get();
+            case HEX_OF_FRAILTY -> HEX_OF_FRAILTY.get();
+            case HEALING_TOTEM -> HEALING_TOTEM.get();
+            case FIRE_SHOCK -> FIRE_SHOCK.get();
+            case PLAGUE -> PLAGUE.get();
         };
     }
 

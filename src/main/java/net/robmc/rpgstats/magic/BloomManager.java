@@ -66,7 +66,8 @@ public final class BloomManager {
         }
     }
 
-    private static void cleanse(LivingEntity target) {
+    /** Strip harmful vanilla effects and every custom debuff off a target. */
+    public static void cleanse(LivingEntity target) {
         List<net.minecraft.world.effect.MobEffect> bad = new ArrayList<>();
         for (MobEffectInstance mei : target.getActiveEffects()) {
             if (!mei.getEffect().isBeneficial()) {

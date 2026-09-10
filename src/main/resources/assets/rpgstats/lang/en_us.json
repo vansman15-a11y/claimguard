@@ -88,5 +88,15 @@
   "rpgstats.subtitle.spell.wolf_form": "Wolf Form",
   "rpgstats.subtitle.spell.dolphin_form": "Dolphin Form",
   "rpgstats.subtitle.spell.bloom_of_renewal": "Bloom of Renewal",
-  "rpgstats.subtitle.spell.swarm_of_the_wild": "Swarm of the Wild"
+  "rpgstats.subtitle.spell.swarm_of_the_wild": "Swarm of the Wild",
+  "rpgstats.subtitle.spell.divine_smite": "Divine Smite",
+  "rpgstats.subtitle.spell.blessing_of_protection": "Blessing of Protection",
+  "rpgstats.subtitle.spell.purifying_wave": "Purifying Wave",
+  "rpgstats.subtitle.spell.sacrificial_heal": "Sacrificial Heal",
+  "rpgstats.subtitle.spell.mass_mend": "Mass Mend",
+  "rpgstats.subtitle.spell.lightning_totem": "Lightning Totem",
+  "rpgstats.subtitle.spell.hex_of_frailty": "Hex of Frailty",
+  "rpgstats.subtitle.spell.healing_totem": "Healing Totem",
+  "rpgstats.subtitle.spell.fire_shock": "Fire Shock",
+  "rpgstats.subtitle.spell.plague": "Plague"
 }

@@ -422,6 +422,134 @@ public final class StatFormulas {
         return SWARM_ANIMAL_DMG_MIN + (SWARM_ANIMAL_DMG_MAX - SWARM_ANIMAL_DMG_MIN) * effectiveness(spellLevel);
     }
 
+    // --- Cleric ---
+
+    // Divine Smite: arms your next melee swing with radiant damage and refunds mana
+    public static final int DIVINE_SMITE_TICKS = 100;            // the arm lasts 5 s
+    public static final double DIVINE_SMITE_MANA_REFUND = 15.0;
+    private static final double DIVINE_SMITE_DMG_MIN = 4.0;      // raw radiant bonus at school level 1
+    private static final double DIVINE_SMITE_DMG_MAX = 9.0;      // ... at the cap
+
+    public static double divineSmiteBonus(int spellLevel) {
+        return DIVINE_SMITE_DMG_MIN + (DIVINE_SMITE_DMG_MAX - DIVINE_SMITE_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    // Blessing of Protection: an absorption shield that bursts into an AoE heal
+    public static final double BLESSING_RANGE = 22.0;
+    public static final int BLESSING_ABSORB_AMPLIFIER = 3;       // ~16 HP shield
+    public static final int BLESSING_MAX_TICKS = 1200;           // 60 s if never broken
+    public static final double BLESSING_BURST_RADIUS = 5.0;
+    private static final double BLESSING_BURST_HEAL_MIN = 15.0;
+    private static final double BLESSING_BURST_HEAL_MAX = 30.0;
+
+    public static double blessingBurstHeal(int schoolLevel) {
+        return BLESSING_BURST_HEAL_MIN + (BLESSING_BURST_HEAL_MAX - BLESSING_BURST_HEAL_MIN) * effectiveness(schoolLevel);
+    }
+
+    // Purifying Wave: a frontal holy cone - hurts foes, heals + cleanses allies
+    public static final double PURIFYING_WAVE_RANGE = 8.5;
+    public static final double PURIFYING_WAVE_HALF_ANGLE_COS = 0.55; // ~57 deg half-angle
+    private static final double PURIFYING_WAVE_DMG_MIN = 3.0;
+    private static final double PURIFYING_WAVE_DMG_MAX = 6.5;
+    private static final double PURIFYING_WAVE_HEAL_MIN = 12.0;
+    private static final double PURIFYING_WAVE_HEAL_MAX = 26.0;
+
+    public static double purifyingWaveDamage(int spellLevel) {
+        return PURIFYING_WAVE_DMG_MIN + (PURIFYING_WAVE_DMG_MAX - PURIFYING_WAVE_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    public static double purifyingWaveHeal(int schoolLevel) {
+        return PURIFYING_WAVE_HEAL_MIN + (PURIFYING_WAVE_HEAL_MAX - PURIFYING_WAVE_HEAL_MIN) * effectiveness(schoolLevel);
+    }
+
+    // Sacrificial Heal: spend your own HP, the target gets more back
+    public static final double SACRIFICIAL_HEAL_RANGE = 24.0;
+    public static final double SACRIFICIAL_HEAL_RATIO = 1.6;    // heal = sacrifice x 1.6
+    private static final double SACRIFICIAL_HEAL_COST_MIN = 18.0;
+    private static final double SACRIFICIAL_HEAL_COST_MAX = 40.0;
+
+    public static double sacrificialHealCost(int schoolLevel) {
+        return SACRIFICIAL_HEAL_COST_MIN + (SACRIFICIAL_HEAL_COST_MAX - SACRIFICIAL_HEAL_COST_MIN) * effectiveness(schoolLevel);
+    }
+
+    // Mass Mend: a channelled radius heal, weighted toward the most hurt ally
+    public static final double MASS_MEND_RADIUS = 8.0;
+    public static final double MASS_MEND_MANA_PER_TICK = 1.1;
+    public static final double MASS_MEND_MOVE_TOLERANCE = 0.6;  // move farther than this from the cast spot and it drops
+    private static final double MASS_MEND_HEAL_MIN = 1.4;       // per tick, per ally, at school level 1
+    private static final double MASS_MEND_HEAL_MAX = 3.2;
+    public static final double MASS_MEND_INJURED_BONUS = 2.0;   // most-injured ally gets up to this much extra per tick
+
+    public static double massMendHealPerTick(int schoolLevel) {
+        return MASS_MEND_HEAL_MIN + (MASS_MEND_HEAL_MAX - MASS_MEND_HEAL_MIN) * effectiveness(schoolLevel);
+    }
+
+    // --- Shaman ---
+
+    // Totems (shared): a 1x2 destructible pillar that pulses an aura
+    public static final int TOTEM_LIFETIME = 300;               // 15 s
+    public static final double TOTEM_AURA_RADIUS = 7.0;
+
+    // Lightning Totem
+    public static final int LIGHTNING_TOTEM_PULSE = 30;
+    public static final int LIGHTNING_TOTEM_BUFF_TICKS = 60;
+    private static final double LIGHTNING_TOTEM_DMG_MIN = 1.5;
+    private static final double LIGHTNING_TOTEM_DMG_MAX = 3.5;
+
+    public static double lightningTotemDamage(int spellLevel) {
+        return LIGHTNING_TOTEM_DMG_MIN + (LIGHTNING_TOTEM_DMG_MAX - LIGHTNING_TOTEM_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    // Healing Totem
+    public static final int HEALING_TOTEM_LIFETIME = 600;       // 30 s so it gets several ticks
+    public static final int HEALING_TOTEM_PULSE = 100;          // heal every 5 s
+    private static final double HEALING_TOTEM_HEAL_MIN = 8.0;
+    private static final double HEALING_TOTEM_HEAL_MAX = 18.0;
+
+    public static double healingTotemHeal(int schoolLevel) {
+        return HEALING_TOTEM_HEAL_MIN + (HEALING_TOTEM_HEAL_MAX - HEALING_TOTEM_HEAL_MIN) * effectiveness(schoolLevel);
+    }
+
+    // Hex of Frailty: a curse that weakens and slows, and pays out on the kill
+    public static final double HEX_RANGE = 26.0;
+    public static final int HEX_TICKS = 200;                    // 10 s
+    private static final double HEX_KILL_HEAL_MIN = 40.0;
+    private static final double HEX_KILL_HEAL_MAX = 85.0;
+
+    public static double hexKillHeal(int schoolLevel) {
+        return HEX_KILL_HEAL_MIN + (HEX_KILL_HEAL_MAX - HEX_KILL_HEAL_MIN) * effectiveness(schoolLevel);
+    }
+
+    // Fire Shock: a burning DoT that heals the caster on its last tick
+    public static final double FIRE_SHOCK_RANGE = 22.0;
+    public static final int FIRE_SHOCK_TICKS = 100;             // 5 s
+    public static final int FIRE_SHOCK_INTERVAL = 20;
+    private static final double FIRE_SHOCK_DMG_MIN = 1.6;       // raw, per tick
+    private static final double FIRE_SHOCK_DMG_MAX = 3.4;
+    private static final double FIRE_SHOCK_HEAL_MIN = 10.0;
+    private static final double FIRE_SHOCK_HEAL_MAX = 22.0;
+
+    public static double fireShockDamage(int spellLevel) {
+        return FIRE_SHOCK_DMG_MIN + (FIRE_SHOCK_DMG_MAX - FIRE_SHOCK_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    public static double fireShockHeal(int schoolLevel) {
+        return FIRE_SHOCK_HEAL_MIN + (FIRE_SHOCK_HEAL_MAX - FIRE_SHOCK_HEAL_MIN) * effectiveness(schoolLevel);
+    }
+
+    // Plague: a green beam that leaves three poison frogs on the target
+    public static final double PLAGUE_RANGE = 24.0;
+    public static final int PLAGUE_FROGS = 3;
+    public static final int PLAGUE_FROG_TICKS = 100;            // 5 s
+    public static final int PLAGUE_FROG_ATTACK_INTERVAL = 18;
+    public static final int PLAGUE_POISON_TICKS = 60;
+    private static final double PLAGUE_FROG_DMG_MIN = 1.0;
+    private static final double PLAGUE_FROG_DMG_MAX = 2.5;
+
+    public static double plagueFrogDamage(int spellLevel) {
+        return PLAGUE_FROG_DMG_MIN + (PLAGUE_FROG_DMG_MAX - PLAGUE_FROG_DMG_MIN) * effectiveness(spellLevel);
+    }
+
     // --- Arcana ---
 
     // Starlance: a piercing skill-shot that leaves a sigil for a follow-up

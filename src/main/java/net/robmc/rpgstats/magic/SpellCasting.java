@@ -109,6 +109,13 @@ public final class SpellCasting {
             WildShapeManager.stop(player);
             return;
         }
+        // Mass Mend is a channel: re-press ends it, and casting anything else drops it
+        if (MassMendManager.isChanneling(player.getUUID())) {
+            MassMendManager.stop(player);
+            if (spell == Spell.MASS_MEND) {
+                return;
+            }
+        }
         if (s.getSchoolLevel(spell.school()) < spell.unlockLevel()) {
             player.displayClientMessage(Component.literal(spell.displayName() + " needs "
                     + spell.school().displayName() + " level " + spell.unlockLevel() + ".")
@@ -211,6 +218,7 @@ public final class SpellCasting {
     public static void interrupt(ServerPlayer player) {
         WindChannel.stop(player); // a hit / silence also drops a Speed of Wind channel
         WaterSpoutManager.stop(player);
+        MassMendManager.stop(player);
         if (casting.remove(player.getUUID()) != null) {
             player.displayClientMessage(Component.literal("Spell interrupted!").withStyle(ChatFormatting.RED), true);
             ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new CastStatePacket("", 0));
@@ -446,6 +454,47 @@ public final class SpellCasting {
             case SWARM_OF_THE_WILD -> {
                 spend(player, s, spell.costPool(), spell.flatCost());
                 castSwarmOfTheWild(player, lvl);
+            }
+            case DIVINE_SMITE -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                SmiteManager.arm(player, lvl);
+            }
+            case BLESSING_OF_PROTECTION -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castBlessingOfProtection(player, s);
+            }
+            case PURIFYING_WAVE -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castPurifyingWave(player, s, lvl);
+            }
+            case SACRIFICIAL_HEAL -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castSacrificialHeal(player, s);
+            }
+            case MASS_MEND -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                MassMendManager.start(player, s.getSchoolLevel(net.robmc.rpgstats.magic.School.CLERIC));
+            }
+            case LIGHTNING_TOTEM -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                ShamanTotemManager.raise(player, ShamanTotemManager.Kind.LIGHTNING, lvl);
+            }
+            case HEX_OF_FRAILTY -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castHexOfFrailty(player, s);
+            }
+            case HEALING_TOTEM -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                ShamanTotemManager.raise(player, ShamanTotemManager.Kind.HEALING,
+                        s.getSchoolLevel(net.robmc.rpgstats.magic.School.SHAMAN));
+            }
+            case FIRE_SHOCK -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castFireShock(player, s, lvl);
+            }
+            case PLAGUE -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castPlague(player, lvl);
             }
             default -> { // every projectile spell (Adept + Fire + Chaos bolts)
                 spend(player, s, spell.costPool(), spell.flatCost());
@@ -1053,6 +1102,139 @@ public final class SpellCasting {
             return;
         }
         SwarmManager.create(player, target, spellLevel);
+    }
+
+    /** Blessing of Protection: shield an aimed ally (or yourself). */
+    private static void castBlessingOfProtection(ServerPlayer player, PlayerStats s) {
+        net.minecraft.world.entity.LivingEntity aimed = aimedTarget(player, StatFormulas.BLESSING_RANGE,
+                e -> e instanceof ServerPlayer);
+        ServerPlayer who = aimed instanceof ServerPlayer sp ? sp : player;
+        BlessingManager.grant(player, who, s.getSchoolLevel(net.robmc.rpgstats.magic.School.CLERIC));
+    }
+
+    /** Purifying Wave: a forward holy cone - hurts foes, heals &amp; cleanses friends. */
+    private static void castPurifyingWave(ServerPlayer player, PlayerStats s, int spellLevel) {
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getViewVector(1.0f);
+        double range = StatFormulas.PURIFYING_WAVE_RANGE;
+        float dmg = (float) (StatFormulas.purifyingWaveDamage(spellLevel)
+                * StatFormulas.spellDamageMultiplier(s) * Afflictions.spellDamageMult(player));
+        float heal = (float) StatFormulas.purifyingWaveHeal(s.getSchoolLevel(net.robmc.rpgstats.magic.School.CLERIC));
+        int enemies = 0;
+
+        for (net.minecraft.world.entity.LivingEntity le : level.getEntitiesOfClass(
+                net.minecraft.world.entity.LivingEntity.class,
+                player.getBoundingBox().inflate(range), e -> e.isAlive() && e != player)) {
+            Vec3 to = le.position().add(0, le.getBbHeight() * 0.5, 0).subtract(eye);
+            double dist = to.length();
+            if (dist > range || to.normalize().dot(look) < StatFormulas.PURIFYING_WAVE_HALF_ANGLE_COS) {
+                continue;
+            }
+            boolean friend = le instanceof ServerPlayer other
+                    && net.robmc.claimguard.clan.ClanActions.areFriendly(player.server, player.getUUID(), other.getUUID());
+            if (friend) {
+                le.heal(heal);
+                BloomManager.cleanse(le);
+                ((ServerPlayer) le).displayClientMessage(Component.literal("Purifying light washes over you.")
+                        .withStyle(ChatFormatting.YELLOW), true);
+            } else if (isEnemyOf(player, le)) {
+                le.hurt(player.damageSources().indirectMagic(player, player), dmg);
+                enemies++;
+            }
+        }
+
+        // a fan of holy motes sweeping out in front
+        Vec3 right = new Vec3(-look.z, 0, look.x).normalize();
+        for (int i = 0; i <= 24; i++) {
+            double t = i / 24.0;
+            double spread = (t - 0.5) * range * 1.1;
+            Vec3 p = eye.add(look.scale(range * 0.6)).add(right.scale(spread)).add(0, -0.2, 0);
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, p.x, p.y, p.z, 1, 0.05, 0.05, 0.05, 0.0);
+        }
+        level.playSound(null, player.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.1f, 1.1f);
+        if (enemies > 0) {
+            RpgManager.addSpellXp(player, Spell.PURIFYING_WAVE, StatFormulas.spellHitXp(enemies));
+        }
+    }
+
+    /** Sacrificial Heal: spend your own HP to overheal an aimed player. */
+    private static void castSacrificialHeal(ServerPlayer player, PlayerStats s) {
+        net.minecraft.world.entity.LivingEntity aimed = aimedTarget(player, StatFormulas.SACRIFICIAL_HEAL_RANGE,
+                e -> e instanceof ServerPlayer && e != player);
+        if (!(aimed instanceof ServerPlayer target)) {
+            player.displayClientMessage(Component.literal("Sacrificial Heal needs an ally in your sights.")
+                    .withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        float cost = (float) StatFormulas.sacrificialHealCost(s.getSchoolLevel(net.robmc.rpgstats.magic.School.CLERIC));
+        cost = Math.min(cost, Math.max(0.0f, player.getHealth() - 1.0f)); // never suicide on it
+        if (cost <= 0) {
+            player.displayClientMessage(Component.literal("You are too weak to give more.").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        // spend the caster's HP straight off the bar - it's a sacrifice, not a hit to be scaled/resisted
+        player.setHealth(player.getHealth() - cost);
+        player.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.DAMAGE_INDICATOR,
+                player.getX(), player.getY() + 1.0, player.getZ(), 6, 0.2, 0.3, 0.2, 0.0);
+        target.heal((float) (cost * StatFormulas.SACRIFICIAL_HEAL_RATIO));
+
+        ServerLevel level = player.serverLevel();
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD,
+                target.getX(), target.getY() + target.getBbHeight() + 0.6, target.getZ(), 24, 0.25, 0.3, 0.25, 0.03);
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.HEART,
+                target.getX(), target.getY() + target.getBbHeight() + 0.3, target.getZ(), 5, 0.3, 0.2, 0.3, 0.0);
+        level.playSound(null, target.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.7f, 1.7f);
+        target.displayClientMessage(Component.literal(player.getGameProfile().getName() + " pours their life into you.")
+                .withStyle(ChatFormatting.YELLOW), true);
+    }
+
+    /** Hex of Frailty: curse an aimed enemy. */
+    private static void castHexOfFrailty(ServerPlayer player, PlayerStats s) {
+        net.minecraft.world.entity.LivingEntity target = aimedTarget(player, StatFormulas.HEX_RANGE,
+                e -> e instanceof net.minecraft.world.entity.LivingEntity le && isEnemyOf(player, le));
+        if (target == null) {
+            player.displayClientMessage(Component.literal("Hex of Frailty needs an enemy in your sights.")
+                    .withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        HexManager.apply(player, target, s.getSchoolLevel(net.robmc.rpgstats.magic.School.SHAMAN));
+    }
+
+    /** Fire Shock: hitscan an enemy and set a burning DoT on them. */
+    private static void castFireShock(ServerPlayer player, PlayerStats s, int spellLevel) {
+        net.minecraft.world.entity.LivingEntity target = aimedTarget(player, StatFormulas.FIRE_SHOCK_RANGE,
+                e -> e instanceof net.minecraft.world.entity.LivingEntity le && isEnemyOf(player, le));
+        if (target == null) {
+            player.displayClientMessage(Component.literal("Fire Shock needs an enemy in your sights.")
+                    .withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        float perTick = (float) (StatFormulas.fireShockDamage(spellLevel)
+                * StatFormulas.spellDamageMultiplier(s) * Afflictions.spellDamageMult(player));
+        FireShockManager.start(player, target, s.getSchoolLevel(net.robmc.rpgstats.magic.School.SHAMAN), perTick);
+    }
+
+    /** Plague: a green beam that drops three poison frogs on whatever it hits. */
+    private static void castPlague(ServerPlayer player, int spellLevel) {
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getViewVector(1.0f);
+        net.minecraft.world.entity.LivingEntity target = aimedTarget(player, StatFormulas.PLAGUE_RANGE,
+                e -> e instanceof net.minecraft.world.entity.LivingEntity le && isEnemyOf(player, le));
+        if (target == null) {
+            player.displayClientMessage(Component.literal("Plague needs an enemy in your sights.")
+                    .withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        Vec3 hit = target.position().add(0, target.getBbHeight() * 0.4, 0);
+        int steps = (int) Math.max(6, eye.distanceTo(hit));
+        for (int i = 0; i <= steps; i++) {
+            Vec3 p = eye.add(look.scale(0.2)).lerp(hit, i / (double) steps);
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.SNEEZE, p.x, p.y, p.z, 1, 0.03, 0.03, 0.03, 0.0);
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.ITEM_SLIME, p.x, p.y, p.z, 1, 0.02, 0.02, 0.02, 0.0);
+        }
+        PlagueManager.unleash(player, target, target.position(), spellLevel);
     }
 
     /** Earthen Path: lay a mossy hazard patch on the ground where you're aiming. */

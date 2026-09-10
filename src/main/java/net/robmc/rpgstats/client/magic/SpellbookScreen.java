@@ -342,6 +342,16 @@ public class SpellbookScreen extends Screen {
             case DOLPHIN_FORM -> "toggle dolphin (water): breathe, +35% swim";
             case BLOOM_OF_RENEWAL -> "heal an ally over time, cleanse debuffs";
             case SWARM_OF_THE_WILD -> "nearby animals maul your target 10s";
+            case DIVINE_SMITE -> "arm next melee: radiant dmg + mana back";
+            case BLESSING_OF_PROTECTION -> "ally shield, bursts into an AoE heal";
+            case PURIFYING_WAVE -> "holy cone: hurt foes, heal + cleanse allies";
+            case SACRIFICIAL_HEAL -> "spend your HP, ally heals 1.6x back";
+            case MASS_MEND -> "channel: radius heal, most on the hurt";
+            case LIGHTNING_TOTEM -> "totem: buff allies, shock enemies";
+            case HEX_OF_FRAILTY -> "curse: -dmg/-speed 10s, heal on its kill";
+            case HEALING_TOTEM -> "totem: heals the group every 5s";
+            case FIRE_SHOCK -> "burning DoT, heals you on the last tick";
+            case PLAGUE -> "beam drops 3 poison frogs on the target";
         };
     }
 

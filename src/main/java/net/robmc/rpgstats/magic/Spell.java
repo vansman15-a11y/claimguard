@@ -81,7 +81,21 @@ public enum Spell {
     WOLF_FORM("Wolf Form", School.DRUID, 2, Kind.WOLF_FORM, Pool.MANA, null, 17, 60, 1200),
     DOLPHIN_FORM("Dolphin Form", School.DRUID, 3, Kind.DOLPHIN_FORM, Pool.MANA, null, 15, 60, 400),
     BLOOM_OF_RENEWAL("Bloom of Renewal", School.DRUID, 4, Kind.BLOOM_OF_RENEWAL, Pool.MANA, null, 11, 40, 900),
-    SWARM_OF_THE_WILD("Swarm of the Wild", School.DRUID, 5, Kind.SWARM_OF_THE_WILD, Pool.MANA, null, 19, 80, 2400);
+    SWARM_OF_THE_WILD("Swarm of the Wild", School.DRUID, 5, Kind.SWARM_OF_THE_WILD, Pool.MANA, null, 19, 80, 2400),
+
+    // --- Cleric (radiant damage, shields, group healing) ---
+    DIVINE_SMITE("Divine Smite", School.CLERIC, 1, Kind.DIVINE_SMITE, Pool.MANA, null, 15, 60, 800),
+    BLESSING_OF_PROTECTION("Blessing of Protection", School.CLERIC, 2, Kind.BLESSING_OF_PROTECTION, Pool.MANA, null, 11, 30, 1200),
+    PURIFYING_WAVE("Purifying Wave", School.CLERIC, 3, Kind.PURIFYING_WAVE, Pool.MANA, null, 19, 80, 1980),
+    SACRIFICIAL_HEAL("Sacrificial Heal", School.CLERIC, 4, Kind.SACRIFICIAL_HEAL, Pool.MANA, null, 13, 28, 160),
+    MASS_MEND("Mass Mend", School.CLERIC, 5, Kind.MASS_MEND, Pool.MANA, null, 6, 60, 2400),
+
+    // --- Shaman (totems, curses, DoTs, summons) ---
+    LIGHTNING_TOTEM("Lightning Totem", School.SHAMAN, 1, Kind.LIGHTNING_TOTEM, Pool.MANA, null, 12, 50, 400),
+    HEX_OF_FRAILTY("Hex of Frailty", School.SHAMAN, 2, Kind.HEX_OF_FRAILTY, Pool.MANA, null, 15, 60, 1800),
+    HEALING_TOTEM("Healing Totem", School.SHAMAN, 3, Kind.HEALING_TOTEM, Pool.MANA, null, 16, 60, 900),
+    FIRE_SHOCK("Fire Shock", School.SHAMAN, 4, Kind.FIRE_SHOCK, Pool.MANA, null, 12, 40, 1800),
+    PLAGUE("Plague", School.SHAMAN, 5, Kind.PLAGUE, Pool.MANA, null, 15, 50, 1200);
 
     public enum Pool { HEALTH, STAMINA, MANA }
 
@@ -96,7 +110,9 @@ public enum Spell {
         BONE_SPEAR, RAISE_MINION, SOUL_DRAIN, EYE_DECAY, WRAITH_STEP,
         STARLANCE, ILLUMINATE_VISION, LUMINOUS_PHASE, AEGIS_OF_STARS, ASTRAL_NOVA,
         CHANT_OF_GROWTH, BATTLE_HYMN, WORD_OF_UNMAKING, FEARCRAFT, SILENCING_WHISPER,
-        THORNS, WOLF_FORM, DOLPHIN_FORM, BLOOM_OF_RENEWAL, SWARM_OF_THE_WILD
+        THORNS, WOLF_FORM, DOLPHIN_FORM, BLOOM_OF_RENEWAL, SWARM_OF_THE_WILD,
+        DIVINE_SMITE, BLESSING_OF_PROTECTION, PURIFYING_WAVE, SACRIFICIAL_HEAL, MASS_MEND,
+        LIGHTNING_TOTEM, HEX_OF_FRAILTY, HEALING_TOTEM, FIRE_SHOCK, PLAGUE
     }
 
     private final String displayName;

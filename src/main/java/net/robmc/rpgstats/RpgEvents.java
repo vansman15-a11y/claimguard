@@ -27,6 +27,7 @@ import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.ShieldBlockEvent;
 import net.robmc.rpgstats.item.SkillItem;
@@ -111,6 +112,13 @@ public class RpgEvents {
             net.robmc.rpgstats.magic.WildShapeManager.tick(event.getServer());
             net.robmc.rpgstats.magic.BloomManager.tick(event.getServer());
             net.robmc.rpgstats.magic.SwarmManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.SmiteManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.BlessingManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.MassMendManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.ShamanTotemManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.HexManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.FireShockManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.PlagueManager.tick(event.getServer());
         }
     }
 
@@ -346,6 +354,13 @@ public class RpgEvents {
         net.robmc.rpgstats.magic.WildShapeManager.clear(id);
         net.robmc.rpgstats.magic.BloomManager.clearTarget(event.getEntity().getId());
         net.robmc.rpgstats.magic.SwarmManager.clearTarget(event.getEntity().getId());
+        net.robmc.rpgstats.magic.SmiteManager.clear(id);
+        net.robmc.rpgstats.magic.BlessingManager.clear(id);
+        net.robmc.rpgstats.magic.MassMendManager.clear(id);
+        net.robmc.rpgstats.magic.ShamanTotemManager.clearOwner(id);
+        net.robmc.rpgstats.magic.HexManager.clearTarget(event.getEntity().getId());
+        net.robmc.rpgstats.magic.FireShockManager.clearTarget(event.getEntity().getId());
+        net.robmc.rpgstats.magic.PlagueManager.clearTarget(event.getEntity().getId());
         lastPos.remove(id);
         wasSwinging.remove(id);
         lastMeleeHitTick.remove(id);
@@ -444,6 +459,16 @@ public class RpgEvents {
                 } else {
                     amount *= (float) StatFormulas.meleeDamageMultiplier(as);
                 }
+                // Divine Smite: the armed swing carries bonus radiant damage and refunds mana
+                if (net.robmc.rpgstats.magic.SmiteManager.isArmed(attacker.getUUID(), attacker.serverLevel().getGameTime())) {
+                    float radiant = net.robmc.rpgstats.magic.SmiteManager.consume(attacker);
+                    if (radiant > 0) {
+                        amount += radiant;
+                        attacker.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD,
+                                event.getEntity().getX(), event.getEntity().getY() + event.getEntity().getBbHeight() * 0.5,
+                                event.getEntity().getZ(), 20, 0.3, 0.4, 0.3, 0.1);
+                    }
+                }
                 RpgManager.addXp(attacker, Stat.STRENGTH, StatFormulas.XP_MELEE_HIT);
                 RpgManager.addXp(attacker, Stat.VITALITY, StatFormulas.XP_MELEE_HIT * 0.6);
                 // any landed melee hit (fist or weapon) costs stamina
@@ -498,6 +523,18 @@ public class RpgEvents {
         }
 
         event.setAmount(amount);
+    }
+
+    @SubscribeEvent
+    public static void onLivingDeath(LivingDeathEvent event) {
+        if (event.getEntity().level().isClientSide() || event.getEntity().getServer() == null) {
+            return;
+        }
+        net.robmc.rpgstats.magic.HexManager.onDeath(event.getEntity().getServer(), event.getEntity());
+        net.robmc.rpgstats.magic.FireShockManager.clearTarget(event.getEntity().getId());
+        net.robmc.rpgstats.magic.PlagueManager.clearTarget(event.getEntity().getId());
+        net.robmc.rpgstats.magic.SwarmManager.clearTarget(event.getEntity().getId());
+        net.robmc.rpgstats.magic.BloomManager.clearTarget(event.getEntity().getId());
     }
 
     // --- gathering XP ---

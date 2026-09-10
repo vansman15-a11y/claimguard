@@ -73,6 +73,16 @@ public final class SpellIcons {
             case DOLPHIN_FORM -> tex("dolphin_form");
             case BLOOM_OF_RENEWAL -> tex("bloom_of_renewal");
             case SWARM_OF_THE_WILD -> tex("swarm_of_the_wild");
+            case DIVINE_SMITE -> tex("divine_smite");
+            case BLESSING_OF_PROTECTION -> tex("blessing_of_protection");
+            case PURIFYING_WAVE -> tex("purifying_wave");
+            case SACRIFICIAL_HEAL -> tex("sacrificial_heal");
+            case MASS_MEND -> tex("mass_mend");
+            case LIGHTNING_TOTEM -> tex("lightning_totem");
+            case HEX_OF_FRAILTY -> tex("hex_of_frailty");
+            case HEALING_TOTEM -> tex("healing_totem");
+            case FIRE_SHOCK -> tex("fire_shock");
+            case PLAGUE -> tex("plague");
         };
     }
 

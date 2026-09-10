@@ -263,5 +263,55 @@
     "category": "player",
     "subtitle": "rpgstats.subtitle.spell.swarm_of_the_wild",
     "sounds": [ "rpgstats:spell/swarm_of_the_wild" ]
+  },
+  "spell.divine_smite": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.divine_smite",
+    "sounds": [ "rpgstats:spell/divine_smite" ]
+  },
+  "spell.blessing_of_protection": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.blessing_of_protection",
+    "sounds": [ "rpgstats:spell/blessing_of_protection" ]
+  },
+  "spell.purifying_wave": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.purifying_wave",
+    "sounds": [ "rpgstats:spell/purifying_wave" ]
+  },
+  "spell.sacrificial_heal": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.sacrificial_heal",
+    "sounds": [ "rpgstats:spell/sacrificial_heal" ]
+  },
+  "spell.mass_mend": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.mass_mend",
+    "sounds": [ "rpgstats:spell/mass_mend" ]
+  },
+  "spell.lightning_totem": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.lightning_totem",
+    "sounds": [ "rpgstats:spell/lightning_totem" ]
+  },
+  "spell.hex_of_frailty": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.hex_of_frailty",
+    "sounds": [ "rpgstats:spell/hex_of_frailty" ]
+  },
+  "spell.healing_totem": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.healing_totem",
+    "sounds": [ "rpgstats:spell/healing_totem" ]
+  },
+  "spell.fire_shock": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.fire_shock",
+    "sounds": [ "rpgstats:spell/fire_shock" ]
+  },
+  "spell.plague": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.plague",
+    "sounds": [ "rpgstats:spell/plague" ]
   }
 }
