@@ -59,6 +59,11 @@ public final class RpgSounds {
     public static final RegistryObject<SoundEvent> WORD_OF_UNMAKING = reg("spell.word_of_unmaking");
     public static final RegistryObject<SoundEvent> FEARCRAFT = reg("spell.fearcraft");
     public static final RegistryObject<SoundEvent> SILENCING_WHISPER = reg("spell.silencing_whisper");
+    public static final RegistryObject<SoundEvent> STARLANCE = reg("spell.starlance");
+    public static final RegistryObject<SoundEvent> ILLUMINATE_VISION = reg("spell.illuminate_vision");
+    public static final RegistryObject<SoundEvent> LUMINOUS_PHASE = reg("spell.luminous_phase");
+    public static final RegistryObject<SoundEvent> AEGIS_OF_STARS = reg("spell.aegis_of_stars");
+    public static final RegistryObject<SoundEvent> ASTRAL_NOVA = reg("spell.astral_nova");
 
     private RpgSounds() {
     }
@@ -114,6 +119,11 @@ public final class RpgSounds {
             case WORD_OF_UNMAKING -> WORD_OF_UNMAKING.get();
             case FEARCRAFT -> FEARCRAFT.get();
             case SILENCING_WHISPER -> SILENCING_WHISPER.get();
+            case STARLANCE -> STARLANCE.get();
+            case ILLUMINATE_VISION -> ILLUMINATE_VISION.get();
+            case LUMINOUS_PHASE -> LUMINOUS_PHASE.get();
+            case AEGIS_OF_STARS -> AEGIS_OF_STARS.get();
+            case ASTRAL_NOVA -> ASTRAL_NOVA.get();
         };
     }
 

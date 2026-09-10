@@ -332,6 +332,11 @@ public class SpellbookScreen extends Screen {
             case WORD_OF_UNMAKING -> "erase a few blocks (drop them through)";
             case FEARCRAFT -> "3s chant, monsters flee you for 5s";
             case SILENCING_WHISPER -> "interrupt + seal a caster's school 2s";
+            case STARLANCE -> "fast piercing star-spear, marks for +30%";
+            case ILLUMINATE_VISION -> "night vision 5 min, self or an ally";
+            case LUMINOUS_PHASE -> "blink 7 blocks along your aim";
+            case AEGIS_OF_STARS -> "absorb shield, bursts light when broken";
+            case ASTRAL_NOVA -> "4s gravity vortex, drags foes to centre";
         };
     }
 

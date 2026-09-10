@@ -394,6 +394,22 @@ public final class SpellCasting {
                 spend(player, s, spell.costPool(), spell.flatCost());
                 castSilencingWhisper(player);
             }
+            case ILLUMINATE_VISION -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castIlluminateVision(player);
+            }
+            case LUMINOUS_PHASE -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castLuminousPhase(player);
+            }
+            case AEGIS_OF_STARS -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                AegisManager.grant(player, lvl);
+            }
+            case ASTRAL_NOVA -> {
+                spend(player, s, spell.costPool(), spell.flatCost());
+                castAstralNova(player, lvl);
+            }
             default -> { // every projectile spell (Adept + Fire + Chaos bolts)
                 spend(player, s, spell.costPool(), spell.flatCost());
                 SpellProjectiles.launch(player, spell, lvl);
@@ -911,6 +927,63 @@ public final class SpellCasting {
         if (enemies > 0) {
             RpgManager.addSpellXp(player, Spell.WRAITH_STEP, StatFormulas.spellHitXp(enemies));
         }
+    }
+
+    /** Illuminate Vision: aim at an ally to grant night vision, aim at nothing to grant it to yourself. */
+    private static void castIlluminateVision(ServerPlayer player) {
+        net.minecraft.world.entity.LivingEntity aimed = aimedTarget(player, StatFormulas.ILLUMINATE_RANGE,
+                e -> e instanceof ServerPlayer);
+        ServerPlayer who = aimed instanceof ServerPlayer sp ? sp : player;
+        who.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.NIGHT_VISION, StatFormulas.ILLUMINATE_TICKS, 0, false, false, true));
+        who.displayClientMessage(Component.literal("Your eyes fill with starlight.").withStyle(ChatFormatting.AQUA), true);
+        if (who != player) {
+            player.displayClientMessage(Component.literal("Illuminate Vision granted to " + who.getGameProfile().getName() + ".")
+                    .withStyle(ChatFormatting.AQUA), true);
+        }
+        player.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD,
+                who.getX(), who.getY() + 1.4, who.getZ(), 24, 0.3, 0.4, 0.3, 0.02);
+    }
+
+    /** Luminous Phase: blink 7 blocks along your aim; fizzles if a wall is right in front of you. */
+    private static void castLuminousPhase(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getViewVector(1.0f);
+        Vec3 want = eye.add(look.scale(StatFormulas.LUMINOUS_PHASE_DISTANCE));
+        net.minecraft.world.phys.BlockHitResult bhr = level.clip(new net.minecraft.world.level.ClipContext(
+                eye, want, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+        Vec3 landEye = bhr.getType() != net.minecraft.world.phys.HitResult.Type.MISS
+                ? bhr.getLocation().subtract(look.scale(0.6)) : want;
+        Vec3 origin = player.position();
+        if (landEye.distanceTo(eye) < StatFormulas.LUMINOUS_PHASE_MIN_TRAVEL) {
+            player.displayClientMessage(Component.literal("The light has nowhere to carry you.").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        double dy = landEye.y - eye.y;
+        Vec3 dest = new Vec3(landEye.x, origin.y + dy, landEye.z);
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.FLASH, origin.x, origin.y + 1.0, origin.z, 1, 0, 0, 0, 0);
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, origin.x, origin.y + 1.0, origin.z, 30, 0.3, 0.6, 0.3, 0.05);
+        player.teleportTo(dest.x, dest.y, dest.z);
+        player.fallDistance = 0.0f;
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.FLASH, dest.x, dest.y + 1.0, dest.z, 1, 0, 0, 0, 0);
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, dest.x, dest.y + 1.0, dest.z, 30, 0.3, 0.6, 0.3, 0.05);
+        level.playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.0f, 1.4f);
+    }
+
+    /** Astral Nova: raycast out to a point and open a gravity vortex there. */
+    private static void castAstralNova(ServerPlayer player, int spellLevel) {
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getViewVector(1.0f);
+        Vec3 far = eye.add(look.scale(StatFormulas.ASTRAL_NOVA_RANGE));
+        net.minecraft.world.phys.BlockHitResult bhr = level.clip(new net.minecraft.world.level.ClipContext(
+                eye, far, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+        Vec3 centre = bhr.getType() != net.minecraft.world.phys.HitResult.Type.MISS
+                ? bhr.getLocation().subtract(look.scale(0.5)) : far;
+        AstralNovaManager.create(player, centre, spellLevel);
     }
 
     /** Earthen Path: lay a mossy hazard patch on the ground where you're aiming. */

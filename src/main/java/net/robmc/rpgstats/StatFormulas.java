@@ -364,6 +364,48 @@ public final class StatFormulas {
         return HEXDRAIN_MANA_MIN + (HEXDRAIN_MANA_MAX - HEXDRAIN_MANA_MIN) * effectiveness(spellLevel);
     }
 
+    // --- Arcana ---
+
+    // Starlance: a piercing skill-shot that leaves a sigil for a follow-up
+    public static final double STARLANCE_SPEED = 2.6;
+    public static final int STARLANCE_MAX_PIERCE = 2;
+    public static final int STARLANCE_MARK_TICKS = 100;         // the sigil lasts 5 s
+    public static final double ARCANA_MARK_BONUS = 1.3;         // your next Arcana hit on a marked target does +30%
+    private static final double STARLANCE_DMG_MIN = 3.5;
+    private static final double STARLANCE_DMG_MAX = 7.0;
+
+    public static double starlanceDamage(int spellLevel) {
+        return STARLANCE_DMG_MIN + (STARLANCE_DMG_MAX - STARLANCE_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    // Illuminate Vision: night vision buff
+    public static final double ILLUMINATE_RANGE = 24.0;
+    public static final int ILLUMINATE_TICKS = 6000;            // 5 min
+
+    // Luminous Phase: a short forward blink that can't pass through terrain
+    public static final double LUMINOUS_PHASE_DISTANCE = 7.0;
+    public static final double LUMINOUS_PHASE_MIN_TRAVEL = 1.5; // shorter than this and it fizzles
+
+    // Aegis of Stars: an absorption shield that detonates when it breaks
+    public static final int AEGIS_ABSORB_AMPLIFIER = 4;         // ~20 HP shield
+    public static final int AEGIS_MAX_TICKS = 800;              // it fades quietly after 40 s if never broken
+    public static final double AEGIS_BURST_RADIUS = 4.0;
+    public static final int AEGIS_BURST_BLIND_TICKS = 40;
+    private static final double AEGIS_BURST_DMG_MIN = 3.0;
+    private static final double AEGIS_BURST_DMG_MAX = 5.5;
+
+    public static double aegisBurstDamage(int spellLevel) {
+        return AEGIS_BURST_DMG_MIN + (AEGIS_BURST_DMG_MAX - AEGIS_BURST_DMG_MIN) * effectiveness(spellLevel);
+    }
+
+    // Astral Nova: a gravity well for crowd control
+    public static final double ASTRAL_NOVA_RANGE = 16.0;
+    public static final double ASTRAL_NOVA_RADIUS = 2.6;        // ~5x5x5
+    public static final int ASTRAL_NOVA_TICKS = 80;             // 4 s
+    public static final double ASTRAL_NOVA_PULL = 0.34;         // velocity toward centre each tick
+    public static final int ASTRAL_NOVA_DAMAGE_INTERVAL = 20;
+    public static final double ASTRAL_NOVA_TICK_DAMAGE = 0.25;  // raw, per damage tick - barely a scratch
+
     // --- Gravemancy ---
 
     // Bone Spear: a plain damage bolt

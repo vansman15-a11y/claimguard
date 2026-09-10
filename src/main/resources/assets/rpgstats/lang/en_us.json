@@ -78,5 +78,10 @@
   "rpgstats.subtitle.spell.battle_hymn": "Battle Hymn",
   "rpgstats.subtitle.spell.word_of_unmaking": "Word of Unmaking",
   "rpgstats.subtitle.spell.fearcraft": "Fearcraft",
-  "rpgstats.subtitle.spell.silencing_whisper": "Silencing Whisper"
+  "rpgstats.subtitle.spell.silencing_whisper": "Silencing Whisper",
+  "rpgstats.subtitle.spell.starlance": "Starlance",
+  "rpgstats.subtitle.spell.illuminate_vision": "Illuminate Vision",
+  "rpgstats.subtitle.spell.luminous_phase": "Luminous Phase",
+  "rpgstats.subtitle.spell.aegis_of_stars": "Aegis of Stars",
+  "rpgstats.subtitle.spell.astral_nova": "Astral Nova"
 }

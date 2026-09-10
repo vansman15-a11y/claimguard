@@ -104,6 +104,9 @@ public class RpgEvents {
             net.robmc.rpgstats.magic.QuakeStomp.tick(event.getServer());
             net.robmc.rpgstats.magic.BarkSkin.tick(event.getServer());
             net.robmc.rpgstats.magic.RaiseMinionManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.ArcanaMark.tick(event.getServer());
+            net.robmc.rpgstats.magic.AegisManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.AstralNovaManager.tick(event.getServer());
         }
     }
 
@@ -334,6 +337,7 @@ public class RpgEvents {
         net.robmc.rpgstats.magic.QuakeStomp.clear(id);
         net.robmc.rpgstats.magic.BarkSkin.clear(id);
         net.robmc.rpgstats.magic.RaiseMinionManager.clear(id);
+        net.robmc.rpgstats.magic.AegisManager.clear(id);
         lastPos.remove(id);
         wasSwinging.remove(id);
         lastMeleeHitTick.remove(id);

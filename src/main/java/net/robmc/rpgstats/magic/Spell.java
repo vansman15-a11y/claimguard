@@ -55,6 +55,13 @@ public enum Spell {
     BARK_SKIN("Bark Skin", School.EARTH, 4, Kind.BARK_SKIN, Pool.MANA, null, 14, 40, 1200),
     FISSURE("Fissure", School.EARTH, 5, Kind.FISSURE, Pool.MANA, null, 20, 80, 2400),
 
+    // --- Arcana (starlight - burst damage, light, teleports, control) ---
+    STARLANCE("Starlance", School.ARCANA, 1, Kind.STARLANCE, Pool.MANA, null, 10, 40, 100),
+    ILLUMINATE_VISION("Illuminate Vision", School.ARCANA, 2, Kind.ILLUMINATE_VISION, Pool.MANA, null, 20, 80, 200),
+    LUMINOUS_PHASE("Luminous Phase", School.ARCANA, 3, Kind.LUMINOUS_PHASE, Pool.MANA, null, 12, 20, 800),
+    AEGIS_OF_STARS("Aegis of Stars", School.ARCANA, 4, Kind.AEGIS_OF_STARS, Pool.MANA, null, 14, 70, 1800),
+    ASTRAL_NOVA("Astral Nova", School.ARCANA, 5, Kind.ASTRAL_NOVA, Pool.MANA, null, 20, 80, 2100),
+
     // --- Gravemancy (bone, undead, life drain) ---
     BONE_SPEAR("Bone Spear", School.GRAVEMANCY, 1, Kind.BONE_SPEAR, Pool.MANA, null, 7, 40, 60),
     RAISE_MINION("Raise Minion", School.GRAVEMANCY, 2, Kind.RAISE_MINION, Pool.MANA, null, 18, 80, 0),
@@ -80,6 +87,7 @@ public enum Spell {
         WATER_BREATHING, ICE_WALL, WATER_ORB, WATER_SPOUT, RIPTIDE,
         EARTHEN_PATH, SEISMIC_PILLAR, QUAKE_STOMP, BARK_SKIN, FISSURE,
         BONE_SPEAR, RAISE_MINION, SOUL_DRAIN, EYE_DECAY, WRAITH_STEP,
+        STARLANCE, ILLUMINATE_VISION, LUMINOUS_PHASE, AEGIS_OF_STARS, ASTRAL_NOVA,
         CHANT_OF_GROWTH, BATTLE_HYMN, WORD_OF_UNMAKING, FEARCRAFT, SILENCING_WHISPER
     }
 

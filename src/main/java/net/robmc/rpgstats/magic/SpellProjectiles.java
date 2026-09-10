@@ -80,6 +80,10 @@ public final class SpellProjectiles {
                 damage = (float) (StatFormulas.eyeDecayDamage(spellLevel) * spellMult);
                 speed = (float) StatFormulas.EYE_DECAY_SPEED;
             }
+            case STARLANCE -> {
+                damage = (float) (StatFormulas.starlanceDamage(spellLevel) * spellMult);
+                speed = (float) StatFormulas.STARLANCE_SPEED;
+            }
             default -> {
                 return;
             }

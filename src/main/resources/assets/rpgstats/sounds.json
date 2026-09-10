@@ -213,5 +213,30 @@
     "category": "player",
     "subtitle": "rpgstats.subtitle.spell.silencing_whisper",
     "sounds": [ "rpgstats:spell/silencing_whisper" ]
+  },
+  "spell.starlance": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.starlance",
+    "sounds": [ "rpgstats:spell/starlance" ]
+  },
+  "spell.illuminate_vision": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.illuminate_vision",
+    "sounds": [ "rpgstats:spell/illuminate_vision" ]
+  },
+  "spell.luminous_phase": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.luminous_phase",
+    "sounds": [ "rpgstats:spell/luminous_phase" ]
+  },
+  "spell.aegis_of_stars": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.aegis_of_stars",
+    "sounds": [ "rpgstats:spell/aegis_of_stars" ]
+  },
+  "spell.astral_nova": {
+    "category": "player",
+    "subtitle": "rpgstats.subtitle.spell.astral_nova",
+    "sounds": [ "rpgstats:spell/astral_nova" ]
   }
 }
