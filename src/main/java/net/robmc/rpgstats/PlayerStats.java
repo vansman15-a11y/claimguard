@@ -360,6 +360,9 @@ public class PlayerStats {
         List<String> extra = slotExtra.get(slot);
         if (!extra.contains(name)) {
             extra.add(name);
+            // stacking a 2nd+ spell onto a slot turns it into a ray bar right away - no separate
+            // opt-in needed. Auto Cast stays available in the J editor to pause the rotation later.
+            setSlotAutoCast(slot, true);
         }
     }
 

@@ -22,9 +22,11 @@ import org.lwjgl.glfw.GLFW;
 
 /**
  * Press J: the movable HUD elements show with a labelled outline - drag to
- * reposition. Right-click a hotbar / spell-bar SLOT to rebind its key: the next
- * key or mouse button you press becomes it (with a warning + confirm if it would
- * stomp an important control). J or Done to finish; positions save.
+ * reposition. Right-click a hotbar SLOT to rebind its key directly (the next key or
+ * mouse button you press becomes it, with a warning + confirm if it would stomp an
+ * important control); right-click a spell/cast bar SLOT instead opens its options
+ * popup (ray-bar cycle mode, auto cast, forced weapon), which has its own "Rebind
+ * Key" button for the same key-capture flow. J or Done to finish; positions save.
  */
 public class HudEditorScreen extends Screen {
 
@@ -46,7 +48,7 @@ public class HudEditorScreen extends Screen {
     private Integer slotMenuOpen;
 
     private static final int SLOT_MENU_W = 150;
-    private static final int SLOT_MENU_H = 100;
+    private static final int SLOT_MENU_H = 118;
 
     // dragging a spell/skill binding out of a bar slot
     private int draggingSpellFrom = -1;
@@ -201,6 +203,11 @@ public class HudEditorScreen extends Screen {
         return new int[]{m[0] + 6, m[1] + 82, SLOT_MENU_W - 12, 14};
     }
 
+    private int[] rebindButtonBox(int slot) {
+        int[] m = slotMenuBox(slot);
+        return new int[]{m[0] + 6, m[1] + 100, SLOT_MENU_W - 12, 14};
+    }
+
     private void toggleCycleMode(int slot) {
         int next = ClientSpells.slotCycleMode(slot) == 0 ? 1 : 0;
         sendSlotOptions(slot, next, ClientSpells.slotAutoCast(slot), ClientSpells.slotForceWeapon(slot));
@@ -263,13 +270,19 @@ public class HudEditorScreen extends Screen {
                 ClaimGuardNetwork.CHANNEL.sendToServer(new SetSlotWeaponPacket(slot));
                 return true;
             }
+            if (button == 0 && inside(rebindButtonBox(slot), mx, my)) {
+                slotMenuOpen = null;
+                startCapture(RpgKeybinds.CAST[slot],
+                        "Bar " + (slot / SpellBarOverlay.SLOTS + 1) + " slot " + (slot % SpellBarOverlay.SLOTS + 1));
+                return true;
+            }
             if (inside(slotMenuBox(slot), mx, my)) {
                 return true; // clicked inside the popup but not on a control - just absorb it
             }
             slotMenuOpen = null; // clicked elsewhere - close it, and let this click still do its own thing below
         }
 
-        if (button == 1) { // right-click a slot -> rebind (Shift = its ray-bar options), or a bar's grip -> its settings popup
+        if (button == 1) { // right-click a slot -> its options popup, or a bar's grip -> its settings popup
             for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
                 if (onGrip(bar, mx, my)) {
                     barMenuOpen = bar;
@@ -284,13 +297,8 @@ public class HudEditorScreen extends Screen {
             }
             int ss = spellSlotAt(mx, my);
             if (ss >= 0) {
-                if (hasShiftDown()) {
-                    slotMenuOpen = ss;
-                    barMenuOpen = null;
-                } else {
-                    startCapture(RpgKeybinds.CAST[ss],
-                            "Bar " + (ss / SpellBarOverlay.SLOTS + 1) + " slot " + (ss % SpellBarOverlay.SLOTS + 1));
-                }
+                slotMenuOpen = ss;
+                barMenuOpen = null;
                 return true;
             }
         }
@@ -497,28 +505,7 @@ public class HudEditorScreen extends Screen {
     }
 
     private int spellSlotAt(double x, double y) {
-        for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
-            String key = SpellBarOverlay.layoutKey(bar);
-            boolean horiz = HudLayout.isHorizontal(key);
-            int sx = spellBarX(bar);
-            int sy = spellBarY(bar);
-            int i;
-            if (horiz) {
-                if (y < sy || y > sy + SpellBarOverlay.SLOT) {
-                    continue;
-                }
-                i = (int) ((x - sx) / SpellBarOverlay.SLOT);
-            } else {
-                if (x < sx || x > sx + SpellBarOverlay.SLOT) {
-                    continue;
-                }
-                i = (int) ((y - sy) / SpellBarOverlay.SLOT);
-            }
-            if (i >= 0 && i < SpellBarOverlay.SLOTS) {
-                return bar * SpellBarOverlay.SLOTS + i;
-            }
-        }
-        return -1;
+        return SpellBarOverlay.slotAt(x, y, height);
     }
 
     // --- render ---
@@ -526,7 +513,7 @@ public class HudEditorScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         g.fill(0, 0, this.width, this.height, 0x60000000);
-        g.drawCenteredString(this.font, "HUD Editor  -  drag a label to move it, right-click a label for opacity/orientation, right-click a slot to rebind (Shift = ray-bar options)", this.width / 2, 12, 0xFFFFFF);
+        g.drawCenteredString(this.font, "HUD Editor  -  drag a label to move it, right-click a label for opacity/orientation, right-click a slot for its options", this.width / 2, 12, 0xFFFFFF);
 
         int[] bars = statBarsBox();
         RpgHudOverlay.renderBars(g, this.font, bars[0] + 1, bars[1] + 1);
@@ -689,6 +676,13 @@ public class HudEditorScreen extends Screen {
                 g.pose().popPose();
             }
         }
+
+        int[] rebindBtn = rebindButtonBox(slot);
+        g.fill(rebindBtn[0], rebindBtn[1], rebindBtn[0] + rebindBtn[2], rebindBtn[1] + rebindBtn[3], 0xFF2A3346);
+        g.renderOutline(rebindBtn[0], rebindBtn[1], rebindBtn[2], rebindBtn[3], 0xFF9FC0FF);
+        String keyLabel = RpgKeybinds.CAST[slot].getKey() == InputConstants.UNKNOWN
+                ? "-" : RpgKeybinds.CAST[slot].getTranslatedKeyMessage().getString();
+        g.drawString(this.font, "Rebind Key (" + keyLabel + ")", rebindBtn[0] + 3, rebindBtn[1] + 3, 0xFFFFFFFF, false);
     }
 
     private void outline(GuiGraphics g, int[] box, int colour, String label) {

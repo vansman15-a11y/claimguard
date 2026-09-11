@@ -53,14 +53,51 @@ public class SpellBarOverlay {
         return bar * SLOTS;
     }
 
-    /** The bar's on-screen width, accounting for its saved orientation - includes the two trailing readout tiles. */
-    public static int width(String layoutKey) {
-        return HudLayout.isHorizontal(layoutKey) ? BAR_H + SELECTED_GAP + SLOT * 2 : SLOT;
+    /**
+     * Which global slot (0..17) sits at this screen position right now, accounting for each
+     * bar's saved position/orientation, or -1. Shared by the J editor's own hit-testing and by
+     * anything reaching in from outside it (e.g. dragging a weapon off the survival inventory).
+     */
+    public static int slotAt(double mx, double my, int screenH) {
+        for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
+            String key = layoutKey(bar);
+            boolean horiz = HudLayout.isHorizontal(key);
+            int sx = defaultLeft(bar) + HudLayout.offX(key);
+            int sy = defaultTop(screenH) + HudLayout.offY(key);
+            int i;
+            if (horiz) {
+                if (my < sy || my > sy + SLOT) {
+                    continue;
+                }
+                i = (int) ((mx - sx) / SLOT);
+            } else {
+                if (mx < sx || mx > sx + SLOT) {
+                    continue;
+                }
+                i = (int) ((my - sy) / SLOT);
+            }
+            if (i >= 0 && i < SLOTS) {
+                return bar * SLOTS + i;
+            }
+        }
+        return -1;
     }
 
-    /** The bar's on-screen height, accounting for its saved orientation - includes the two trailing readout tiles. */
+    /** Only Bar 1 gets the trailing "currently selected" + weapon readout tiles. */
+    private static boolean hasReadout(String layoutKey) {
+        return layoutKey.equals(HudLayout.SPELL_BAR);
+    }
+
+    /** The bar's on-screen width, accounting for its saved orientation - includes the readout tiles on Bar 1. */
+    public static int width(String layoutKey) {
+        int extra = hasReadout(layoutKey) ? SELECTED_GAP + SLOT * 2 : 0;
+        return HudLayout.isHorizontal(layoutKey) ? BAR_H + extra : SLOT;
+    }
+
+    /** The bar's on-screen height, accounting for its saved orientation - includes the readout tiles on Bar 1. */
     public static int height(String layoutKey) {
-        return HudLayout.isHorizontal(layoutKey) ? SLOT : BAR_H + SELECTED_GAP + SLOT * 2;
+        int extra = hasReadout(layoutKey) ? SELECTED_GAP + SLOT * 2 : 0;
+        return HudLayout.isHorizontal(layoutKey) ? SLOT : BAR_H + extra;
     }
 
     @SubscribeEvent
@@ -100,6 +137,9 @@ public class SpellBarOverlay {
             drawSlot(g, font, sx, sy, firstSlot + i, opacity);
         }
 
+        if (!hasReadout(layoutKey)) {
+            return; // only Bar 1 shows the "currently selected" + weapon readout
+        }
         int bar = firstSlot / SLOTS;
         int selX = horiz ? x + SLOTS * SLOT + SELECTED_GAP : x;
         int selY = horiz ? y : y + SLOTS * SLOT + SELECTED_GAP;

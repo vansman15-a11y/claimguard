@@ -94,6 +94,8 @@ public final class SpellCasting {
         }
         if (slot >= 0) {
             lastSlotByBar.computeIfAbsent(player.getUUID(), k -> defaultLastSlots())[slot / StatFormulas.BAR_SLOTS] = slot;
+            // push the "currently selected" readout the moment the key is pressed - don't wait for the cast to finish
+            RpgManager.syncSpellBar(player);
         }
         // Speed of Wind is a toggle: press it again to end the channel
         if (spell == Spell.SPEED_OF_WIND && WindChannel.isChanneling(player.getUUID())) {

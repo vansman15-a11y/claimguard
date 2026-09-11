@@ -20,7 +20,9 @@ import java.util.Set;
  * Press U. Two expandable books: the Spellbook (every magic school, expand one
  * to see its spells) and the Skills Book (the fighter-type classes - names only
  * for now, abilities not designed yet). Your two 9-slot casting bars sit on the
- * right. Drag a spell row onto a slot to bind it; drag a bound slot off to clear it.
+ * right. Drag a spell row onto an empty slot to bind it, or onto an already-bound one to
+ * stack it there too (a multi-spell "ray bar" - hold Shift to replace instead of stacking).
+ * Drag a bound slot off to clear it.
  * Which rows are expanded, and the scroll position, are remembered for the rest
  * of your login (see {@link SpellbookUiState}) - everything starts collapsed on
  * a fresh login and wipes again when you log out.
@@ -217,8 +219,10 @@ public class SpellbookScreen extends Screen {
     public boolean mouseReleased(double mx, double my, int button) {
         int slot = slotAt(mx, my);
         if (draggingName != null && slot >= 0) {
-            // a plain drop replaces the slot; Shift-drop stacks it on top instead (a "ray bar")
-            send(slot, draggingName, hasShiftDown());
+            // dropping onto an empty slot just sets it; onto an already-bound one, it stacks
+            // on top instead (a "ray bar") - hold Shift to force a full replace instead
+            boolean occupied = !ClientSpells.slotName(slot).isEmpty();
+            send(slot, draggingName, occupied && !hasShiftDown());
         } else if (draggingSlot >= 0 && slot >= 0 && slot != draggingSlot) {
             send(slot, ClientSpells.slotName(draggingSlot));
             send(draggingSlot, "");
@@ -268,7 +272,7 @@ public class SpellbookScreen extends Screen {
         g.fill(left, top, left + PANEL_W, top + PANEL_H, 0xE0140F1E);
         g.renderOutline(left, top, PANEL_W, PANEL_H, 0xFF3A5A88);
         g.drawString(this.font, "SPELLBOOK & SKILLS", left + 14, top + 12, 0xFF9FC0FF, false);
-        g.drawString(this.font, "drag=bind, shift-drag=stack, right-click=auto-equip / pop", left + 90, top + 13, 0xFF6A6A6A, false);
+        g.drawString(this.font, "drag=bind/stack, shift-drag=replace, right-click=auto-equip / pop", left + 78, top + 13, 0xFF6A6A6A, false);
 
         int vx = listX();
         int vy = listY();
@@ -303,6 +307,18 @@ public class SpellbookScreen extends Screen {
                         SpellBarOverlay.firstSlot(bar) + i, 1.0f);
             }
             g.drawString(this.font, "Bar " + (bar + 1), bx - 1, by - 10, 0xFF9FC0FF, false);
+        }
+
+        // dragging a spell over an already-bound slot - it'll stack there (a "ray bar"); expand the outline to show it
+        if (draggingName != null) {
+            int hover = slotAt(mouseX, mouseY);
+            if (hover >= 0 && !ClientSpells.slotName(hover).isEmpty() && !hasShiftDown()) {
+                int hb = hover / SpellBarOverlay.SLOTS;
+                int hi = hover % SpellBarOverlay.SLOTS;
+                int hx = barX(hb) - 2;
+                int hy = barY() + hi * SpellBarOverlay.SLOT - 2;
+                g.renderOutline(hx, hy, SpellBarOverlay.SLOT + 4, SpellBarOverlay.SLOT + 4, 0xFFFFE066);
+            }
         }
 
         // drag ghost
