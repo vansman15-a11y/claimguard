@@ -74,7 +74,7 @@ public class SpellProjectileEntity extends ThrowableProjectile {
             case HEXDRAIN -> new Vector3f(0.5f, 0.12f, 0.68f);  // deep purple
             case HOWLING_IMPACT -> new Vector3f(0.78f, 0.9f, 1.0f); // pale wind-blue
             case WATER_ORB -> new Vector3f(0.32f, 0.58f, 1.0f);     // deep water blue
-            case STARLANCE -> new Vector3f(0.85f, 0.92f, 1.0f);     // brilliant starlight
+            case ARCANE_BOLT -> new Vector3f(0.85f, 0.92f, 1.0f);   // brilliant starlight
             case BONE_SPEAR -> new Vector3f(0.92f, 0.9f, 0.8f);     // bone
             case SOUL_DRAIN -> new Vector3f(0.35f, 0.85f, 0.7f);    // sickly soul-green
             case EYE_DECAY -> new Vector3f(0.85f, 0.1f, 0.12f);     // blood red
@@ -103,7 +103,7 @@ public class SpellProjectileEntity extends ThrowableProjectile {
         }
     }
 
-    /** Starlance pierces - entities it has already speared don't stop it. */
+    /** Arcane Bolt pierces - entities it has already speared don't stop it. */
     private final java.util.Set<Integer> piercedIds = new java.util.HashSet<>();
 
     @Override
@@ -403,7 +403,7 @@ public class SpellProjectileEntity extends ThrowableProjectile {
                 level.sendParticles(new DustParticleOptions(colour(), 1.6f), at.x, at.y, at.z, 24, 0.3, 0.3, 0.3, 0.03);
                 level.playSound(null, blockPosition(), SoundEvents.WITHER_SHOOT, SoundSource.PLAYERS, 0.6f, 1.4f);
             }
-            case STARLANCE -> {
+            case ARCANE_BOLT -> {
                 if (hit != null) {
                     ServerPlayer caster = getOwner() instanceof ServerPlayer sp ? sp : null;
                     float dealt = caster != null ? net.robmc.rpgstats.magic.ArcanaMark.onArcanaHit(caster, hit, damage) : damage;
@@ -426,8 +426,8 @@ public class SpellProjectileEntity extends ThrowableProjectile {
         if (getOwner() instanceof ServerPlayer caster && enemiesHit > 0) {
             net.robmc.rpgstats.RpgManager.addSpellXp(caster, spell, StatFormulas.spellHitXp(enemiesHit));
         }
-        // Starlance keeps flying through the first couple of targets
-        if (spell == Spell.STARLANCE && hit != null && piercedIds.size() < StatFormulas.STARLANCE_MAX_PIERCE) {
+        // Arcane Bolt keeps flying through the first couple of targets
+        if (spell == Spell.ARCANE_BOLT && hit != null && piercedIds.size() < StatFormulas.ARCANE_BOLT_MAX_PIERCE) {
             return;
         }
         this.discard();

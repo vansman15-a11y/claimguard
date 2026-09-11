@@ -63,7 +63,7 @@ public final class SpellIcons {
             case WORD_OF_UNMAKING -> tex("word_of_unmaking");
             case FEARCRAFT -> tex("fearcraft");
             case SILENCING_WHISPER -> tex("silencing_whisper");
-            case STARLANCE -> tex("starlance");
+            case ARCANE_BOLT -> tex("arcane_bolt");
             case ILLUMINATE_VISION -> tex("illuminate_vision");
             case LUMINOUS_PHASE -> tex("luminous_phase");
             case AEGIS_OF_STARS -> tex("aegis_of_stars");

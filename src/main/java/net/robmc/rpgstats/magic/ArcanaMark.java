@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Starlance's constellation sigil. A marked target takes {@link StatFormulas#ARCANA_MARK_BONUS}
+ * Arcane Bolt's constellation sigil. A marked target takes {@link StatFormulas#ARCANA_MARK_BONUS}
  * extra damage from the marker's next Arcana hit, which spends the mark.
  */
 public final class ArcanaMark {
@@ -27,7 +27,7 @@ public final class ArcanaMark {
 
     public static void mark(ServerPlayer caster, LivingEntity target) {
         marks.put(target.getId(), new Mark(caster.getUUID(),
-                target.level().getGameTime() + StatFormulas.STARLANCE_MARK_TICKS));
+                target.level().getGameTime() + StatFormulas.ARCANE_BOLT_MARK_TICKS));
         ((ServerLevel) target.level()).sendParticles(ParticleTypes.ENCHANT,
                 target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(), 16, 0.4, 0.5, 0.4, 0.6);
     }

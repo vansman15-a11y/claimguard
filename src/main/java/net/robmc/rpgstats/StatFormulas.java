@@ -552,16 +552,16 @@ public final class StatFormulas {
 
     // --- Arcana ---
 
-    // Starlance: a piercing skill-shot that leaves a sigil for a follow-up
-    public static final double STARLANCE_SPEED = 2.6;
-    public static final int STARLANCE_MAX_PIERCE = 2;
-    public static final int STARLANCE_MARK_TICKS = 100;         // the sigil lasts 5 s
+    // Arcane Bolt: a piercing skill-shot that leaves a sigil for a follow-up
+    public static final double ARCANE_BOLT_SPEED = 2.6;
+    public static final int ARCANE_BOLT_MAX_PIERCE = 2;
+    public static final int ARCANE_BOLT_MARK_TICKS = 100;       // the sigil lasts 5 s
     public static final double ARCANA_MARK_BONUS = 1.3;         // your next Arcana hit on a marked target does +30%
-    private static final double STARLANCE_DMG_MIN = 3.5;
-    private static final double STARLANCE_DMG_MAX = 7.0;
+    private static final double ARCANE_BOLT_DMG_MIN = 3.5;
+    private static final double ARCANE_BOLT_DMG_MAX = 7.0;
 
-    public static double starlanceDamage(int spellLevel) {
-        return STARLANCE_DMG_MIN + (STARLANCE_DMG_MAX - STARLANCE_DMG_MIN) * effectiveness(spellLevel);
+    public static double arcaneBoltDamage(int spellLevel) {
+        return ARCANE_BOLT_DMG_MIN + (ARCANE_BOLT_DMG_MAX - ARCANE_BOLT_DMG_MIN) * effectiveness(spellLevel);
     }
 
     // Illuminate Vision: night vision buff

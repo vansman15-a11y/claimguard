@@ -214,10 +214,10 @@
     "subtitle": "rpgstats.subtitle.spell.silencing_whisper",
     "sounds": [ "rpgstats:spell/silencing_whisper" ]
   },
-  "spell.starlance": {
+  "spell.arcane_bolt": {
     "category": "player",
-    "subtitle": "rpgstats.subtitle.spell.starlance",
-    "sounds": [ "rpgstats:spell/starlance" ]
+    "subtitle": "rpgstats.subtitle.spell.arcane_bolt",
+    "sounds": [ "rpgstats:spell/arcane_bolt" ]
   },
   "spell.illuminate_vision": {
     "category": "player",
