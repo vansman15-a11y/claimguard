@@ -212,6 +212,9 @@ public final class StatFormulas {
     public static final double DOUBLE_JUMP_VELOCITY = 0.5;       // fresh upward kick, about like the base jump itself
     public static final double DOUBLE_JUMP_FORWARD_BOOST = 0.55; // extra push added along your current heading - extends the jump's reach
     public static final int DOUBLE_JUMP_COOLDOWN_TICKS = 120;    // 6s
+    // guards against the client's "still airborne" check racing the same tick the first jump
+    // launches - without this a single space-bar press could double-stack into one big jump
+    public static final int DOUBLE_JUMP_MIN_DELAY_TICKS = 4;
 
     // --- exhausted state (stamina bottomed out) ---
     /** Exhausted at 0 stamina; stays exhausted until stamina climbs back to this fraction of max. */

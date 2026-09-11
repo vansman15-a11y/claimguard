@@ -32,11 +32,13 @@ public final class JumpArcManager {
         int hangTicksLeft;
         int fallTicks;
         final double startY;
+        final long startTick;
         double launchSpeedSq;
         boolean doubleJumped = false;
 
-        Arc(double startY, double launchSpeedSq) {
+        Arc(double startY, long startTick, double launchSpeedSq) {
             this.startY = startY;
+            this.startTick = startTick;
             this.launchSpeedSq = launchSpeedSq;
         }
     }
@@ -53,15 +55,20 @@ public final class JumpArcManager {
             return; // those already own vertical physics - don't fight them
         }
         Vec3 dm = player.getDeltaMovement();
+        long now = player.serverLevel().getGameTime();
         player.setDeltaMovement(dm.x, dm.y * StatFormulas.JUMP_HEIGHT_MULT, dm.z);
         player.hurtMarked = true; // force the boosted velocity to actually reach the client
-        arcs.put(player.getUUID(), new Arc(player.getY(), dm.x * dm.x + dm.z * dm.z));
+        arcs.put(player.getUUID(), new Arc(player.getY(), now, dm.x * dm.x + dm.z * dm.z));
     }
 
     /**
-     * A second jump mid-arc: one per active jump, on a shared cooldown. Restarts the same
-     * rise/hang/fall curve from wherever the player currently is, and adds a push along
-     * whatever direction they're already moving to extend the jump's reach.
+     * A second jump mid-arc - entirely opt-in, never automatic: only fires when the player
+     * presses jump again themselves while still airborne, at most once per active jump, and
+     * only once more per {@link StatFormulas#DOUBLE_JUMP_COOLDOWN_TICKS} after that (being off
+     * cooldown does not use it on its own - it still takes another press on the next jump).
+     * Restarts a fresh, ordinary jump arc from wherever the player currently is - two regular
+     * jumps stacked back to back, not one bigger jump - and adds a push along whatever direction
+     * they're already moving to extend the reach.
      */
     public static void tryDoubleJump(ServerPlayer player) {
         Arc arc = arcs.get(player.getUUID());
@@ -69,6 +76,11 @@ public final class JumpArcManager {
             return;
         }
         long now = player.serverLevel().getGameTime();
+        // guards against the same press that started the jump being mistaken for the double-jump
+        // press, if the client's "am I airborne yet" check lands the same tick the jump launches
+        if (now - arc.startTick < StatFormulas.DOUBLE_JUMP_MIN_DELAY_TICKS) {
+            return;
+        }
         long cdEnd = doubleJumpCdEnd.getOrDefault(player.getUUID(), 0L);
         if (now < cdEnd) {
             return;
