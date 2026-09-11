@@ -64,10 +64,10 @@ public final class SpellIcons {
             case FEARCRAFT -> tex("fearcraft");
             case SILENCING_WHISPER -> tex("silencing_whisper");
             case ARCANE_BOLT -> tex("arcane_bolt");
-            case ILLUMINATE_VISION -> tex("illuminate_vision");
-            case LUMINOUS_PHASE -> tex("luminous_phase");
-            case AEGIS_OF_STARS -> tex("aegis_of_stars");
-            case ASTRAL_NOVA -> tex("astral_nova");
+            case MANA_RIFT -> tex("mana_rift");
+            case SPELLBIND -> tex("spellbind");
+            case ARCANE_SHIFT -> tex("arcane_shift");
+            case ASTRAL_ANNIHILATION -> tex("astral_annihilation");
             case THORNS -> tex("thorns");
             case WOLF_FORM -> tex("wolf_form");
             case DOLPHIN_FORM -> tex("dolphin_form");

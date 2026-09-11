@@ -55,12 +55,12 @@ public enum Spell {
     BARK_SKIN("Bark Skin", School.EARTH, 4, Kind.BARK_SKIN, Pool.MANA, null, 14, 40, 1200),
     FISSURE("Fissure", School.EARTH, 5, Kind.FISSURE, Pool.MANA, null, 20, 80, 2400),
 
-    // --- Arcana (starlight - burst damage, light, teleports, control) ---
+    // --- Arcana (raw arcane power - bolts, rifts, control, blinks, a channelled ultimate) ---
     ARCANE_BOLT("Arcane Bolt", School.ARCANA, 1, Kind.ARCANE_BOLT, Pool.MANA, null, 8, 40, 80),
-    ILLUMINATE_VISION("Illuminate Vision", School.ARCANA, 2, Kind.ILLUMINATE_VISION, Pool.MANA, null, 20, 80, 200),
-    LUMINOUS_PHASE("Luminous Phase", School.ARCANA, 3, Kind.LUMINOUS_PHASE, Pool.MANA, null, 12, 20, 800),
-    AEGIS_OF_STARS("Aegis of Stars", School.ARCANA, 4, Kind.AEGIS_OF_STARS, Pool.MANA, null, 14, 70, 1800),
-    ASTRAL_NOVA("Astral Nova", School.ARCANA, 5, Kind.ASTRAL_NOVA, Pool.MANA, null, 20, 80, 2100),
+    MANA_RIFT("Mana Rift", School.ARCANA, 2, Kind.MANA_RIFT, Pool.MANA, null, 12, 60, 700),
+    SPELLBIND("Spellbind", School.ARCANA, 3, Kind.SPELLBIND, Pool.MANA, null, 10, 20, 600),
+    ARCANE_SHIFT("Arcane Shift", School.ARCANA, 4, Kind.ARCANE_SHIFT, Pool.MANA, null, 10, 2, 900),
+    ASTRAL_ANNIHILATION("Astral Annihilation", School.ARCANA, 5, Kind.ASTRAL_ANNIHILATION, Pool.MANA, null, 10, 2, 900),
 
     // --- Gravemancy (bone, undead, life drain) ---
     BONE_SPEAR("Bone Spear", School.GRAVEMANCY, 1, Kind.BONE_SPEAR, Pool.MANA, null, 7, 40, 60),
@@ -108,7 +108,7 @@ public enum Spell {
         WATER_BREATHING, ICE_WALL, WATER_ORB, WATER_SPOUT, RIPTIDE,
         EARTHEN_PATH, SEISMIC_PILLAR, QUAKE_STOMP, BARK_SKIN, FISSURE,
         BONE_SPEAR, RAISE_MINION, SOUL_DRAIN, EYE_DECAY, WRAITH_STEP,
-        ARCANE_BOLT, ILLUMINATE_VISION, LUMINOUS_PHASE, AEGIS_OF_STARS, ASTRAL_NOVA,
+        ARCANE_BOLT, MANA_RIFT, SPELLBIND, ARCANE_SHIFT, ASTRAL_ANNIHILATION,
         CHANT_OF_GROWTH, BATTLE_HYMN, WORD_OF_UNMAKING, FEARCRAFT, SILENCING_WHISPER,
         THORNS, WOLF_FORM, DOLPHIN_FORM, BLOOM_OF_RENEWAL, SWARM_OF_THE_WILD,
         DIVINE_SMITE, BLESSING_OF_PROTECTION, PURIFYING_WAVE, SACRIFICIAL_HEAL, MASS_MEND,

@@ -382,10 +382,10 @@ public class SpellbookScreen extends Screen {
             case FEARCRAFT -> "3s chant, monsters flee you for 5s";
             case SILENCING_WHISPER -> "interrupt + seal a caster's school 2s";
             case ARCANE_BOLT -> "fast piercing bolt, marks for +30%";
-            case ILLUMINATE_VISION -> "night vision 5 min, self or an ally";
-            case LUMINOUS_PHASE -> "blink 7 blocks along your aim";
-            case AEGIS_OF_STARS -> "absorb shield, bursts light when broken";
-            case ASTRAL_NOVA -> "4s gravity vortex, drags foes to centre";
+            case MANA_RIFT -> "cracked-ground AoE, damages + disrupts casts";
+            case SPELLBIND -> "instant bolt: locks their casting for 3s";
+            case ARCANE_SHIFT -> "blink 7 blocks, afterimage loses hostiles";
+            case ASTRAL_ANNIHILATION -> "channelled beam, ramps up, roots you";
             case THORNS -> "buff: reflect part of melee/arrow hits";
             case WOLF_FORM -> "toggle wolf: +25% speed, bite + leap";
             case DOLPHIN_FORM -> "toggle dolphin (water): breathe, +35% swim";

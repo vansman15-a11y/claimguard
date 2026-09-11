@@ -106,8 +106,8 @@ public class RpgEvents {
             net.robmc.rpgstats.magic.BarkSkin.tick(event.getServer());
             net.robmc.rpgstats.magic.RaiseMinionManager.tick(event.getServer());
             net.robmc.rpgstats.magic.ArcanaMark.tick(event.getServer());
-            net.robmc.rpgstats.magic.AegisManager.tick(event.getServer());
-            net.robmc.rpgstats.magic.AstralNovaManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.ManaRiftManager.tick(event.getServer());
+            net.robmc.rpgstats.magic.AstralAnnihilationManager.tick(event.getServer());
             net.robmc.rpgstats.magic.ThornsManager.tick(event.getServer());
             net.robmc.rpgstats.magic.WildShapeManager.tick(event.getServer());
             net.robmc.rpgstats.magic.BloomManager.tick(event.getServer());
@@ -349,7 +349,6 @@ public class RpgEvents {
         net.robmc.rpgstats.magic.QuakeStomp.clear(id);
         net.robmc.rpgstats.magic.BarkSkin.clear(id);
         net.robmc.rpgstats.magic.RaiseMinionManager.clear(id);
-        net.robmc.rpgstats.magic.AegisManager.clear(id);
         net.robmc.rpgstats.magic.ThornsManager.clear(id);
         net.robmc.rpgstats.magic.WildShapeManager.clear(id);
         net.robmc.rpgstats.magic.BloomManager.clearTarget(event.getEntity().getId());
@@ -361,6 +360,7 @@ public class RpgEvents {
         net.robmc.rpgstats.magic.HexManager.clearTarget(event.getEntity().getId());
         net.robmc.rpgstats.magic.FireShockManager.clearTarget(event.getEntity().getId());
         net.robmc.rpgstats.magic.PlagueManager.clearTarget(event.getEntity().getId());
+        net.robmc.rpgstats.magic.AstralAnnihilationManager.clear(id);
         lastPos.remove(id);
         wasSwinging.remove(id);
         lastMeleeHitTick.remove(id);

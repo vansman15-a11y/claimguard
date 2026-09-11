@@ -219,25 +219,25 @@
     "subtitle": "rpgstats.subtitle.spell.arcane_bolt",
     "sounds": [ "rpgstats:spell/arcane_bolt" ]
   },
-  "spell.illuminate_vision": {
+  "spell.mana_rift": {
     "category": "player",
-    "subtitle": "rpgstats.subtitle.spell.illuminate_vision",
-    "sounds": [ "rpgstats:spell/illuminate_vision" ]
+    "subtitle": "rpgstats.subtitle.spell.mana_rift",
+    "sounds": [ "rpgstats:spell/mana_rift" ]
   },
-  "spell.luminous_phase": {
+  "spell.spellbind": {
     "category": "player",
-    "subtitle": "rpgstats.subtitle.spell.luminous_phase",
-    "sounds": [ "rpgstats:spell/luminous_phase" ]
+    "subtitle": "rpgstats.subtitle.spell.spellbind",
+    "sounds": [ "rpgstats:spell/spellbind" ]
   },
-  "spell.aegis_of_stars": {
+  "spell.arcane_shift": {
     "category": "player",
-    "subtitle": "rpgstats.subtitle.spell.aegis_of_stars",
-    "sounds": [ "rpgstats:spell/aegis_of_stars" ]
+    "subtitle": "rpgstats.subtitle.spell.arcane_shift",
+    "sounds": [ "rpgstats:spell/arcane_shift" ]
   },
-  "spell.astral_nova": {
+  "spell.astral_annihilation": {
     "category": "player",
-    "subtitle": "rpgstats.subtitle.spell.astral_nova",
-    "sounds": [ "rpgstats:spell/astral_nova" ]
+    "subtitle": "rpgstats.subtitle.spell.astral_annihilation",
+    "sounds": [ "rpgstats:spell/astral_annihilation" ]
   },
   "spell.thorns": {
     "category": "player",

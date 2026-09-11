@@ -564,33 +564,51 @@ public final class StatFormulas {
         return ARCANE_BOLT_DMG_MIN + (ARCANE_BOLT_DMG_MAX - ARCANE_BOLT_DMG_MIN) * effectiveness(spellLevel);
     }
 
-    // Illuminate Vision: night vision buff
-    public static final double ILLUMINATE_RANGE = 24.0;
-    public static final int ILLUMINATE_TICKS = 6000;            // 5 min
+    // Mana Rift: a small zone that tears the ground open and destabilizes magic in it
+    public static final double MANA_RIFT_RANGE = 10.0;
+    public static final double MANA_RIFT_RADIUS = 3.2;
+    public static final int MANA_RIFT_TICKS = 80;                // lasts 4 s
+    public static final int MANA_RIFT_DAMAGE_INTERVAL = 20;      // a damage tick every 1 s
+    private static final double MANA_RIFT_TICK_DMG_MIN = 2.0;
+    private static final double MANA_RIFT_TICK_DMG_MAX = 4.5;
 
-    // Luminous Phase: a short forward blink that can't pass through terrain
-    public static final double LUMINOUS_PHASE_DISTANCE = 7.0;
-    public static final double LUMINOUS_PHASE_MIN_TRAVEL = 1.5; // shorter than this and it fizzles
-
-    // Aegis of Stars: an absorption shield that detonates when it breaks
-    public static final int AEGIS_ABSORB_AMPLIFIER = 4;         // ~20 HP shield
-    public static final int AEGIS_MAX_TICKS = 800;              // it fades quietly after 40 s if never broken
-    public static final double AEGIS_BURST_RADIUS = 4.0;
-    public static final int AEGIS_BURST_BLIND_TICKS = 40;
-    private static final double AEGIS_BURST_DMG_MIN = 3.0;
-    private static final double AEGIS_BURST_DMG_MAX = 5.5;
-
-    public static double aegisBurstDamage(int spellLevel) {
-        return AEGIS_BURST_DMG_MIN + (AEGIS_BURST_DMG_MAX - AEGIS_BURST_DMG_MIN) * effectiveness(spellLevel);
+    public static double manaRiftTickDamage(int spellLevel) {
+        return MANA_RIFT_TICK_DMG_MIN + (MANA_RIFT_TICK_DMG_MAX - MANA_RIFT_TICK_DMG_MIN) * effectiveness(spellLevel);
     }
 
-    // Astral Nova: a gravity well for crowd control
-    public static final double ASTRAL_NOVA_RANGE = 16.0;
-    public static final double ASTRAL_NOVA_RADIUS = 2.6;        // ~5x5x5
-    public static final int ASTRAL_NOVA_TICKS = 80;             // 4 s
-    public static final double ASTRAL_NOVA_PULL = 0.34;         // velocity toward centre each tick
-    public static final int ASTRAL_NOVA_DAMAGE_INTERVAL = 20;
-    public static final double ASTRAL_NOVA_TICK_DAMAGE = 0.25;  // raw, per damage tick - barely a scratch
+    // Spellbind: locks a caster out of every school for a few seconds
+    public static final double SPELLBIND_RANGE = 24.0;
+    public static final int SPELLBIND_LOCK_TICKS = 60;           // 3 s
+
+    // Arcane Shift: a short forward blink that can't pass through terrain
+    public static final double ARCANE_SHIFT_DISTANCE = 7.0;
+    public static final double ARCANE_SHIFT_MIN_TRAVEL = 1.5;    // shorter than this and it fizzles
+    public static final double ARCANE_SHIFT_DECOY_RADIUS = 10.0; // hostiles this close to the old spot lose your trail
+
+    // Astral Annihilation: a channelled beam that ramps up the longer you hold it,
+    // rooting you in place and eventually chewing through the terrain it crosses.
+    public static final int ASTRAL_ANNIHILATION_MAX_CHARGE_TICKS = 80;    // 4 s to reach full power
+    public static final double ASTRAL_ANNIHILATION_MANA_PER_TICK_MIN = 1.0;
+    public static final double ASTRAL_ANNIHILATION_MANA_PER_TICK_MAX = 3.2;
+    public static final double ASTRAL_ANNIHILATION_RANGE = 14.0;
+    public static final double ASTRAL_ANNIHILATION_MIN_RADIUS = 0.6;
+    public static final double ASTRAL_ANNIHILATION_MAX_RADIUS = 2.4;
+    public static final int ASTRAL_ANNIHILATION_DAMAGE_INTERVAL = 5;      // every 0.25 s
+    private static final double ASTRAL_ANNIHILATION_TICK_DMG_MIN = 0.5;
+    private static final double ASTRAL_ANNIHILATION_TICK_DMG_MAX = 2.2;
+    public static final int ASTRAL_ANNIHILATION_DIG_START_TICKS = 30;     // digging starts 1.5 s into the channel
+    public static final int ASTRAL_ANNIHILATION_DIG_INTERVAL = 4;
+    public static final double ASTRAL_ANNIHILATION_DIG_HARDNESS_CAP = 30.0; // won't eat obsidian/bedrock-tier blocks
+
+    /** 0 at the start of the channel, 1 at full charge (and capped there). */
+    public static double astralAnnihilationCharge(long channelTicks) {
+        return Math.min(1.0, channelTicks / (double) ASTRAL_ANNIHILATION_MAX_CHARGE_TICKS);
+    }
+
+    public static double astralAnnihilationTickDamage(double charge, int spellLevel) {
+        double base = ASTRAL_ANNIHILATION_TICK_DMG_MIN + (ASTRAL_ANNIHILATION_TICK_DMG_MAX - ASTRAL_ANNIHILATION_TICK_DMG_MIN) * charge;
+        return base * (0.6 + 0.4 * effectiveness(spellLevel));
+    }
 
     // --- Gravemancy ---
 
