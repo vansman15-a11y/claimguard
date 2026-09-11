@@ -77,6 +77,12 @@ public class HudEditorScreen extends Screen {
                 net.robmc.rpgstats.client.magic.CastBarOverlay.H + 14};
     }
 
+    private int[] potionIconsBox() {
+        int x = RpgHudOverlay.potionIconsDefaultLeft(width) + HudLayout.offX(HudLayout.POTION_ICONS);
+        int y = RpgHudOverlay.potionIconsDefaultTop(height) + HudLayout.offY(HudLayout.POTION_ICONS);
+        return new int[]{x, y, RpgHudOverlay.POTION_ICONS_W, RpgHudOverlay.POTION_ICONS_H};
+    }
+
     private int[] targetFrameBox() {
         int x = TargetFrameOverlay.defaultLeft(width) + HudLayout.offX(HudLayout.TARGET_FRAME);
         int y = TargetFrameOverlay.defaultTop(height) + HudLayout.offY(HudLayout.TARGET_FRAME);
@@ -151,6 +157,10 @@ public class HudEditorScreen extends Screen {
             }
             if (inside(targetFrameBox(), mx, my)) {
                 startDrag(HudLayout.TARGET_FRAME, mx, my);
+                return true;
+            }
+            if (inside(potionIconsBox(), mx, my)) {
+                startDrag(HudLayout.POTION_ICONS, mx, my);
                 return true;
             }
             if (inside(hotbarBox(), mx, my)) {
@@ -369,6 +379,11 @@ public class HudEditorScreen extends Screen {
         g.fill(tfX, tfBarY, tfX + TargetFrameOverlay.W, tfBarY + TargetFrameOverlay.BAR_H, 0xC0301010);
         g.fill(tfX, tfBarY, tfX + TargetFrameOverlay.W * 6 / 10, tfBarY + TargetFrameOverlay.BAR_H, 0xFFC0392B);
         outline(g, targetFrameBox(), 0xFFE1533E, "Target frame  (drag me)");
+
+        int[] potions = potionIconsBox();
+        g.fill(potions[0], potions[1], potions[0] + potions[2], potions[1] + potions[3], 0x40FFFFFF);
+        g.renderOutline(potions[0] + potions[2] - 18, potions[1] + 2, 18, 18, 0x6055DD55);
+        outline(g, potions, 0xFF55DD55, "Status effects  (Nourished shows here)");
 
         // hotbar ghost with 9 slots
         int hbX = hotbarX();

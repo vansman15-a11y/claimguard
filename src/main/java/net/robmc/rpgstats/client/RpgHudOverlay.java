@@ -77,6 +77,18 @@ public class RpgHudOverlay {
         return defaultTop(screenH) - STATUS_H - 3;
     }
 
+    // --- potion/status-effect icons (vanilla's own, just relocated) ---
+    public static final int POTION_ICONS_W = 100; // room for ~4 icons, vanilla stacks them 25px apart
+    public static final int POTION_ICONS_H = 22;
+
+    public static int potionIconsDefaultLeft(int screenW) {
+        return screenW - POTION_ICONS_W;
+    }
+
+    public static int potionIconsDefaultTop(int screenH) {
+        return 1;
+    }
+
     @SubscribeEvent
     public static void register(RegisterGuiOverlaysEvent event) {
         event.registerAbove(VanillaGuiOverlay.HOTBAR.id(), "rpg_bars", BARS);
@@ -147,12 +159,17 @@ public class RpgHudOverlay {
                 PoseStack pose = event.getGuiGraphics().pose();
                 pose.pushPose();
                 pose.translate(HudLayout.offX(HudLayout.HOTBAR), HudLayout.offY(HudLayout.HOTBAR), 0);
+            } else if (id.equals(VanillaGuiOverlay.POTION_ICONS.id())) {
+                PoseStack pose = event.getGuiGraphics().pose();
+                pose.pushPose();
+                pose.translate(HudLayout.offX(HudLayout.POTION_ICONS), HudLayout.offY(HudLayout.POTION_ICONS), 0);
             }
         }
 
         @SubscribeEvent
         public static void post(RenderGuiOverlayEvent.Post event) {
-            if (isHotbarGroup(event.getOverlay().id())) {
+            var id = event.getOverlay().id();
+            if (isHotbarGroup(id) || id.equals(VanillaGuiOverlay.POTION_ICONS.id())) {
                 event.getGuiGraphics().pose().popPose();
             }
         }

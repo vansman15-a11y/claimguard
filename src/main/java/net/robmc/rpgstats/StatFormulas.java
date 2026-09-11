@@ -159,7 +159,7 @@ public final class StatFormulas {
     public static final int NOURISHMENT_DURATION_TICKS = 36000;  // 30 min - eat again before this runs out
     public static final int FOOD_TICK_TOTAL_TICKS = 200;         // the gain plays out over 10 s, not all at once
     public static final int FOOD_TICK_INTERVAL = 20;             // one pulse per second
-    public static final double FOOD_GAIN_PER_POINT = 1.25;
+    public static final double FOOD_GAIN_PER_POINT = 1.0625; // 1.25, nerfed ~15%
 
     /**
      * How much Health/Stamina/Mana one eat is worth, in total (paid out gradually - see

@@ -24,6 +24,7 @@ public final class HudLayout {
     public static final String STATUS = "status";
     public static final String CAST_BAR = "castbar";
     public static final String TARGET_FRAME = "targetframe";
+    public static final String POTION_ICONS = "potionicons";
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path FILE = FMLPaths.CONFIGDIR.get().resolve("rpgstats-hud.json");

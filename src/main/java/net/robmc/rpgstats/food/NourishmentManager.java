@@ -4,7 +4,9 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.robmc.rpgstats.StatFormulas;
+import net.robmc.rpgstats.registry.RpgEffects;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +30,11 @@ public final class NourishmentManager {
         long now = player.serverLevel().getGameTime();
         boolean wasStarved = !isNourished(player.getUUID(), now);
         nourishedUntil.put(player.getUUID(), now + StatFormulas.NOURISHMENT_DURATION_TICKS);
+        // the effect itself is just a HUD marker (top-right, with everyone else's buffs) -
+        // the regen gate above is what actually matters and doesn't depend on this applying
+        player.removeEffect(RpgEffects.NOURISHED.get());
+        player.addEffect(new MobEffectInstance(RpgEffects.NOURISHED.get(),
+                StatFormulas.NOURISHMENT_DURATION_TICKS, 0, false, false, true));
         if (wasStarved) {
             player.displayClientMessage(Component.literal("Nourished - your pools regenerate again.")
                     .withStyle(ChatFormatting.GREEN), true);
@@ -61,6 +68,7 @@ public final class NourishmentManager {
             }
             ServerPlayer p = server.getPlayerList().getPlayer(entry.getKey());
             if (p != null) {
+                p.removeEffect(RpgEffects.NOURISHED.get());
                 p.displayClientMessage(Component.literal("You're famished - eat something to keep regenerating.")
                         .withStyle(ChatFormatting.GRAY), true);
             }

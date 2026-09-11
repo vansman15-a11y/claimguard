@@ -53,6 +53,7 @@
   "rpgstats.tooltip.encumbrance": "Encumbrance: %s",
   "rpgstats.tooltip.physical_protection": "Physical Protection: %s%%",
   "rpgstats.tooltip.magic_protection": "Magic Protection: %s%%",
+  "effect.rpgstats.nourished": "Nourished",
   "rpgstats.subtitle.spell.mana_to_stamina": "Transfer: Mana to Stamina",
   "rpgstats.subtitle.spell.stamina_to_health": "Transfer: Stamina to Health",
   "rpgstats.subtitle.spell.health_to_mana": "Transfer: Health to Mana",
