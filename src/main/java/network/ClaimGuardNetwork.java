@@ -12,7 +12,7 @@ public class ClaimGuardNetwork {
      * versions then fail the connection with a clear "incompatible" message instead
      * of mis-parsing a packet and crashing mid-game.
      */
-    private static final String PROTOCOL_VERSION = "28";
+    private static final String PROTOCOL_VERSION = "29";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(ClaimGuard.MOD_ID, "main"),
@@ -208,5 +208,11 @@ public class ClaimGuardNetwork {
                 WolfLeapPacket::encode, WolfLeapPacket::decode, WolfLeapPacket::handle);
         CHANNEL.registerMessage(nextPacketId++, SetWeaponPrefPacket.class,
                 SetWeaponPrefPacket::encode, SetWeaponPrefPacket::decode, SetWeaponPrefPacket::handle);
+        CHANNEL.registerMessage(nextPacketId++, PopSlotBindPacket.class,
+                PopSlotBindPacket::encode, PopSlotBindPacket::decode, PopSlotBindPacket::handle);
+        CHANNEL.registerMessage(nextPacketId++, SetSlotOptionsPacket.class,
+                SetSlotOptionsPacket::encode, SetSlotOptionsPacket::decode, SetSlotOptionsPacket::handle);
+        CHANNEL.registerMessage(nextPacketId++, SetSlotWeaponPacket.class,
+                SetSlotWeaponPacket::encode, SetSlotWeaponPacket::decode, SetSlotWeaponPacket::handle);
     }
 }

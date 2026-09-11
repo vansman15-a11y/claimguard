@@ -94,7 +94,7 @@ public class SpellBarOverlay {
         g.fill(x, y, x + SLOT, y + SLOT, (bgAlpha << 24) | 0x00101010);
         g.renderOutline(x, y, SLOT, SLOT, (borderAlpha << 24) | 0x003A3A3A);
 
-        Spell spell = ClientSpells.slot(index);
+        Spell spell = ClientSpells.activeSlot(index);
         if (spell != null) {
             SpellIcons.draw(g, spell, x + 2, y + 2, SLOT - 4);
 
@@ -124,6 +124,32 @@ public class SpellBarOverlay {
 
             cornerLevel(g, font, x, y, ClientSpells.spellLevel(spell), 0xFFFFE066);
         }
+
+        // stacked "ray bar" slot - a small count badge, bottom-left
+        int count = ClientSpells.slotBindCount(index);
+        if (count > 1) {
+            String tag = "x" + count;
+            g.pose().pushPose();
+            g.pose().translate(x + 1.0f, y + SLOT - 9.0f, 0.0f);
+            g.pose().scale(0.7f, 0.7f, 1.0f);
+            g.drawString(font, tag, 0, 0, 0xFF9FC0FF, true);
+            g.pose().popPose();
+        }
+
+        // this slot force-equips a weapon before firing - a tiny icon, bottom-right
+        String weaponId = ClientSpells.slotForceWeapon(index) ? ClientSpells.slotWeaponId(index) : null;
+        if (weaponId != null) {
+            var item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(
+                    net.minecraft.resources.ResourceLocation.tryParse(weaponId));
+            if (item != null) {
+                g.pose().pushPose();
+                g.pose().translate(x + SLOT - 9, y + 1, 100);
+                g.pose().scale(0.55f, 0.55f, 1.0f);
+                g.renderItem(new net.minecraft.world.item.ItemStack(item), 0, 0);
+                g.pose().popPose();
+            }
+        }
+
         g.drawString(font, String.valueOf(index % SLOTS + 1), x + SLOT - 6, y + SLOT - 8, 0xFF808080, false);
     }
 

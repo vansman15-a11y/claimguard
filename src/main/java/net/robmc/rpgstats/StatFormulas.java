@@ -23,6 +23,7 @@ public final class StatFormulas {
     public static final int BAR_SLOTS = 9;                       // slots per bar
     public static final int BAR_COUNT = 2;                       // number of bars
     public static final int TOTAL_BAR_SLOTS = BAR_SLOTS * BAR_COUNT;
+    public static final int MAX_SLOT_BINDS = 6;                  // cap on spells stacked onto one slot (a "ray bar")
 
     /**
      * Fraction of a stat/spell's level-{@link #LEVEL_CAP} power available at {@code level}.

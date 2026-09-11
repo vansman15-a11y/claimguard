@@ -21,6 +21,12 @@ public final class ClientSpells {
     private static int[] schoolLevels = defaultSchoolLevels();
     private static int[] skillLevels = new int[Skill.values().length];
     private static String[] weaponPrefs = new String[Spell.values().length];
+    private static String[] slotActive = new String[SLOT_COUNT];
+    private static int[] slotCount = new int[SLOT_COUNT];
+    private static int[] slotCycleMode = new int[SLOT_COUNT];
+    private static boolean[] slotAutoCast = new boolean[SLOT_COUNT];
+    private static String[] slotWeaponId = new String[SLOT_COUNT];
+    private static boolean[] slotForceWeapon = new boolean[SLOT_COUNT];
 
     private static int[] defaultSchoolLevels() {
         int[] a = new int[School.values().length];
@@ -56,12 +62,59 @@ public final class ClientSpells {
         if (p.weaponPrefs != null && p.weaponPrefs.length == weaponPrefs.length) {
             weaponPrefs = p.weaponPrefs;
         }
+        if (p.slotActive != null && p.slotActive.length == SLOT_COUNT) {
+            slotActive = p.slotActive;
+        }
+        if (p.slotCount != null && p.slotCount.length == SLOT_COUNT) {
+            slotCount = p.slotCount;
+        }
+        if (p.slotCycleMode != null && p.slotCycleMode.length == SLOT_COUNT) {
+            slotCycleMode = p.slotCycleMode;
+        }
+        if (p.slotAutoCast != null && p.slotAutoCast.length == SLOT_COUNT) {
+            slotAutoCast = p.slotAutoCast;
+        }
+        if (p.slotWeaponId != null && p.slotWeaponId.length == SLOT_COUNT) {
+            slotWeaponId = p.slotWeaponId;
+        }
+        if (p.slotForceWeapon != null && p.slotForceWeapon.length == SLOT_COUNT) {
+            slotForceWeapon = p.slotForceWeapon;
+        }
     }
 
     /** The item registry id this spell auto-equips before casting, or null if none is set. */
     public static String weaponPref(Spell spell) {
         String v = weaponPrefs[spell.ordinal()];
         return (v == null || v.isEmpty()) ? null : v;
+    }
+
+    /** The spell that would actually fire from this slot on a press right now (see SpellCasting.resolveSlotSpell). */
+    public static Spell activeSlot(int i) {
+        return (i >= 0 && i < SLOT_COUNT && slotActive[i] != null) ? Spell.byName(slotActive[i]) : null;
+    }
+
+    /** How many spells are stacked onto this slot (1 for a plain single-bind slot, 0 if empty). */
+    public static int slotBindCount(int i) {
+        return (i >= 0 && i < SLOT_COUNT) ? slotCount[i] : 0;
+    }
+
+    /** 0 = Cycle, 1 = First Available - see PlayerStats.CycleMode. */
+    public static int slotCycleMode(int i) {
+        return (i >= 0 && i < SLOT_COUNT) ? slotCycleMode[i] : 0;
+    }
+
+    public static boolean slotAutoCast(int i) {
+        return i >= 0 && i < SLOT_COUNT && slotAutoCast[i];
+    }
+
+    /** This slot's forced-weapon registry id, or null if none is set. */
+    public static String slotWeaponId(int i) {
+        String v = (i >= 0 && i < SLOT_COUNT) ? slotWeaponId[i] : null;
+        return (v == null || v.isEmpty()) ? null : v;
+    }
+
+    public static boolean slotForceWeapon(int i) {
+        return i >= 0 && i < SLOT_COUNT && slotForceWeapon[i];
     }
 
     public static void onCastState(CastStatePacket p) {

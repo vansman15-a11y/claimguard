@@ -10,6 +10,8 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.client.settings.KeyModifier;
 import net.robmc.claimguard.network.ClaimGuardNetwork;
+import net.robmc.claimguard.network.SetSlotOptionsPacket;
+import net.robmc.claimguard.network.SetSlotWeaponPacket;
 import net.robmc.claimguard.network.SetSpellSlotPacket;
 import net.robmc.rpgstats.StatFormulas;
 import net.robmc.rpgstats.client.magic.ClientSpells;
@@ -39,6 +41,12 @@ public class HudEditorScreen extends Screen {
 
     private static final int MENU_W = 140;
     private static final int MENU_H = 58;
+
+    // shift-right-click a spell slot -> its multi-bind ("ray bar") options popup
+    private Integer slotMenuOpen;
+
+    private static final int SLOT_MENU_W = 150;
+    private static final int SLOT_MENU_H = 100;
 
     // dragging a spell/skill binding out of a bar slot
     private int draggingSpellFrom = -1;
@@ -152,6 +160,64 @@ public class HudEditorScreen extends Screen {
         HudLayout.setOpacity(SpellBarOverlay.layoutKey(bar), Math.max(0.1f, Math.min(1.0f, t)));
     }
 
+    // --- per-slot multi-bind ("ray bar") options popup ---
+
+    private int[] slotPos(int slot) {
+        int bar = slot / SpellBarOverlay.SLOTS;
+        int i = slot % SpellBarOverlay.SLOTS;
+        String key = SpellBarOverlay.layoutKey(bar);
+        boolean horiz = HudLayout.isHorizontal(key);
+        int sx = spellBarX(bar);
+        int sy = spellBarY(bar);
+        int x = horiz ? sx + i * SpellBarOverlay.SLOT : sx;
+        int y = horiz ? sy : sy + i * SpellBarOverlay.SLOT;
+        return new int[]{x, y};
+    }
+
+    private int[] slotMenuBox(int slot) {
+        int[] p = slotPos(slot);
+        int x = Math.min(p[0] + SpellBarOverlay.SLOT + 6, width - SLOT_MENU_W - 4);
+        int y = Math.max(4, Math.min(p[1], height - SLOT_MENU_H - 4));
+        return new int[]{x, y, SLOT_MENU_W, SLOT_MENU_H};
+    }
+
+    private int[] cycleModeButtonBox(int slot) {
+        int[] m = slotMenuBox(slot);
+        return new int[]{m[0] + 6, m[1] + 28, SLOT_MENU_W - 12, 14};
+    }
+
+    private int[] autoCastButtonBox(int slot) {
+        int[] m = slotMenuBox(slot);
+        return new int[]{m[0] + 6, m[1] + 46, SLOT_MENU_W - 12, 14};
+    }
+
+    private int[] forceWeaponButtonBox(int slot) {
+        int[] m = slotMenuBox(slot);
+        return new int[]{m[0] + 6, m[1] + 64, SLOT_MENU_W - 12, 14};
+    }
+
+    private int[] setWeaponButtonBox(int slot) {
+        int[] m = slotMenuBox(slot);
+        return new int[]{m[0] + 6, m[1] + 82, SLOT_MENU_W - 12, 14};
+    }
+
+    private void toggleCycleMode(int slot) {
+        int next = ClientSpells.slotCycleMode(slot) == 0 ? 1 : 0;
+        sendSlotOptions(slot, next, ClientSpells.slotAutoCast(slot), ClientSpells.slotForceWeapon(slot));
+    }
+
+    private void toggleAutoCast(int slot) {
+        sendSlotOptions(slot, ClientSpells.slotCycleMode(slot), !ClientSpells.slotAutoCast(slot), ClientSpells.slotForceWeapon(slot));
+    }
+
+    private void toggleForceWeapon(int slot) {
+        sendSlotOptions(slot, ClientSpells.slotCycleMode(slot), ClientSpells.slotAutoCast(slot), !ClientSpells.slotForceWeapon(slot));
+    }
+
+    private void sendSlotOptions(int slot, int cycleMode, boolean autoCast, boolean forceWeapon) {
+        ClaimGuardNetwork.CHANNEL.sendToServer(new SetSlotOptionsPacket(slot, cycleMode, autoCast, forceWeapon));
+    }
+
     // --- input ---
 
     @Override
@@ -179,10 +245,35 @@ public class HudEditorScreen extends Screen {
             barMenuOpen = null; // clicked elsewhere - close it, and let this click still do its own thing below
         }
 
-        if (button == 1) { // right-click a slot -> rebind, or a bar's grip -> its settings popup
+        if (slotMenuOpen != null) {
+            int slot = slotMenuOpen;
+            if (button == 0 && inside(cycleModeButtonBox(slot), mx, my)) {
+                toggleCycleMode(slot);
+                return true;
+            }
+            if (button == 0 && inside(autoCastButtonBox(slot), mx, my)) {
+                toggleAutoCast(slot);
+                return true;
+            }
+            if (button == 0 && inside(forceWeaponButtonBox(slot), mx, my)) {
+                toggleForceWeapon(slot);
+                return true;
+            }
+            if (button == 0 && inside(setWeaponButtonBox(slot), mx, my)) {
+                ClaimGuardNetwork.CHANNEL.sendToServer(new SetSlotWeaponPacket(slot));
+                return true;
+            }
+            if (inside(slotMenuBox(slot), mx, my)) {
+                return true; // clicked inside the popup but not on a control - just absorb it
+            }
+            slotMenuOpen = null; // clicked elsewhere - close it, and let this click still do its own thing below
+        }
+
+        if (button == 1) { // right-click a slot -> rebind (Shift = its ray-bar options), or a bar's grip -> its settings popup
             for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
                 if (onGrip(bar, mx, my)) {
                     barMenuOpen = bar;
+                    slotMenuOpen = null;
                     return true;
                 }
             }
@@ -193,8 +284,13 @@ public class HudEditorScreen extends Screen {
             }
             int ss = spellSlotAt(mx, my);
             if (ss >= 0) {
-                startCapture(RpgKeybinds.CAST[ss],
-                        "Bar " + (ss / SpellBarOverlay.SLOTS + 1) + " slot " + (ss % SpellBarOverlay.SLOTS + 1));
+                if (hasShiftDown()) {
+                    slotMenuOpen = ss;
+                    barMenuOpen = null;
+                } else {
+                    startCapture(RpgKeybinds.CAST[ss],
+                            "Bar " + (ss / SpellBarOverlay.SLOTS + 1) + " slot " + (ss % SpellBarOverlay.SLOTS + 1));
+                }
                 return true;
             }
         }
@@ -430,7 +526,7 @@ public class HudEditorScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         g.fill(0, 0, this.width, this.height, 0x60000000);
-        g.drawCenteredString(this.font, "HUD Editor  -  drag a bar's label to move it, right-click a label for opacity/orientation, right-click a slot to rebind its key", this.width / 2, 12, 0xFFFFFF);
+        g.drawCenteredString(this.font, "HUD Editor  -  drag a label to move it, right-click a label for opacity/orientation, right-click a slot to rebind (Shift = ray-bar options)", this.width / 2, 12, 0xFFFFFF);
 
         int[] bars = statBarsBox();
         RpgHudOverlay.renderBars(g, this.font, bars[0] + 1, bars[1] + 1);
@@ -492,6 +588,9 @@ public class HudEditorScreen extends Screen {
                 renderBarMenu(g, bar);
             }
         }
+        if (slotMenuOpen != null) {
+            renderSlotMenu(g, slotMenuOpen);
+        }
 
         // spell being dragged between slots
         if (draggingSpellFrom >= 0) {
@@ -541,6 +640,55 @@ public class HudEditorScreen extends Screen {
         g.renderOutline(btn[0], btn[1], btn[2], btn[3], 0xFF9FC0FF);
         String label = horiz ? "Horizontal" : "Vertical";
         g.drawString(this.font, label, btn[0] + (btn[2] - this.font.width(label)) / 2, btn[1] + 3, 0xFFFFFFFF, false);
+    }
+
+    private void renderSlotMenu(GuiGraphics g, int slot) {
+        int[] m = slotMenuBox(slot);
+        g.fill(m[0], m[1], m[0] + m[2], m[1] + m[3], 0xF0141824);
+        g.renderOutline(m[0], m[1], m[2], m[3], 0xFF9FC0FF);
+        g.drawString(this.font, "Slot " + (slot % SpellBarOverlay.SLOTS + 1) + " options", m[0] + 6, m[1] + 4, 0xFFDDE6F5, false);
+
+        int count = ClientSpells.slotBindCount(slot);
+        String listTxt = count <= 1 ? "1 spell bound" : count + " spells stacked (ray bar)";
+        g.drawString(this.font, listTxt, m[0] + 6, m[1] + 15, 0xFF8FA0B4, false);
+
+        int[] cycleBtn = cycleModeButtonBox(slot);
+        boolean firstAvail = ClientSpells.slotCycleMode(slot) == 1;
+        g.fill(cycleBtn[0], cycleBtn[1], cycleBtn[0] + cycleBtn[2], cycleBtn[1] + cycleBtn[3], 0xFF2A3346);
+        g.renderOutline(cycleBtn[0], cycleBtn[1], cycleBtn[2], cycleBtn[3], 0xFF9FC0FF);
+        g.drawString(this.font, firstAvail ? "Mode: First Available" : "Mode: Cycle",
+                cycleBtn[0] + 3, cycleBtn[1] + 3, 0xFFFFFFFF, false);
+
+        int[] autoBtn = autoCastButtonBox(slot);
+        boolean autoCast = ClientSpells.slotAutoCast(slot);
+        g.fill(autoBtn[0], autoBtn[1], autoBtn[0] + autoBtn[2], autoBtn[1] + autoBtn[3], 0xFF2A3346);
+        g.renderOutline(autoBtn[0], autoBtn[1], autoBtn[2], autoBtn[3], 0xFF9FC0FF);
+        g.drawString(this.font, "Auto Cast: " + (autoCast ? "On" : "Off"),
+                autoBtn[0] + 3, autoBtn[1] + 3, autoCast ? 0xFF9BE38A : 0xFFB0B0B0, false);
+
+        int[] fwBtn = forceWeaponButtonBox(slot);
+        boolean forceWeapon = ClientSpells.slotForceWeapon(slot);
+        g.fill(fwBtn[0], fwBtn[1], fwBtn[0] + fwBtn[2], fwBtn[1] + fwBtn[3], 0xFF2A3346);
+        g.renderOutline(fwBtn[0], fwBtn[1], fwBtn[2], fwBtn[3], 0xFF9FC0FF);
+        g.drawString(this.font, "Force Weapon: " + (forceWeapon ? "On" : "Off"),
+                fwBtn[0] + 3, fwBtn[1] + 3, forceWeapon ? 0xFF9BE38A : 0xFFB0B0B0, false);
+
+        int[] setBtn = setWeaponButtonBox(slot);
+        g.fill(setBtn[0], setBtn[1], setBtn[0] + setBtn[2], setBtn[1] + setBtn[3], 0xFF2A3346);
+        g.renderOutline(setBtn[0], setBtn[1], setBtn[2], setBtn[3], 0xFF9FC0FF);
+        g.drawString(this.font, "Set from held item", setBtn[0] + 3, setBtn[1] + 3, 0xFFFFFFFF, false);
+        String weaponId = ClientSpells.slotWeaponId(slot);
+        if (weaponId != null) {
+            var item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(
+                    net.minecraft.resources.ResourceLocation.tryParse(weaponId));
+            if (item != null) {
+                g.pose().pushPose();
+                g.pose().translate(setBtn[0] + setBtn[2] - 13, setBtn[1] - 1, 100);
+                g.pose().scale(0.7f, 0.7f, 1.0f);
+                g.renderItem(new net.minecraft.world.item.ItemStack(item), 0, 0);
+                g.pose().popPose();
+            }
+        }
     }
 
     private void outline(GuiGraphics g, int[] box, int colour, String label) {

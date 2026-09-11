@@ -84,7 +84,9 @@ public final class SpellCasting {
 
     public static void startCast(ServerPlayer player, int slot) {
         PlayerStats s = RpgManager.stats(player);
-        Spell spell = Spell.byName(slot >= 0 && slot < StatFormulas.TOTAL_BAR_SLOTS ? s.getSpellBar()[slot] : "");
+        String resolvedName = slot >= 0 && slot < StatFormulas.TOTAL_BAR_SLOTS ? resolveSlotSpell(player, s, slot) : "";
+        advanceSlotCursorIfCycling(s, slot);
+        Spell spell = Spell.byName(resolvedName);
         if (spell == null) {
             return;
         }
@@ -161,7 +163,9 @@ public final class SpellCasting {
                     .withStyle(ChatFormatting.GRAY), true);
             return;
         }
-        autoEquip(player, s, spell);
+        if (!autoEquipSlot(player, s, slot)) {
+            autoEquip(player, s, spell);
+        }
 
         // Transfers can be cast bare-handed or with a staff. Everything else needs a staff.
         ItemStack hand = player.getMainHandItem();
@@ -217,10 +221,31 @@ public final class SpellCasting {
      */
     private static void autoEquip(ServerPlayer player, PlayerStats s, Spell spell) {
         String wantedId = s.getWeaponPref(spell);
-        if (wantedId == null) {
-            return;
+        if (wantedId != null) {
+            equipById(player, wantedId);
         }
-        net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(wantedId);
+    }
+
+    /**
+     * Same idea as {@link #autoEquip}, but for a slot-level forced weapon (set from the J
+     * editor's slot options popup) - takes priority over any per-spell preference since it's
+     * more specific to how this particular press fired. Returns true if a slot override is
+     * configured at all, whether or not the swap actually found the item on the player.
+     */
+    private static boolean autoEquipSlot(ServerPlayer player, PlayerStats s, int slot) {
+        if (slot < 0 || !s.isSlotForceWeapon(slot)) {
+            return false;
+        }
+        String wantedId = s.getSlotWeaponId(slot);
+        if (wantedId == null || wantedId.isEmpty()) {
+            return false;
+        }
+        equipById(player, wantedId);
+        return true;
+    }
+
+    private static void equipById(ServerPlayer player, String itemId) {
+        net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(itemId);
         if (id == null) {
             return;
         }
@@ -241,6 +266,59 @@ public final class SpellCasting {
                 return;
             }
         }
+    }
+
+    /**
+     * Which of this slot's stacked spells actually fires on a press right now. A plain
+     * single-bind slot (or one with Auto Cast off) always just fires its top/primary spell.
+     * With Auto Cast on: CYCLE steps through the bound list in order every press regardless
+     * of cooldown; FIRST_AVAILABLE always fires whichever bound spell is off cooldown first -
+     * the "ray bar" mode, so stacking a few same-ish rays on one key rotates them for you.
+     */
+    public static String resolveSlotSpell(ServerPlayer player, PlayerStats s, int slot) {
+        List<String> binds = s.getSlotBinds(slot);
+        if (binds.isEmpty()) {
+            return "";
+        }
+        if (!s.isSlotAutoCast(slot) || binds.size() == 1) {
+            return binds.get(0);
+        }
+        if (s.getSlotCycleMode(slot) == PlayerStats.CycleMode.FIRST_AVAILABLE) {
+            for (String name : binds) {
+                Spell sp = Spell.byName(name);
+                if (sp != null && isOffCooldown(player, sp)) {
+                    return name;
+                }
+            }
+            return binds.get(0); // all on cooldown - fall back to the top one (it'll report "on cooldown")
+        }
+        return binds.get(s.getSlotCursor(slot) % binds.size());
+    }
+
+    /** Advances a CYCLE-mode slot's rotation on every press, regardless of whether the cast itself succeeds. */
+    private static void advanceSlotCursorIfCycling(PlayerStats s, int slot) {
+        if (slot < 0) {
+            return;
+        }
+        List<String> binds = s.getSlotBinds(slot);
+        if (s.isSlotAutoCast(slot) && binds.size() > 1 && s.getSlotCycleMode(slot) == PlayerStats.CycleMode.CYCLE) {
+            s.advanceSlotCursor(slot, binds.size());
+        }
+    }
+
+    public static boolean isOffCooldown(ServerPlayer player, Spell spell) {
+        long now = player.serverLevel().getGameTime();
+        long cdEnd = cooldowns.getOrDefault(player.getUUID(), Map.of()).getOrDefault(spell, 0L);
+        return now >= cdEnd;
+    }
+
+    /** For SyncSpellBarPacket: what each slot would actually fire right now (see resolveSlotSpell), "" if empty. */
+    public static String[] slotActiveArray(ServerPlayer player, PlayerStats s) {
+        String[] out = new String[StatFormulas.TOTAL_BAR_SLOTS];
+        for (int i = 0; i < out.length; i++) {
+            out[i] = resolveSlotSpell(player, s, i);
+        }
+        return out;
     }
 
     /** Put a resource-pack staff's CustomModelData back once its cast is over. Called each tick. */

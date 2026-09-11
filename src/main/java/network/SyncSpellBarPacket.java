@@ -18,13 +18,27 @@ public class SyncSpellBarPacket {
     public final int[] schoolLevels;  // indexed by School.ordinal()
     public final int[] skillLevels;   // indexed by Skill.ordinal()
     public final String[] weaponPrefs; // indexed by Spell.ordinal(), "" = none
+    public final String[] slotActive;     // per bar slot: which bound spell actually fires next, "" = empty
+    public final int[] slotCount;         // per bar slot: how many spells are stacked on it
+    public final int[] slotCycleMode;     // per bar slot: PlayerStats.CycleMode ordinal
+    public final boolean[] slotAutoCast;  // per bar slot
+    public final String[] slotWeaponId;   // per bar slot: forced-weapon registry id, "" = none
+    public final boolean[] slotForceWeapon; // per bar slot
 
-    public SyncSpellBarPacket(String[] slots, int[] spellLevels, int[] schoolLevels, int[] skillLevels, String[] weaponPrefs) {
+    public SyncSpellBarPacket(String[] slots, int[] spellLevels, int[] schoolLevels, int[] skillLevels, String[] weaponPrefs,
+                               String[] slotActive, int[] slotCount, int[] slotCycleMode, boolean[] slotAutoCast,
+                               String[] slotWeaponId, boolean[] slotForceWeapon) {
         this.slots = slots;
         this.spellLevels = spellLevels;
         this.schoolLevels = schoolLevels;
         this.skillLevels = skillLevels;
         this.weaponPrefs = weaponPrefs;
+        this.slotActive = slotActive;
+        this.slotCount = slotCount;
+        this.slotCycleMode = slotCycleMode;
+        this.slotAutoCast = slotAutoCast;
+        this.slotWeaponId = slotWeaponId;
+        this.slotForceWeapon = slotForceWeapon;
     }
 
     public static void encode(SyncSpellBarPacket p, FriendlyByteBuf buf) {
@@ -37,6 +51,24 @@ public class SyncSpellBarPacket {
         buf.writeVarInt(p.weaponPrefs.length);
         for (String s : p.weaponPrefs) {
             buf.writeUtf(s != null ? s : "", 64);
+        }
+        for (int i = 0; i < SLOTS; i++) {
+            buf.writeUtf(i < p.slotActive.length && p.slotActive[i] != null ? p.slotActive[i] : "", 48);
+        }
+        for (int i = 0; i < SLOTS; i++) {
+            buf.writeVarInt(i < p.slotCount.length ? p.slotCount[i] : 0);
+        }
+        for (int i = 0; i < SLOTS; i++) {
+            buf.writeVarInt(i < p.slotCycleMode.length ? p.slotCycleMode[i] : 0);
+        }
+        for (int i = 0; i < SLOTS; i++) {
+            buf.writeBoolean(i < p.slotAutoCast.length && p.slotAutoCast[i]);
+        }
+        for (int i = 0; i < SLOTS; i++) {
+            buf.writeUtf(i < p.slotWeaponId.length && p.slotWeaponId[i] != null ? p.slotWeaponId[i] : "", 64);
+        }
+        for (int i = 0; i < SLOTS; i++) {
+            buf.writeBoolean(i < p.slotForceWeapon.length && p.slotForceWeapon[i]);
         }
     }
 
@@ -53,7 +85,32 @@ public class SyncSpellBarPacket {
         for (int i = 0; i < wn; i++) {
             weaponPrefs[i] = buf.readUtf(64);
         }
-        return new SyncSpellBarPacket(slots, spellLevels, schoolLevels, skillLevels, weaponPrefs);
+        String[] slotActive = new String[SLOTS];
+        for (int i = 0; i < SLOTS; i++) {
+            slotActive[i] = buf.readUtf(48);
+        }
+        int[] slotCount = new int[SLOTS];
+        for (int i = 0; i < SLOTS; i++) {
+            slotCount[i] = buf.readVarInt();
+        }
+        int[] slotCycleMode = new int[SLOTS];
+        for (int i = 0; i < SLOTS; i++) {
+            slotCycleMode[i] = buf.readVarInt();
+        }
+        boolean[] slotAutoCast = new boolean[SLOTS];
+        for (int i = 0; i < SLOTS; i++) {
+            slotAutoCast[i] = buf.readBoolean();
+        }
+        String[] slotWeaponId = new String[SLOTS];
+        for (int i = 0; i < SLOTS; i++) {
+            slotWeaponId[i] = buf.readUtf(64);
+        }
+        boolean[] slotForceWeapon = new boolean[SLOTS];
+        for (int i = 0; i < SLOTS; i++) {
+            slotForceWeapon[i] = buf.readBoolean();
+        }
+        return new SyncSpellBarPacket(slots, spellLevels, schoolLevels, skillLevels, weaponPrefs,
+                slotActive, slotCount, slotCycleMode, slotAutoCast, slotWeaponId, slotForceWeapon);
     }
 
     private static void writeInts(FriendlyByteBuf buf, int[] arr) {

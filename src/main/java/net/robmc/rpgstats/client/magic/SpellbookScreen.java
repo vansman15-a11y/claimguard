@@ -175,6 +175,16 @@ public class SpellbookScreen extends Screen {
                 }
             }
         }
+        if (button == 1) {
+            // right-click a bound bar slot: pop the most recently stacked spell off a ray bar,
+            // or clear it entirely if there's only the one
+            int slot = slotAt(mx, my);
+            if (slot >= 0 && !ClientSpells.slotName(slot).isEmpty()) {
+                net.robmc.claimguard.network.ClaimGuardNetwork.CHANNEL.sendToServer(
+                        new net.robmc.claimguard.network.PopSlotBindPacket(slot));
+                return true;
+            }
+        }
         if (button == 0) {
             int slot = slotAt(mx, my);
             if (slot >= 0 && !ClientSpells.slotName(slot).isEmpty()) {
@@ -207,7 +217,8 @@ public class SpellbookScreen extends Screen {
     public boolean mouseReleased(double mx, double my, int button) {
         int slot = slotAt(mx, my);
         if (draggingName != null && slot >= 0) {
-            send(slot, draggingName);
+            // a plain drop replaces the slot; Shift-drop stacks it on top instead (a "ray bar")
+            send(slot, draggingName, hasShiftDown());
         } else if (draggingSlot >= 0 && slot >= 0 && slot != draggingSlot) {
             send(slot, ClientSpells.slotName(draggingSlot));
             send(draggingSlot, "");
@@ -220,8 +231,16 @@ public class SpellbookScreen extends Screen {
     }
 
     private void send(int slot, String name) {
-        ClaimGuardNetwork.CHANNEL.sendToServer(new SetSpellSlotPacket(slot, name));
-        ClientSpells.setSlotLocal(slot, name);
+        send(slot, name, false);
+    }
+
+    private void send(int slot, String name, boolean append) {
+        ClaimGuardNetwork.CHANNEL.sendToServer(new SetSpellSlotPacket(slot, name, append));
+        if (!append) {
+            // an append changes the slot's full bind list, which the client can't predict on its
+            // own - just wait for the server's sync instead of guessing
+            ClientSpells.setSlotLocal(slot, name);
+        }
     }
 
     private int slotAt(double mx, double my) {
@@ -249,7 +268,7 @@ public class SpellbookScreen extends Screen {
         g.fill(left, top, left + PANEL_W, top + PANEL_H, 0xE0140F1E);
         g.renderOutline(left, top, PANEL_W, PANEL_H, 0xFF3A5A88);
         g.drawString(this.font, "SPELLBOOK & SKILLS", left + 14, top + 12, 0xFF9FC0FF, false);
-        g.drawString(this.font, "drag = bind slot, right-click = auto-equip weapon", left + 96, top + 13, 0xFF6A6A6A, false);
+        g.drawString(this.font, "drag=bind, shift-drag=stack, right-click=auto-equip / pop", left + 90, top + 13, 0xFF6A6A6A, false);
 
         int vx = listX();
         int vy = listY();

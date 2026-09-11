@@ -5,7 +5,9 @@ import net.robmc.rpgstats.magic.School;
 import net.robmc.rpgstats.magic.Spell;
 import net.robmc.rpgstats.skill.Skill;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,6 +49,23 @@ public class PlayerStats {
     /** The two casting bars' slots (bar 1 = 0..8, bar 2 = 9..17), each holding a Spell/Skill enum name or "". */
     private final String[] spellBar = new String[StatFormulas.TOTAL_BAR_SLOTS];
 
+    /** How a multi-bind slot picks which of its stacked spells fires next. */
+    public enum CycleMode { CYCLE, FIRST_AVAILABLE }
+
+    /**
+     * A slot can hold more than one spell (a "ray bar") - spellBar[slot] is always the
+     * first/primary one, this holds any additional ones stacked on top of it, in the
+     * order they were added. Empty for every plain single-bind slot.
+     */
+    private final List<List<String>> slotExtra = new ArrayList<>();
+    private final CycleMode[] slotCycleMode = new CycleMode[StatFormulas.TOTAL_BAR_SLOTS];
+    private final boolean[] slotAutoCast = new boolean[StatFormulas.TOTAL_BAR_SLOTS];
+    /** Per-slot forced weapon (overrides any per-spell weaponPref while this slot is what's firing) - registry id, "" = none. */
+    private final String[] slotWeaponId = new String[StatFormulas.TOTAL_BAR_SLOTS];
+    private final boolean[] slotForceWeapon = new boolean[StatFormulas.TOTAL_BAR_SLOTS];
+    /** Which bound spell a CYCLE-mode slot fires next. Not persisted - just resets to the top on relog. */
+    private final int[] slotCursor = new int[StatFormulas.TOTAL_BAR_SLOTS];
+
     public PlayerStats() {
         for (Stat stat : Stat.values()) {
             levels.put(stat, 0);
@@ -65,6 +84,11 @@ public class PlayerStats {
             skillXp.put(skill, 0.0);
         }
         java.util.Arrays.fill(spellBar, "");
+        java.util.Arrays.fill(slotWeaponId, "");
+        java.util.Arrays.fill(slotCycleMode, CycleMode.CYCLE);
+        for (int i = 0; i < StatFormulas.TOTAL_BAR_SLOTS; i++) {
+            slotExtra.add(new ArrayList<>());
+        }
     }
 
     // --- stats ---
@@ -294,6 +318,113 @@ public class PlayerStats {
             spellBar[slot] = "";
         } else if (Spell.byName(name) != null) {
             spellBar[slot] = name;
+        } else {
+            return;
+        }
+        // replacing the slot wholesale drops any stacked "ray bar" extras and resets the rotation
+        slotExtra.get(slot).clear();
+        slotCursor[slot] = 0;
+    }
+
+    // --- multi-bind ("ray bar") slots ---
+
+    /** Every spell bound to this slot, primary first, in add order. Empty if the slot is empty. */
+    public List<String> getSlotBinds(int slot) {
+        if (slot < 0 || slot >= spellBar.length) {
+            return List.of();
+        }
+        List<String> out = new ArrayList<>();
+        if (!spellBar[slot].isEmpty()) {
+            out.add(spellBar[slot]);
+        }
+        for (String extra : slotExtra.get(slot)) {
+            if (!extra.isEmpty() && !out.contains(extra)) {
+                out.add(extra);
+            }
+        }
+        return out;
+    }
+
+    /** Stack another spell onto this slot instead of replacing it (a Shift-drop in the Spellbook). */
+    public void addSlotBind(int slot, String name) {
+        if (slot < 0 || slot >= spellBar.length || name == null || name.isEmpty() || Spell.byName(name) == null) {
+            return;
+        }
+        if (spellBar[slot].isEmpty()) {
+            spellBar[slot] = name;
+            return;
+        }
+        if (name.equals(spellBar[slot]) || getSlotBinds(slot).size() >= StatFormulas.MAX_SLOT_BINDS) {
+            return;
+        }
+        List<String> extra = slotExtra.get(slot);
+        if (!extra.contains(name)) {
+            extra.add(name);
+        }
+    }
+
+    /** Pop the most recently added extra spell off this slot, or clear it entirely if it's down to just the primary. */
+    public void popSlotBind(int slot) {
+        if (slot < 0 || slot >= spellBar.length) {
+            return;
+        }
+        List<String> extra = slotExtra.get(slot);
+        if (!extra.isEmpty()) {
+            extra.remove(extra.size() - 1);
+        } else {
+            setSpellSlot(slot, "");
+        }
+    }
+
+    public CycleMode getSlotCycleMode(int slot) {
+        return slot >= 0 && slot < slotCycleMode.length ? slotCycleMode[slot] : CycleMode.CYCLE;
+    }
+
+    public void setSlotCycleMode(int slot, CycleMode mode) {
+        if (slot >= 0 && slot < slotCycleMode.length) {
+            slotCycleMode[slot] = mode;
+        }
+    }
+
+    public boolean isSlotAutoCast(int slot) {
+        return slot >= 0 && slot < slotAutoCast.length && slotAutoCast[slot];
+    }
+
+    public void setSlotAutoCast(int slot, boolean value) {
+        if (slot >= 0 && slot < slotAutoCast.length) {
+            slotAutoCast[slot] = value;
+        }
+    }
+
+    /** The item registry id this slot force-equips before casting whatever fires from it, or "" if none. */
+    public String getSlotWeaponId(int slot) {
+        return slot >= 0 && slot < slotWeaponId.length ? slotWeaponId[slot] : "";
+    }
+
+    public void setSlotWeaponId(int slot, String itemId) {
+        if (slot >= 0 && slot < slotWeaponId.length) {
+            slotWeaponId[slot] = itemId == null ? "" : itemId;
+        }
+    }
+
+    public boolean isSlotForceWeapon(int slot) {
+        return slot >= 0 && slot < slotForceWeapon.length && slotForceWeapon[slot];
+    }
+
+    public void setSlotForceWeapon(int slot, boolean value) {
+        if (slot >= 0 && slot < slotForceWeapon.length) {
+            slotForceWeapon[slot] = value;
+        }
+    }
+
+    /** Which of this slot's bound spells a CYCLE-mode press fires next. */
+    public int getSlotCursor(int slot) {
+        return slot >= 0 && slot < slotCursor.length ? slotCursor[slot] : 0;
+    }
+
+    public void advanceSlotCursor(int slot, int bindCount) {
+        if (slot >= 0 && slot < slotCursor.length && bindCount > 0) {
+            slotCursor[slot] = (slotCursor[slot] + 1) % bindCount;
         }
     }
 
@@ -376,6 +507,26 @@ public class PlayerStats {
         CompoundTag weapons = new CompoundTag();
         weaponPrefs.forEach((spell, id) -> weapons.putString(spell.name(), id));
         tag.put("WeaponPrefs", weapons);
+
+        CompoundTag slots = new CompoundTag();
+        for (int i = 0; i < StatFormulas.TOTAL_BAR_SLOTS; i++) {
+            if (!slotExtra.get(i).isEmpty()) {
+                slots.putString("Extra" + i, String.join(";", slotExtra.get(i)));
+            }
+            if (slotCycleMode[i] != CycleMode.CYCLE) {
+                slots.putString("Mode" + i, slotCycleMode[i].name());
+            }
+            if (slotAutoCast[i]) {
+                slots.putBoolean("Auto" + i, true);
+            }
+            if (!slotWeaponId[i].isEmpty()) {
+                slots.putString("Weapon" + i, slotWeaponId[i]);
+            }
+            if (slotForceWeapon[i]) {
+                slots.putBoolean("ForceWeapon" + i, true);
+            }
+        }
+        tag.put("SlotOptions", slots);
         return tag;
     }
 
@@ -410,6 +561,33 @@ public class PlayerStats {
                 if (spell != null) {
                     stats.weaponPrefs.put(spell, weapons.getString(key));
                 }
+            }
+        }
+        if (tag.contains("SlotOptions")) {
+            CompoundTag slots = tag.getCompound("SlotOptions");
+            for (int i = 0; i < StatFormulas.TOTAL_BAR_SLOTS; i++) {
+                if (slots.contains("Extra" + i)) {
+                    String joined = slots.getString("Extra" + i);
+                    if (!joined.isEmpty()) {
+                        for (String name : joined.split(";")) {
+                            if (Spell.byName(name) != null) {
+                                stats.slotExtra.get(i).add(name);
+                            }
+                        }
+                    }
+                }
+                if (slots.contains("Mode" + i)) {
+                    try {
+                        stats.slotCycleMode[i] = CycleMode.valueOf(slots.getString("Mode" + i));
+                    } catch (IllegalArgumentException ignored) {
+                        // keep the default (CYCLE)
+                    }
+                }
+                stats.slotAutoCast[i] = slots.getBoolean("Auto" + i);
+                if (slots.contains("Weapon" + i)) {
+                    stats.slotWeaponId[i] = slots.getString("Weapon" + i);
+                }
+                stats.slotForceWeapon[i] = slots.getBoolean("ForceWeapon" + i);
             }
         }
         return stats;
