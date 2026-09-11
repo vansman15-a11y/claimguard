@@ -28,6 +28,8 @@ public final class ClientSpells {
     private static String[] slotWeaponId = new String[SLOT_COUNT];
     private static boolean[] slotForceWeapon = new boolean[SLOT_COUNT];
     private static int lastSlot = -1;
+    /** Client tick lastSlot last actually changed (a fresh cast press) - lets the Bar 1 readout tell a spell cast apart from a more recent melee swing. */
+    private static long lastSpellActionTick = Long.MIN_VALUE;
 
     private static int[] defaultSchoolLevels() {
         int[] a = new int[School.values().length];
@@ -81,7 +83,15 @@ public final class ClientSpells {
         if (p.slotForceWeapon != null && p.slotForceWeapon.length == SLOT_COUNT) {
             slotForceWeapon = p.slotForceWeapon;
         }
+        if (p.lastSlot != lastSlot) {
+            lastSpellActionTick = clientTick();
+        }
         lastSlot = p.lastSlot;
+    }
+
+    /** Client tick of the most recent spell-slot press - compare against ClientSwingCooldown.lastSwingTick() to see which action is newer. */
+    public static long lastSpellActionTick() {
+        return lastSpellActionTick;
     }
 
     /** The item registry id this spell auto-equips before casting, or null if none is set. */

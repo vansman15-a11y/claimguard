@@ -16,7 +16,13 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.network.PacketDistributor;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.robmc.combat.network.CombatNetwork;
+import net.robmc.combat.network.SwingCooldownPacket;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /** Server-side glue for Reforged Melee: slower swings, the cleave arc, and the combo crit. */
@@ -25,7 +31,29 @@ public final class CombatEvents {
 
     private static final UUID SWING_SLOWDOWN_ID = UUID.fromString("c0dea7e5-0001-4a00-8000-0000000000a1");
 
+    /** The tick each player last swung, for the hard global cooldown - independent of vanilla's attack-speed charge. */
+    private static final Map<UUID, Long> lastSwingTick = new HashMap<>();
+
     private CombatEvents() {
+    }
+
+    /**
+     * Gate: only lets a swing through once every {@link CombatConfig#SWING_COOLDOWN_TICKS}, no
+     * matter how fast the attack button is spammed. On success, tells the client to start
+     * showing the cooldown (the readout under rpgstats' Bar 1 reads this). Call this before
+     * doing anything else for a swing - a click that fails this check should have zero effect.
+     */
+    public static boolean tryStartSwing(ServerPlayer player) {
+        long now = player.serverLevel().getGameTime();
+        long last = lastSwingTick.getOrDefault(player.getUUID(), Long.MIN_VALUE);
+        if (now - last < CombatConfig.SWING_COOLDOWN_TICKS) {
+            return false;
+        }
+        lastSwingTick.put(player.getUUID(), now);
+        var id = ForgeRegistries.ITEMS.getKey(player.getMainHandItem().getItem());
+        CombatNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new SwingCooldownPacket(id != null ? id.toString() : "", CombatConfig.SWING_COOLDOWN_TICKS));
+        return true;
     }
 
     public static boolean isMeleeWeapon(ItemStack stack) {
@@ -69,6 +97,10 @@ public final class CombatEvents {
         if (!isMeleeWeapon(player.getMainHandItem())) {
             return;
         }
+        if (!tryStartSwing(player)) {
+            event.setCanceled(true); // still on the hard cooldown - no damage, no knockback, nothing
+            return;
+        }
         LivingEntity primary = event.getTarget() instanceof LivingEntity le ? le : null;
         MeleeArc.sweep(player, primary, true); // the vanilla primary hit is about to land
     }
@@ -102,5 +134,6 @@ public final class CombatEvents {
     @SubscribeEvent
     public static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         ComboTracker.clear(event.getEntity().getUUID());
+        lastSwingTick.remove(event.getEntity().getUUID());
     }
 }

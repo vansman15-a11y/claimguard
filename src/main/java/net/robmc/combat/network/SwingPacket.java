@@ -29,7 +29,7 @@ public class SwingPacket {
         NetworkEvent.Context context = ctx.get();
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
-            if (player != null && CombatEvents.isMeleeWeapon(player.getMainHandItem())) {
+            if (player != null && CombatEvents.isMeleeWeapon(player.getMainHandItem()) && CombatEvents.tryStartSwing(player)) {
                 MeleeArc.sweep(player, null, false);
             }
         });

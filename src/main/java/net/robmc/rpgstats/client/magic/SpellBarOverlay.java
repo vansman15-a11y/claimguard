@@ -142,11 +142,44 @@ public class SpellBarOverlay {
         }
         int selX = horiz ? x + SLOTS * SLOT + SELECTED_GAP : x;
         int selY = horiz ? y : y + SLOTS * SLOT + SELECTED_GAP;
-        drawTile(g, font, selX, selY, ClientSpells.selectedSpell(), opacity, 0x00C9A227);
+
+        // whichever action happened more recently - a spell-slot press or a melee swing - wins the readout
+        boolean melee = net.robmc.combat.client.ClientSwingCooldown.lastSwingTick() > ClientSpells.lastSpellActionTick();
+        if (melee) {
+            drawMeleeTile(g, font, selX, selY, opacity);
+        } else {
+            drawTile(g, font, selX, selY, ClientSpells.selectedSpell(), opacity, 0x00C9A227);
+        }
 
         int wepX = horiz ? selX + SLOT : selX;
         int wepY = horiz ? selY : selY + SLOT;
-        drawWeaponTile(g, wepX, wepY, ClientSpells.selectedWeaponId(), opacity);
+        drawWeaponTile(g, wepX, wepY, melee ? null : ClientSpells.selectedWeaponId(), opacity);
+    }
+
+    /** The readout when the most recent action was a melee swing, not a spell cast - same look, reading the combat mod's cooldown state. */
+    private static void drawMeleeTile(GuiGraphics g, Font font, int x, int y, float opacity) {
+        int bgAlpha = (int) (0xC0 * opacity);
+        int borderAlpha = (int) (0xFF * opacity);
+        g.fill(x, y, x + SLOT, y + SLOT, (bgAlpha << 24) | 0x00101010);
+        g.renderOutline(x, y, SLOT, SLOT, (borderAlpha << 24) | 0x00C9A227);
+
+        String weaponId = net.robmc.combat.client.ClientSwingCooldown.weaponId();
+        if (weaponId == null) {
+            return;
+        }
+        drawItem(g, weaponId, x + 2, y + 2, 1.0f, opacity);
+
+        float cdp = net.robmc.combat.client.ClientSwingCooldown.progress();
+        if (cdp < 1.0f) {
+            int a = (int) (0x8C * (1.0f - cdp) * opacity);
+            g.fill(x + 1, y + 1, x + SLOT - 1, y + SLOT - 1, (a << 24) | 0x00FFE2A6);
+        }
+
+        float flash = net.robmc.combat.client.ClientSwingCooldown.readyFlash();
+        if (flash > 0.0f) {
+            g.fill(x, y, x + SLOT, y + SLOT, ((int) (0x3C * flash * opacity) << 24) | 0x00FFFFFF);
+            g.renderOutline(x, y, SLOT, SLOT, ((int) (0xC0 * flash * opacity) << 24) | 0x00FFFFFF);
+        }
     }
 
     static void drawSlot(GuiGraphics g, Font font, int x, int y, int index, float opacity) {
