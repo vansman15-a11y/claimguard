@@ -310,6 +310,8 @@ public class RpgEvents {
         }
         food.setExhaustion(0.0f);
 
+        JumpArcManager.tick(player);
+
         // Moving on foot drains stamina - a trickle for walking, much more for sprinting.
         PlayerStats s = RpgManager.stats(player);
         boolean onFoot = player.onGround() || player.isInWater();
@@ -381,6 +383,7 @@ public class RpgEvents {
         net.robmc.rpgstats.magic.AstralAnnihilationManager.clear(id);
         net.robmc.rpgstats.food.NourishmentManager.clear(id);
         net.robmc.rpgstats.food.FoodBuffManager.clear(id);
+        JumpArcManager.clear(id);
         lastPos.remove(id);
         wasSwinging.remove(id);
         lastMeleeHitTick.remove(id);
@@ -404,6 +407,7 @@ public class RpgEvents {
             s.setStamina(s.getStamina() - StatFormulas.STAMINA_JUMP);
             RpgManager.sync(player);
         }
+        JumpArcManager.start(player);
     }
 
     // --- exhausted: can't fight ---

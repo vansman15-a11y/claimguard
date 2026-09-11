@@ -196,6 +196,16 @@ public final class StatFormulas {
     public static final double STAMINA_JUMP = 3.0;               // per jump
     public static final double STAMINA_MELEE_SWING = 6.0;        // per landed hit with a weapon
 
+    // --- jump arc: a bit higher, hangs for a split second at the top, floats back down -
+    // enough of a window to fire a spell or a shot mid-air. See JumpArcManager. ---
+    public static final double JUMP_HEIGHT_MULT = 1.2;           // ~20% higher than vanilla (stacks with Jump Boost)
+    public static final double JUMP_RISE_GRAVITY = 0.055;        // vanilla's is ~0.08 - decelerates slower on the way up
+    public static final int JUMP_HANG_TICKS = 4;                 // frozen at the apex for a split second
+    public static final double JUMP_FALL_GRAVITY = 0.045;        // about half of vanilla - floats back down
+    public static final double JUMP_FALL_TERMINAL = 0.5;         // caps how fast the floaty fall can build up to
+    public static final int JUMP_FALL_MAX_TICKS = 40;            // safety: hands back to vanilla physics after 2s of floaty falling
+    public static final double JUMP_MAX_DROP = 4.0;              // safety: also hands back if they've drifted this far below the jump's start
+
     // --- exhausted state (stamina bottomed out) ---
     /** Exhausted at 0 stamina; stays exhausted until stamina climbs back to this fraction of max. */
     public static final double EXHAUSTION_RECOVER_FRACTION = 0.15;
