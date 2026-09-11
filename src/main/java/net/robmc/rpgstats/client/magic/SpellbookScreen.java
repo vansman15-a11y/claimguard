@@ -10,6 +10,7 @@ import net.robmc.claimguard.network.SetSpellSlotPacket;
 import net.robmc.rpgstats.StatFormulas;
 import net.robmc.rpgstats.magic.School;
 import net.robmc.rpgstats.magic.Spell;
+import net.robmc.rpgstats.skill.FighterClass;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,9 +19,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Press U. A scrolling list of every magic school (expand one to see its spells)
- * and your two 9-slot casting bars on the right. Drag a spell row onto a slot to
- * bind it; drag a bound slot off to clear it. Only Weak Magic has spells so far.
+ * Press U. Two expandable books: the Spellbook (every magic school, expand one
+ * to see its spells) and the Skills Book (the fighter-type classes - names only
+ * for now, abilities not designed yet). Your two 9-slot casting bars sit on the
+ * right. Drag a spell row onto a slot to bind it; drag a bound slot off to clear it.
  */
 public class SpellbookScreen extends Screen {
 
@@ -29,12 +31,15 @@ public class SpellbookScreen extends Screen {
     private static final int ROW_H = 22;
     private static final int LIST_W = 250;
 
-    private enum Kind { HEADER, SPELL, LOCKED, EMPTY }
+    private static final String BOOK_SPELLS = "BOOK_SPELLS";
+    private static final String BOOK_SKILLS = "BOOK_SKILLS";
 
-    private record Row(Kind kind, String group, String name, int tier, int y) {
+    private enum Kind { BOOK, HEADER, SPELL, LOCKED, EMPTY, CLASS_HEADER, CLASS_PLACEHOLDER }
+
+    private record Row(Kind kind, String group, String name, int tier, int y, int indent) {
     }
 
-    private final Set<String> expanded = new HashSet<>(Arrays.asList(School.WEAK.name()));
+    private final Set<String> expanded = new HashSet<>(Arrays.asList(BOOK_SPELLS, School.WEAK.name()));
     private int scroll;
 
     private String draggingName;
@@ -83,20 +88,38 @@ public class SpellbookScreen extends Screen {
     private List<Row> rows() {
         List<Row> list = new ArrayList<>();
         int y = 0;
-        for (School school : School.values()) {
-            list.add(new Row(Kind.HEADER, school.name(), school.displayName(), 0, y));
-            y += ROW_H;
-            if (expanded.contains(school.name())) {
-                int lvl = ClientSpells.schoolLevel(school);
-                for (int tier = 1; tier <= school.tierCount(); tier++) {
-                    Spell spell = Spell.of(school, tier);
-                    if (spell == null) {
-                        list.add(new Row(Kind.EMPTY, school.name(), "", tier, y));
-                    } else if (lvl >= school.unlockLevel(tier)) {
-                        list.add(new Row(Kind.SPELL, school.name(), spell.name(), tier, y));
-                    } else {
-                        list.add(new Row(Kind.LOCKED, school.name(), spell.name(), tier, y));
+
+        list.add(new Row(Kind.BOOK, BOOK_SPELLS, "Spellbook", 0, y, 0));
+        y += ROW_H;
+        if (expanded.contains(BOOK_SPELLS)) {
+            for (School school : School.values()) {
+                list.add(new Row(Kind.HEADER, school.name(), school.displayName(), 0, y, 8));
+                y += ROW_H;
+                if (expanded.contains(school.name())) {
+                    int lvl = ClientSpells.schoolLevel(school);
+                    for (int tier = 1; tier <= school.tierCount(); tier++) {
+                        Spell spell = Spell.of(school, tier);
+                        if (spell == null) {
+                            list.add(new Row(Kind.EMPTY, school.name(), "", tier, y, 20));
+                        } else if (lvl >= school.unlockLevel(tier)) {
+                            list.add(new Row(Kind.SPELL, school.name(), spell.name(), tier, y, 20));
+                        } else {
+                            list.add(new Row(Kind.LOCKED, school.name(), spell.name(), tier, y, 20));
+                        }
+                        y += ROW_H;
                     }
+                }
+            }
+        }
+
+        list.add(new Row(Kind.BOOK, BOOK_SKILLS, "Skills Book", 0, y, 0));
+        y += ROW_H;
+        if (expanded.contains(BOOK_SKILLS)) {
+            for (FighterClass fc : FighterClass.values()) {
+                list.add(new Row(Kind.CLASS_HEADER, fc.name(), fc.displayName(), 0, y, 8));
+                y += ROW_H;
+                if (expanded.contains(fc.name())) {
+                    list.add(new Row(Kind.CLASS_PLACEHOLDER, fc.name(), "", 0, y, 20));
                     y += ROW_H;
                 }
             }
@@ -144,7 +167,7 @@ public class SpellbookScreen extends Screen {
                 int localY = (int) (my - listY()) + scroll;
                 for (Row row : rows()) {
                     if (localY >= row.y && localY < row.y + ROW_H) {
-                        if (row.kind == Kind.HEADER) {
+                        if (row.kind == Kind.BOOK || row.kind == Kind.HEADER || row.kind == Kind.CLASS_HEADER) {
                             if (expanded.contains(row.group)) {
                                 expanded.remove(row.group);
                             } else {
@@ -207,8 +230,8 @@ public class SpellbookScreen extends Screen {
 
         g.fill(left, top, left + PANEL_W, top + PANEL_H, 0xE0140F1E);
         g.renderOutline(left, top, PANEL_W, PANEL_H, 0xFF3A5A88);
-        g.drawString(this.font, "SPELLBOOK", left + 14, top + 12, 0xFF9FC0FF, false);
-        g.drawString(this.font, "drag a spell or skill onto a bar slot", left + 96, top + 13, 0xFF6A6A6A, false);
+        g.drawString(this.font, "SPELLBOOK & SKILLS", left + 14, top + 12, 0xFF9FC0FF, false);
+        g.drawString(this.font, "drag a spell onto a bar slot", left + 148, top + 13, 0xFF6A6A6A, false);
 
         int vx = listX();
         int vy = listY();
@@ -252,34 +275,52 @@ public class SpellbookScreen extends Screen {
     }
 
     private void drawRow(GuiGraphics g, Row row, int x, int y) {
+        int bx = x + row.indent;
         switch (row.kind) {
+            case BOOK -> {
+                boolean open = expanded.contains(row.group);
+                g.fill(bx, y, x + LIST_W, y + ROW_H - 3, 0xE01A2438);
+                g.renderOutline(bx, y, LIST_W - row.indent, ROW_H - 3, 0xFF3A5A88);
+                g.drawString(this.font, (open ? "▼ " : "▶ ") + row.name, bx + 6, y + 6, 0xFFFFE066, false);
+            }
             case HEADER -> {
                 School school = School.valueOf(row.group);
                 boolean open = expanded.contains(row.group);
                 int lvl = ClientSpells.schoolLevel(school);
-                g.fill(x, y, x + LIST_W, y + ROW_H - 3, 0xC02A3346);
-                g.drawString(this.font, (open ? "[-] " : "[+] ") + row.name, x + 6, y + 3, 0xFFDDE6F5, false);
+                g.fill(bx, y, x + LIST_W, y + ROW_H - 3, 0xC02A3346);
+                g.drawString(this.font, (open ? "[-] " : "[+] ") + row.name, bx + 6, y + 3, 0xFFDDE6F5, false);
                 String tag = "Lv " + lvl + "  " + unlockedCount(school) + "/" + school.tierCount();
                 g.drawString(this.font, tag, x + LIST_W - 4 - this.font.width(tag), y + 3, 0xFF8FA0B4, false);
             }
+            case CLASS_HEADER -> {
+                boolean open = expanded.contains(row.group);
+                g.fill(bx, y, x + LIST_W, y + ROW_H - 3, 0xC02A2A38);
+                g.drawString(this.font, (open ? "[-] " : "[+] ") + row.name, bx + 6, y + 3, 0xFFDDE6F5, false);
+                String tag = "coming soon";
+                g.drawString(this.font, tag, x + LIST_W - 4 - this.font.width(tag), y + 3, 0xFF6A6A6A, false);
+            }
+            case CLASS_PLACEHOLDER -> {
+                g.fill(bx, y, x + LIST_W, y + ROW_H - 3, 0x50202838);
+                g.drawString(this.font, "abilities not designed yet", bx + 8, y + 6, 0xFF5A5A5A, false);
+            }
             case EMPTY -> {
-                g.fill(x + 12, y, x + LIST_W, y + ROW_H - 3, 0x50202838);
-                g.drawString(this.font, "tier " + row.tier + "  -", x + 20, y + 6, 0xFF5A5A5A, false);
+                g.fill(bx, y, x + LIST_W, y + ROW_H - 3, 0x50202838);
+                g.drawString(this.font, "tier " + row.tier + "  -", bx + 8, y + 6, 0xFF5A5A5A, false);
             }
             case LOCKED -> {
                 Spell spell = Spell.valueOf(row.name);
-                g.fill(x + 12, y, x + LIST_W, y + ROW_H - 3, 0x80181C24);
-                g.drawString(this.font, "🔒 " + spell.displayName(), x + 20, y + 3, 0xFF6A6A6A, false);
+                g.fill(bx, y, x + LIST_W, y + ROW_H - 3, 0x80181C24);
+                g.drawString(this.font, "🔒 " + spell.displayName(), bx + 8, y + 3, 0xFF6A6A6A, false);
                 String need = "Lv " + spell.unlockLevel();
                 g.drawString(this.font, need, x + LIST_W - 4 - this.font.width(need), y + 3, 0xFF6A6A6A, false);
             }
             case SPELL -> {
                 Spell spell = Spell.valueOf(row.name);
                 int lvl = ClientSpells.spellLevel(spell);
-                g.fill(x + 12, y, x + LIST_W, y + ROW_H - 3, 0xC0202838);
-                SpellIcons.draw(g, spell, x + 14, y + 1, ROW_H - 6);
-                g.drawString(this.font, spell.displayName(), x + 36, y + 3, 0xFFFFFFFF, false);
-                g.drawString(this.font, describe(spell), x + 36, y + 12, 0xFF8FA0B4, false);
+                g.fill(bx, y, x + LIST_W, y + ROW_H - 3, 0xC0202838);
+                SpellIcons.draw(g, spell, bx + 2, y + 1, ROW_H - 6);
+                g.drawString(this.font, spell.displayName(), bx + 24, y + 3, 0xFFFFFFFF, false);
+                g.drawString(this.font, describe(spell), bx + 24, y + 12, 0xFF8FA0B4, false);
                 String lt = "Lv " + lvl + " (" + StatFormulas.effectivenessPercent(lvl) + "%)";
                 g.drawString(this.font, lt, x + LIST_W - 4 - this.font.width(lt), y + 3, 0xFFB9A9E3, false);
             }
