@@ -74,6 +74,12 @@ public class RpgKeybinds {
                     mc.setScreen(null);
                 }
             }
+            // jump pressed again while airborne -> try a mid-arc double jump (server validates cooldown/eligibility)
+            while (mc.options.keyJump.consumeClick()) {
+                if (mc.screen == null && mc.player != null && !mc.player.onGround()) {
+                    ClaimGuardNetwork.CHANNEL.sendToServer(new net.robmc.claimguard.network.DoubleJumpPacket());
+                }
+            }
             while (SPELLBOOK.consumeClick()) {
                 if (mc.screen == null) {
                     mc.setScreen(new SpellbookScreen());

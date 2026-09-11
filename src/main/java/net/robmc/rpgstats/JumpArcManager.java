@@ -10,9 +10,11 @@ import java.util.UUID;
 
 /**
  * Replaces the vanilla jump's near-instant rise-and-drop with one that climbs a
- * little higher, hangs for a split second at the apex, and floats back down
- * slower - a real window to fire off a spell or a shot mid-air instead of
- * vanilla's blink-and-you-missed-it arc.
+ * little higher, hangs briefly at the apex, and floats back down slower - a real
+ * window to fire off a spell or a shot mid-air instead of vanilla's
+ * blink-and-you-missed-it arc. Launch-speed momentum is held for the whole arc
+ * instead of bleeding away to vanilla's air drag, and a second jump is available
+ * mid-arc on a cooldown to extend the reach further.
  *
  * Fully custom gravity while an arc is active: every player tick this
  * overwrites {@code deltaMovement.y} with our own curve instead of letting
@@ -30,13 +32,17 @@ public final class JumpArcManager {
         int hangTicksLeft;
         int fallTicks;
         final double startY;
+        double launchSpeedSq;
+        boolean doubleJumped = false;
 
-        Arc(double startY) {
+        Arc(double startY, double launchSpeedSq) {
             this.startY = startY;
+            this.launchSpeedSq = launchSpeedSq;
         }
     }
 
     private static final Map<UUID, Arc> arcs = new HashMap<>();
+    private static final Map<UUID, Long> doubleJumpCdEnd = new HashMap<>();
 
     private JumpArcManager() {
     }
@@ -49,11 +55,48 @@ public final class JumpArcManager {
         Vec3 dm = player.getDeltaMovement();
         player.setDeltaMovement(dm.x, dm.y * StatFormulas.JUMP_HEIGHT_MULT, dm.z);
         player.hurtMarked = true; // force the boosted velocity to actually reach the client
-        arcs.put(player.getUUID(), new Arc(player.getY()));
+        arcs.put(player.getUUID(), new Arc(player.getY(), dm.x * dm.x + dm.z * dm.z));
+    }
+
+    /**
+     * A second jump mid-arc: one per active jump, on a shared cooldown. Restarts the same
+     * rise/hang/fall curve from wherever the player currently is, and adds a push along
+     * whatever direction they're already moving to extend the jump's reach.
+     */
+    public static void tryDoubleJump(ServerPlayer player) {
+        Arc arc = arcs.get(player.getUUID());
+        if (arc == null || arc.doubleJumped) {
+            return;
+        }
+        long now = player.serverLevel().getGameTime();
+        long cdEnd = doubleJumpCdEnd.getOrDefault(player.getUUID(), 0L);
+        if (now < cdEnd) {
+            return;
+        }
+        arc.doubleJumped = true;
+        arc.phase = Phase.RISING;
+        arc.fallTicks = 0;
+        doubleJumpCdEnd.put(player.getUUID(), now + StatFormulas.DOUBLE_JUMP_COOLDOWN_TICKS);
+
+        Vec3 dm = player.getDeltaMovement();
+        double speedSq = dm.x * dm.x + dm.z * dm.z;
+        double hx = dm.x;
+        double hz = dm.z;
+        if (speedSq > 1.0E-6) {
+            double invLen = StatFormulas.DOUBLE_JUMP_FORWARD_BOOST / Math.sqrt(speedSq);
+            hx += dm.x * invLen;
+            hz += dm.z * invLen;
+        }
+        arc.launchSpeedSq = hx * hx + hz * hz;
+        player.setDeltaMovement(hx, StatFormulas.DOUBLE_JUMP_VELOCITY, hz);
+        player.hurtMarked = true;
+        player.level().playSound(null, player.blockPosition(),
+                net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP, net.minecraft.sounds.SoundSource.PLAYERS, 0.5f, 1.6f);
     }
 
     public static void clear(UUID id) {
         arcs.remove(id);
+        doubleJumpCdEnd.remove(id);
     }
 
     /** Called every player tick (Phase.END) from RpgEvents.onPlayerTick. */
@@ -100,7 +143,20 @@ public final class JumpArcManager {
         }
 
         Vec3 dm = player.getDeltaMovement();
-        player.setDeltaMovement(dm.x, y, dm.z);
+        double hx = dm.x;
+        double hz = dm.z;
+        double targetSpeedSq = arc.launchSpeedSq * StatFormulas.JUMP_MOMENTUM_PRESERVE_FRACTION;
+        double speedSq = hx * hx + hz * hz;
+        // vanilla air drag would otherwise bleed off a sprint jump's speed over this much longer
+        // airtime - top the current horizontal speed back up to (a fraction of) launch speed,
+        // in whatever direction the player's currently steering, instead of freezing it outright
+        if (speedSq < targetSpeedSq && speedSq > 1.0E-6) {
+            double scale = Math.sqrt(targetSpeedSq / speedSq);
+            hx *= scale;
+            hz *= scale;
+        }
+
+        player.setDeltaMovement(hx, y, hz);
         player.hurtMarked = true; // force the corrected velocity to actually reach the client every tick
         player.fallDistance = 0.0f; // a controlled ascent/descent, not a fall - no fall damage from it
     }
