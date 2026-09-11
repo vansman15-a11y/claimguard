@@ -13,8 +13,6 @@ import net.robmc.rpgstats.magic.Spell;
 import net.robmc.rpgstats.skill.FighterClass;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -23,6 +21,9 @@ import java.util.Set;
  * to see its spells) and the Skills Book (the fighter-type classes - names only
  * for now, abilities not designed yet). Your two 9-slot casting bars sit on the
  * right. Drag a spell row onto a slot to bind it; drag a bound slot off to clear it.
+ * Which rows are expanded, and the scroll position, are remembered for the rest
+ * of your login (see {@link SpellbookUiState}) - everything starts collapsed on
+ * a fresh login and wipes again when you log out.
  */
 public class SpellbookScreen extends Screen {
 
@@ -39,8 +40,8 @@ public class SpellbookScreen extends Screen {
     private record Row(Kind kind, String group, String name, int tier, int y, int indent) {
     }
 
-    private final Set<String> expanded = new HashSet<>(Arrays.asList(BOOK_SPELLS, School.WEAK.name()));
-    private int scroll;
+    private final Set<String> expanded = SpellbookUiState.expanded();
+    private int scroll = SpellbookUiState.scroll();
 
     private String draggingName;
     private int draggingSlot = -1;
@@ -53,6 +54,13 @@ public class SpellbookScreen extends Screen {
     protected void init() {
         addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, b -> onClose())
                 .bounds(this.width / 2 - 60, panelTop() + PANEL_H - 26, 120, 20).build());
+        scroll = Math.min(scroll, maxScroll());
+    }
+
+    @Override
+    public void removed() {
+        SpellbookUiState.setScroll(scroll); // expanded() is the live shared set - already up to date
+        super.removed();
     }
 
     private int panelLeft() {
