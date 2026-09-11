@@ -26,7 +26,10 @@ public final class RpgManager {
     }
 
     public static PlayerStats stats(ServerPlayer player) {
-        return RpgData.get(player.server).getOrCreate(player.getUUID());
+        PlayerStats s = RpgData.get(player.server).getOrCreate(player.getUUID());
+        // cheap (4 armour slots) and keeps casts/spell damage honest about what's currently worn
+        s.setArmorEncumbrance(net.robmc.rpgstats.item.ArmorTier.totalEncumbrance(player));
+        return s;
     }
 
     public static void markDirty(ServerPlayer player) {

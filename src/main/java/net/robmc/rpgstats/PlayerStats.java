@@ -38,6 +38,9 @@ public class PlayerStats {
     /** Battle Hymn's temporary +N to Strength / Vitality / Quickness (0 = not buffed). Not persisted. */
     private int hymnBonus = 0;
 
+    /** Summed encumbrance of the 4 worn armour pieces. Derived, refreshed by RpgManager.stats() - not persisted. */
+    private double armorEncumbrance = 0.0;
+
     /** The two casting bars' slots (bar 1 = 0..8, bar 2 = 9..17), each holding a Spell/Skill enum name or "". */
     private final String[] spellBar = new String[StatFormulas.TOTAL_BAR_SLOTS];
 
@@ -82,6 +85,14 @@ public class PlayerStats {
 
     public boolean hasHymn() {
         return hymnBonus > 0;
+    }
+
+    public double getArmorEncumbrance() {
+        return armorEncumbrance;
+    }
+
+    public void setArmorEncumbrance(double value) {
+        this.armorEncumbrance = Math.max(0.0, value);
     }
 
     public double getXp(Stat stat) {

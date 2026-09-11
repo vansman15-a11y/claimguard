@@ -18,10 +18,12 @@ import java.util.function.Supplier;
  */
 public enum RpgArmorMaterials implements ArmorMaterial {
 
-    DRAGON("rpgstats:dragon", 37, 3, 6, 8, 3, 15,
+    DRAGON("rpgstats:dragon", 40, 3, 6, 8, 3, 18,
+            SoundEvents.ARMOR_EQUIP_NETHERITE, 3.5F, 0.15F, () -> Ingredient.of(Items.NETHERITE_INGOT)),
+    INFERNAL("rpgstats:infernal", 37, 3, 6, 8, 3, 15,
             SoundEvents.ARMOR_EQUIP_NETHERITE, 3.0F, 0.1F, () -> Ingredient.of(Items.NETHERITE_INGOT)),
-    INFERNAL("rpgstats:infernal", 33, 3, 6, 8, 3, 10,
-            SoundEvents.ARMOR_EQUIP_DIAMOND, 2.0F, 0.0F, () -> Ingredient.of(Items.DIAMOND));
+    FULL_PLATE("rpgstats:full_plate", 30, 3, 6, 8, 3, 12,
+            SoundEvents.ARMOR_EQUIP_IRON, 2.0F, 0.05F, () -> Ingredient.of(Items.IRON_INGOT));
 
     private static final EnumMap<ArmorItem.Type, Integer> BASE_DURABILITY = new EnumMap<>(ArmorItem.Type.class);
 

@@ -165,6 +165,21 @@ public class RpgEvents {
         }
     }
 
+    /**
+     * Armour's own defense/toughness attributes stop mattering the moment it's worn - they're
+     * zeroed here so vanilla's built-in reduction can't quietly stack with Physical/Magic
+     * Protection (see {@link net.robmc.rpgstats.item.ArmorTier}, applied in onLivingHurt below).
+     * Knockback resistance is left alone.
+     */
+    @SubscribeEvent
+    public static void onArmorAttributes(ItemAttributeModifierEvent event) {
+        if (!(event.getItemStack().getItem() instanceof net.minecraft.world.item.ArmorItem)) {
+            return;
+        }
+        event.removeAttribute(Attributes.ARMOR);
+        event.removeAttribute(Attributes.ARMOR_TOUGHNESS);
+    }
+
     // --- two-handed weapons: never in the offhand, and clear the offhand while wielded ---
 
     private static void enforceTwoHanded(ServerPlayer player) {
@@ -500,6 +515,9 @@ public class RpgEvents {
             amount *= (float) StatFormulas.DAMAGE_SCALE;
             if (magic) {
                 amount *= (float) (1.0 - StatFormulas.spellDamageResist(RpgManager.stats(victim)));
+                amount *= (float) (1.0 - StatFormulas.magicProtection(victim));
+            } else {
+                amount *= (float) (1.0 - StatFormulas.physicalProtection(victim));
             }
             SpellCasting.interrupt(victim); // taking a hit breaks your cast
             RestManager.stop(victim, "Knocked out of your rest!");

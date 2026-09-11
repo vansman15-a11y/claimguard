@@ -106,12 +106,41 @@ public final class StatFormulas {
     }
 
     public static double spellDamageMultiplier(PlayerStats s) {
-        return 1.0 + SPELL_MAX_BONUS * eff(s, Stat.INTELLIGENCE);
+        return (1.0 + SPELL_MAX_BONUS * eff(s, Stat.INTELLIGENCE)) * encumbranceSpellDamageMult(s.getArmorEncumbrance());
     }
 
-    /** Cast-time multiplier (&lt;1 = faster). Floors at 0.5x. */
+    /** Cast-time multiplier (&lt;1 = faster). Floors at 0.5x from Intelligence alone, but heavy armour can push it back up past 1x. */
     public static double castSpeedMultiplier(PlayerStats s) {
-        return Math.max(0.5, 1.0 - CAST_MAX_CUT * eff(s, Stat.INTELLIGENCE));
+        return Math.max(0.5, 1.0 - CAST_MAX_CUT * eff(s, Stat.INTELLIGENCE)) * encumbranceCastTimeMult(s.getArmorEncumbrance());
+    }
+
+    // --- encumbrance: heavy armour is a real tax on spellcasting ---
+
+    public static final double ENCUMBRANCE_PENALTY_FULL = 106.0;    // a full Dragon set - the penalty maxes out here
+    public static final double ENCUMBRANCE_SPELL_DAMAGE_MAX_CUT = 0.45; // -45% spell damage at full penalty
+    public static final double ENCUMBRANCE_CAST_TIME_MAX_ADD = 1.0;    // up to +100% cast time (2x as slow) at full penalty
+
+    /** &lt;1 = weaker spells. 1.0 with no armour (or something as light as Leather). */
+    public static double encumbranceSpellDamageMult(double encumbrance) {
+        return 1.0 - ENCUMBRANCE_SPELL_DAMAGE_MAX_CUT * Math.min(1.0, encumbrance / ENCUMBRANCE_PENALTY_FULL);
+    }
+
+    /** &gt;1 = slower casts. 1.0 with no armour. */
+    public static double encumbranceCastTimeMult(double encumbrance) {
+        return 1.0 + ENCUMBRANCE_CAST_TIME_MAX_ADD * Math.min(1.0, encumbrance / ENCUMBRANCE_PENALTY_FULL);
+    }
+
+    // --- armour protection: everything condenses to just these two ---
+
+    public static final double PHYSICAL_PROTECTION_CAP = 0.65; // a full set can never shave off more than this
+    public static final double MAGIC_PROTECTION_CAP = 0.60;
+
+    public static double physicalProtection(net.minecraft.server.level.ServerPlayer player) {
+        return Math.min(PHYSICAL_PROTECTION_CAP, net.robmc.rpgstats.item.ArmorTier.totalPhysicalProtectionPercent(player) / 100.0);
+    }
+
+    public static double magicProtection(net.minecraft.server.level.ServerPlayer player) {
+        return Math.min(MAGIC_PROTECTION_CAP, net.robmc.rpgstats.item.ArmorTier.totalMagicProtectionPercent(player) / 100.0);
     }
 
     /** Fraction of incoming spell damage removed by Dexterity. */
