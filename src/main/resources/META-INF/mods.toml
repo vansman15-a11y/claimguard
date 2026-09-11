@@ -90,3 +90,30 @@ no dependency on the other mods in this pack. Install on the server and every cl
     versionRange="[1.20.1,1.21)"
     ordering="NONE"
     side="BOTH"
+
+[[mods]]
+modId="villagehousing"
+version="1.0.0"
+displayName="Village Housing"
+authors="robmc"
+description='''
+Buy, own, sell and lock individual village houses on top of vanilla villages.
+One house per player (owner or guest), a For Sale sign per buyable house,
+locked doors/chests for everyone but the owner and their one guest, and
+diamonds as the v1 currency. Standalone - no dependency on the other mods in
+this pack. Install on the server and every client.
+'''
+
+[[dependencies.villagehousing]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.villagehousing]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"
