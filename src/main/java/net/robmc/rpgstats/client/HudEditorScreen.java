@@ -33,6 +33,13 @@ public class HudEditorScreen extends Screen {
     private String dragging;
     private int grabX, grabY, baseX, baseY;
 
+    // right-click a bar's grip -> a small opacity/orientation popup for that bar
+    private Integer barMenuOpen;
+    private boolean draggingOpacitySlider;
+
+    private static final int MENU_W = 140;
+    private static final int MENU_H = 58;
+
     // dragging a spell/skill binding out of a bar slot
     private int draggingSpellFrom = -1;
 
@@ -110,7 +117,39 @@ public class HudEditorScreen extends Screen {
     }
 
     private int[] spellBarBox(int bar) {
-        return new int[]{spellBarX(bar), spellBarY(bar), SpellBarOverlay.SLOT, SpellBarOverlay.BAR_H};
+        String key = SpellBarOverlay.layoutKey(bar);
+        return new int[]{spellBarX(bar), spellBarY(bar), SpellBarOverlay.width(key), SpellBarOverlay.height(key)};
+    }
+
+    // --- per-bar opacity/orientation popup ---
+
+    private int[] barMenuBox(int bar) {
+        int[] b = spellBarBox(bar);
+        int x = Math.min(b[0] + b[2] + 6, width - MENU_W - 4);
+        int y = Math.max(4, Math.min(b[1], height - MENU_H - 4));
+        return new int[]{x, y, MENU_W, MENU_H};
+    }
+
+    private int[] opacitySliderBox(int bar) {
+        int[] m = barMenuBox(bar);
+        return new int[]{m[0] + 6, m[1] + 22, MENU_W - 12, 6};
+    }
+
+    private int[] orientationButtonBox(int bar) {
+        int[] m = barMenuBox(bar);
+        return new int[]{m[0] + 6, m[1] + 38, MENU_W - 12, 14};
+    }
+
+    /** The "Bar N" label strip above the bar - generous so the whole label grabs (drag) or opens its menu (right-click). */
+    private boolean onGrip(int bar, double mx, double my) {
+        int[] b = spellBarBox(bar);
+        return mx >= b[0] - 2 && mx <= b[0] + 40 && my >= b[1] - 13 && my <= b[1];
+    }
+
+    private void setOpacityFromMouse(int bar, double mx) {
+        int[] s = opacitySliderBox(bar);
+        float t = (float) ((mx - s[0]) / s[2]);
+        HudLayout.setOpacity(SpellBarOverlay.layoutKey(bar), Math.max(0.1f, Math.min(1.0f, t)));
     }
 
     // --- input ---
@@ -122,7 +161,31 @@ public class HudEditorScreen extends Screen {
             return true;
         }
 
-        if (button == 1) { // right-click a slot -> rebind
+        if (barMenuOpen != null) {
+            int bar = barMenuOpen;
+            if (button == 0 && inside(opacitySliderBox(bar), mx, my)) {
+                setOpacityFromMouse(bar, mx);
+                draggingOpacitySlider = true;
+                return true;
+            }
+            if (button == 0 && inside(orientationButtonBox(bar), mx, my)) {
+                String key = SpellBarOverlay.layoutKey(bar);
+                HudLayout.setHorizontal(key, !HudLayout.isHorizontal(key));
+                return true;
+            }
+            if (inside(barMenuBox(bar), mx, my)) {
+                return true; // clicked inside the popup but not on a control - just absorb it
+            }
+            barMenuOpen = null; // clicked elsewhere - close it, and let this click still do its own thing below
+        }
+
+        if (button == 1) { // right-click a slot -> rebind, or a bar's grip -> its settings popup
+            for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
+                if (onGrip(bar, mx, my)) {
+                    barMenuOpen = bar;
+                    return true;
+                }
+            }
             int hs = hotbarSlotAt(mx, my);
             if (hs >= 0) {
                 startCapture(minecraft.options.keyHotbarSlots[hs], "Hotbar slot " + (hs + 1));
@@ -168,10 +231,7 @@ public class HudEditorScreen extends Screen {
                 return true;
             }
             for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
-                int[] b = spellBarBox(bar);
-                // the "Bar N" label strip above the bar - generous so the whole label grabs
-                boolean onGrip = mx >= b[0] - 2 && mx <= b[0] + 40 && my >= b[1] - 13 && my <= b[1];
-                if (onGrip || inside(b, mx, my)) {
+                if (onGrip(bar, mx, my) || inside(spellBarBox(bar), mx, my)) {
                     startDrag(SpellBarOverlay.layoutKey(bar), mx, my);
                     return true;
                 }
@@ -209,6 +269,10 @@ public class HudEditorScreen extends Screen {
 
     @Override
     public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+        if (draggingOpacitySlider && barMenuOpen != null) {
+            setOpacityFromMouse(barMenuOpen, mx);
+            return true;
+        }
         if (draggingSpellFrom >= 0) {
             return true; // handled on release
         }
@@ -221,6 +285,7 @@ public class HudEditorScreen extends Screen {
 
     @Override
     public boolean mouseReleased(double mx, double my, int button) {
+        draggingOpacitySlider = false;
         if (draggingSpellFrom >= 0) {
             int target = spellSlotAt(mx, my);
             if (target >= 0 && target != draggingSpellFrom) {
@@ -337,12 +402,22 @@ public class HudEditorScreen extends Screen {
 
     private int spellSlotAt(double x, double y) {
         for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
+            String key = SpellBarOverlay.layoutKey(bar);
+            boolean horiz = HudLayout.isHorizontal(key);
             int sx = spellBarX(bar);
             int sy = spellBarY(bar);
-            if (x < sx || x > sx + SpellBarOverlay.SLOT) {
-                continue;
+            int i;
+            if (horiz) {
+                if (y < sy || y > sy + SpellBarOverlay.SLOT) {
+                    continue;
+                }
+                i = (int) ((x - sx) / SpellBarOverlay.SLOT);
+            } else {
+                if (x < sx || x > sx + SpellBarOverlay.SLOT) {
+                    continue;
+                }
+                i = (int) ((y - sy) / SpellBarOverlay.SLOT);
             }
-            int i = (int) ((y - sy) / SpellBarOverlay.SLOT);
             if (i >= 0 && i < SpellBarOverlay.SLOTS) {
                 return bar * SpellBarOverlay.SLOTS + i;
             }
@@ -355,7 +430,7 @@ public class HudEditorScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         g.fill(0, 0, this.width, this.height, 0x60000000);
-        g.drawCenteredString(this.font, "HUD Editor  -  drag a bar's label to move it, drag a spell between slots, right-click a slot to rebind its key", this.width / 2, 12, 0xFFFFFF);
+        g.drawCenteredString(this.font, "HUD Editor  -  drag a bar's label to move it, right-click a label for opacity/orientation, right-click a slot to rebind its key", this.width / 2, 12, 0xFFFFFF);
 
         int[] bars = statBarsBox();
         RpgHudOverlay.renderBars(g, this.font, bars[0] + 1, bars[1] + 1);
@@ -398,17 +473,23 @@ public class HudEditorScreen extends Screen {
 
         // the two casting bars
         for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
+            String key = SpellBarOverlay.layoutKey(bar);
+            boolean horiz = HudLayout.isHorizontal(key);
             int sbX = spellBarX(bar);
             int sbY = spellBarY(bar);
-            SpellBarOverlay.render(g, this.font, sbX, sbY, SpellBarOverlay.firstSlot(bar));
+            SpellBarOverlay.render(g, this.font, sbX, sbY, SpellBarOverlay.firstSlot(bar), key);
             // draggable label / grip strip above the bar
             g.fill(sbX - 2, sbY - 13, sbX + 40, sbY - 1, 0xC03A5A88);
             g.renderOutline(sbX - 2, sbY - 13, 42, 12, 0xFF9FC0FF);
             g.drawString(this.font, "Bar " + (bar + 1), sbX + 1, sbY - 10, 0xFFDDE6F5, true);
-            g.renderOutline(sbX, sbY, SpellBarOverlay.SLOT, SpellBarOverlay.BAR_H, 0xFF9FC0FF);
+            g.renderOutline(sbX, sbY, SpellBarOverlay.width(key), SpellBarOverlay.height(key), 0xFF9FC0FF);
             for (int i = 0; i < SpellBarOverlay.SLOTS; i++) {
-                keyHint(g, RpgKeybinds.CAST[bar * SpellBarOverlay.SLOTS + i],
-                        sbX, sbY + i * SpellBarOverlay.SLOT, SpellBarOverlay.SLOT);
+                int kx = horiz ? sbX + i * SpellBarOverlay.SLOT : sbX;
+                int ky = horiz ? sbY : sbY + i * SpellBarOverlay.SLOT;
+                keyHint(g, RpgKeybinds.CAST[bar * SpellBarOverlay.SLOTS + i], kx, ky, SpellBarOverlay.SLOT);
+            }
+            if (barMenuOpen != null && barMenuOpen == bar) {
+                renderBarMenu(g, bar);
             }
         }
 
@@ -437,6 +518,29 @@ public class HudEditorScreen extends Screen {
             label = label.substring(0, 5);
         }
         g.drawString(this.font, label, x + 1, y + size - 8, 0xFFB0B0B0, false);
+    }
+
+    private void renderBarMenu(GuiGraphics g, int bar) {
+        String key = SpellBarOverlay.layoutKey(bar);
+        int[] m = barMenuBox(bar);
+        g.fill(m[0], m[1], m[0] + m[2], m[1] + m[3], 0xF0141824);
+        g.renderOutline(m[0], m[1], m[2], m[3], 0xFF9FC0FF);
+        g.drawString(this.font, "Bar " + (bar + 1) + " settings", m[0] + 6, m[1] + 4, 0xFFDDE6F5, false);
+
+        int[] slider = opacitySliderBox(bar);
+        float opacity = HudLayout.opacity(key);
+        g.drawString(this.font, "Opacity  " + Math.round(opacity * 100) + "%", m[0] + 6, m[1] + 14, 0xFFB0B0B0, false);
+        g.fill(slider[0], slider[1], slider[0] + slider[2], slider[1] + slider[3], 0xFF202838);
+        g.renderOutline(slider[0], slider[1], slider[2], slider[3], 0xFF5A6B85);
+        int handleX = slider[0] + (int) (slider[2] * opacity) - 1;
+        g.fill(handleX, slider[1] - 1, handleX + 2, slider[1] + slider[3] + 1, 0xFFFFE066);
+
+        int[] btn = orientationButtonBox(bar);
+        boolean horiz = HudLayout.isHorizontal(key);
+        g.fill(btn[0], btn[1], btn[0] + btn[2], btn[1] + btn[3], 0xFF2A3346);
+        g.renderOutline(btn[0], btn[1], btn[2], btn[3], 0xFF9FC0FF);
+        String label = horiz ? "Horizontal" : "Vertical";
+        g.drawString(this.font, label, btn[0] + (btn[2] - this.font.width(label)) / 2, btn[1] + 3, 0xFFFFFFFF, false);
     }
 
     private void outline(GuiGraphics g, int[] box, int colour, String label) {

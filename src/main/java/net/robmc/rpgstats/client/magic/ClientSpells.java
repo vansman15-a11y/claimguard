@@ -20,6 +20,7 @@ public final class ClientSpells {
     private static int[] spellLevels = new int[Spell.values().length];
     private static int[] schoolLevels = defaultSchoolLevels();
     private static int[] skillLevels = new int[Skill.values().length];
+    private static String[] weaponPrefs = new String[Spell.values().length];
 
     private static int[] defaultSchoolLevels() {
         int[] a = new int[School.values().length];
@@ -52,6 +53,15 @@ public final class ClientSpells {
         if (p.skillLevels != null && p.skillLevels.length == skillLevels.length) {
             skillLevels = p.skillLevels;
         }
+        if (p.weaponPrefs != null && p.weaponPrefs.length == weaponPrefs.length) {
+            weaponPrefs = p.weaponPrefs;
+        }
+    }
+
+    /** The item registry id this spell auto-equips before casting, or null if none is set. */
+    public static String weaponPref(Spell spell) {
+        String v = weaponPrefs[spell.ordinal()];
+        return (v == null || v.isEmpty()) ? null : v;
     }
 
     public static void onCastState(CastStatePacket p) {

@@ -90,7 +90,7 @@ public final class RpgManager {
         PlayerStats s = stats(player);
         ClaimGuardNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                 new SyncSpellBarPacket(s.getSpellBar().clone(), s.spellLevelArray(),
-                        s.schoolLevelArray(), s.skillLevelArray()));
+                        s.schoolLevelArray(), s.skillLevelArray(), s.weaponPrefArray()));
     }
 
     /**

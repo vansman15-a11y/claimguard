@@ -25,6 +25,9 @@ public class PlayerStats {
     private final Map<Spell, Integer> spellLevels = new EnumMap<>(Spell.class);
     private final Map<Spell, Double> spellXp = new EnumMap<>(Spell.class);
 
+    /** Per-spell "auto-equip this weapon before casting" preference - the item's registry id, e.g. "rpgstats:cobra_staff". */
+    private final Map<Spell, String> weaponPrefs = new EnumMap<>(Spell.class);
+
     private final Map<School, Integer> schoolLevels = new EnumMap<>(School.class);
     private final Map<School, Double> schoolXp = new EnumMap<>(School.class);
 
@@ -294,6 +297,30 @@ public class PlayerStats {
         }
     }
 
+    // --- per-spell weapon auto-equip preference ---
+
+    /** The item registry id (e.g. "rpgstats:cobra_staff") to auto-equip before casting this spell, or null. */
+    public String getWeaponPref(Spell spell) {
+        return weaponPrefs.get(spell);
+    }
+
+    public void setWeaponPref(Spell spell, String itemId) {
+        if (itemId == null || itemId.isEmpty()) {
+            weaponPrefs.remove(spell);
+        } else {
+            weaponPrefs.put(spell, itemId);
+        }
+    }
+
+    /** Indexed by Spell.ordinal(), "" where no preference is set - for SyncSpellBarPacket. */
+    public String[] weaponPrefArray() {
+        String[] arr = new String[Spell.values().length];
+        for (Spell sp : Spell.values()) {
+            arr[sp.ordinal()] = weaponPrefs.getOrDefault(sp, "");
+        }
+        return arr;
+    }
+
     // --- pools ---
 
     public double getStamina() {
@@ -346,6 +373,9 @@ public class PlayerStats {
         for (int i = 0; i < spellBar.length; i++) {
             tag.putString("Spell" + i, spellBar[i]);
         }
+        CompoundTag weapons = new CompoundTag();
+        weaponPrefs.forEach((spell, id) -> weapons.putString(spell.name(), id));
+        tag.put("WeaponPrefs", weapons);
         return tag;
     }
 
@@ -372,6 +402,15 @@ public class PlayerStats {
         stats.initialised = tag.getBoolean("Initialised");
         for (int i = 0; i < stats.spellBar.length; i++) {
             stats.spellBar[i] = tag.getString("Spell" + i);
+        }
+        if (tag.contains("WeaponPrefs")) {
+            CompoundTag weapons = tag.getCompound("WeaponPrefs");
+            for (String key : weapons.getAllKeys()) {
+                Spell spell = Spell.byName(key);
+                if (spell != null) {
+                    stats.weaponPrefs.put(spell, weapons.getString(key));
+                }
+            }
         }
         return stats;
     }

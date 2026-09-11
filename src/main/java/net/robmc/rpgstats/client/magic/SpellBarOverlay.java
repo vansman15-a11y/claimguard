@@ -14,13 +14,17 @@ import net.robmc.rpgstats.StatFormulas;
 import net.robmc.rpgstats.client.HudLayout;
 import net.robmc.rpgstats.magic.Spell;
 
-/** Two vertical 9-slot casting bars on the left. Separate from the vanilla hotbar; movable in the J editor. */
+/**
+ * Two 9-slot casting bars, vertical by default (left edge of the screen).
+ * Movable, and - via the J editor's right-click bar menu - each can be flipped
+ * horizontal and given its own background opacity.
+ */
 @Mod.EventBusSubscriber(modid = RpgStats.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class SpellBarOverlay {
 
     public static final int SLOT = 20;
     public static final int SLOTS = StatFormulas.BAR_SLOTS;   // per bar
-    public static final int BAR_H = SLOT * SLOTS;
+    public static final int BAR_H = SLOT * SLOTS;             // the bar's span along its own axis
 
     /** Anchor for a bar: bar 0 sits at the edge, bar 1 just to its right. */
     public static int defaultLeft(int bar) {
@@ -40,6 +44,16 @@ public class SpellBarOverlay {
         return bar * SLOTS;
     }
 
+    /** The bar's on-screen width, accounting for its saved orientation. */
+    public static int width(String layoutKey) {
+        return HudLayout.isHorizontal(layoutKey) ? BAR_H : SLOT;
+    }
+
+    /** The bar's on-screen height, accounting for its saved orientation. */
+    public static int height(String layoutKey) {
+        return HudLayout.isHorizontal(layoutKey) ? SLOT : BAR_H;
+    }
+
     @SubscribeEvent
     public static void register(RegisterGuiOverlaysEvent event) {
         event.registerAbove(VanillaGuiOverlay.HOTBAR.id(), "rpg_spell_bar", BAR);
@@ -51,9 +65,10 @@ public class SpellBarOverlay {
             return;
         }
         for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
-            int x = defaultLeft(bar) + HudLayout.offX(layoutKey(bar));
-            int y = defaultTop(screenH) + HudLayout.offY(layoutKey(bar));
-            render(g, mc.font, x, y, firstSlot(bar));
+            String key = layoutKey(bar);
+            int x = defaultLeft(bar) + HudLayout.offX(key);
+            int y = defaultTop(screenH) + HudLayout.offY(key);
+            render(g, mc.font, x, y, firstSlot(bar), key);
         }
 
         if (ClientRecall.isRecalling()) {
@@ -62,16 +77,22 @@ public class SpellBarOverlay {
         }
     };
 
-    /** Render one bar's SLOTS slots starting from global slot {@code firstSlot}. */
-    public static void render(GuiGraphics g, Font font, int x, int y, int firstSlot) {
+    /** Render one bar's SLOTS slots starting from global slot {@code firstSlot}, laid out per its saved orientation/opacity. */
+    public static void render(GuiGraphics g, Font font, int x, int y, int firstSlot, String layoutKey) {
+        boolean horiz = HudLayout.isHorizontal(layoutKey);
+        float opacity = HudLayout.opacity(layoutKey);
         for (int i = 0; i < SLOTS; i++) {
-            drawSlot(g, font, x, y + i * SLOT, firstSlot + i);
+            int sx = horiz ? x + i * SLOT : x;
+            int sy = horiz ? y : y + i * SLOT;
+            drawSlot(g, font, sx, sy, firstSlot + i, opacity);
         }
     }
 
-    static void drawSlot(GuiGraphics g, Font font, int x, int y, int index) {
-        g.fill(x, y, x + SLOT, y + SLOT, 0xC0101010);
-        g.renderOutline(x, y, SLOT, SLOT, 0xFF3A3A3A);
+    static void drawSlot(GuiGraphics g, Font font, int x, int y, int index, float opacity) {
+        int bgAlpha = (int) (0xC0 * opacity);
+        int borderAlpha = (int) (0xFF * opacity);
+        g.fill(x, y, x + SLOT, y + SLOT, (bgAlpha << 24) | 0x00101010);
+        g.renderOutline(x, y, SLOT, SLOT, (borderAlpha << 24) | 0x003A3A3A);
 
         Spell spell = ClientSpells.slot(index);
         if (spell != null) {

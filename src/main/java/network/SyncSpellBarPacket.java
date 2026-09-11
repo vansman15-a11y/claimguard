@@ -17,12 +17,14 @@ public class SyncSpellBarPacket {
     public final int[] spellLevels;   // indexed by Spell.ordinal()
     public final int[] schoolLevels;  // indexed by School.ordinal()
     public final int[] skillLevels;   // indexed by Skill.ordinal()
+    public final String[] weaponPrefs; // indexed by Spell.ordinal(), "" = none
 
-    public SyncSpellBarPacket(String[] slots, int[] spellLevels, int[] schoolLevels, int[] skillLevels) {
+    public SyncSpellBarPacket(String[] slots, int[] spellLevels, int[] schoolLevels, int[] skillLevels, String[] weaponPrefs) {
         this.slots = slots;
         this.spellLevels = spellLevels;
         this.schoolLevels = schoolLevels;
         this.skillLevels = skillLevels;
+        this.weaponPrefs = weaponPrefs;
     }
 
     public static void encode(SyncSpellBarPacket p, FriendlyByteBuf buf) {
@@ -32,6 +34,10 @@ public class SyncSpellBarPacket {
         writeInts(buf, p.spellLevels);
         writeInts(buf, p.schoolLevels);
         writeInts(buf, p.skillLevels);
+        buf.writeVarInt(p.weaponPrefs.length);
+        for (String s : p.weaponPrefs) {
+            buf.writeUtf(s != null ? s : "", 64);
+        }
     }
 
     public static SyncSpellBarPacket decode(FriendlyByteBuf buf) {
@@ -42,7 +48,12 @@ public class SyncSpellBarPacket {
         int[] spellLevels = readInts(buf);
         int[] schoolLevels = readInts(buf);
         int[] skillLevels = readInts(buf);
-        return new SyncSpellBarPacket(slots, spellLevels, schoolLevels, skillLevels);
+        int wn = Math.max(0, Math.min(buf.readVarInt(), 256));
+        String[] weaponPrefs = new String[wn];
+        for (int i = 0; i < wn; i++) {
+            weaponPrefs[i] = buf.readUtf(64);
+        }
+        return new SyncSpellBarPacket(slots, spellLevels, schoolLevels, skillLevels, weaponPrefs);
     }
 
     private static void writeInts(FriendlyByteBuf buf, int[] arr) {

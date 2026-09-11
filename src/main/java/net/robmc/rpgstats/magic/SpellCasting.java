@@ -161,6 +161,8 @@ public final class SpellCasting {
                     .withStyle(ChatFormatting.GRAY), true);
             return;
         }
+        autoEquip(player, s, spell);
+
         // Transfers can be cast bare-handed or with a staff. Everything else needs a staff.
         ItemStack hand = player.getMainHandItem();
         boolean staff = Weapons.isStaff(hand);
@@ -205,6 +207,40 @@ public final class SpellCasting {
             }
         }
         player.level().playSound(null, player.blockPosition(), SoundEvents.ILLUSIONER_PREPARE_MIRROR, SoundSource.PLAYERS, 0.6f, 1.4f);
+    }
+
+    /**
+     * If this spell has a preferred weapon set (see PlayerStats.setWeaponPref) and the player
+     * isn't already holding it, swap it into their main hand from wherever it sits in their
+     * inventory - so you can keep a sword out and still fire off a spell bound to a staff
+     * without manually swapping first. Silently does nothing if it's not on them right now.
+     */
+    private static void autoEquip(ServerPlayer player, PlayerStats s, Spell spell) {
+        String wantedId = s.getWeaponPref(spell);
+        if (wantedId == null) {
+            return;
+        }
+        net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(wantedId);
+        if (id == null) {
+            return;
+        }
+        net.minecraft.world.item.Item wanted = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(id);
+        if (wanted == null || wanted == net.minecraft.world.item.Items.AIR) {
+            return;
+        }
+        if (player.getMainHandItem().is(wanted)) {
+            return; // already holding it
+        }
+        var inv = player.getInventory();
+        for (int i = 0; i < 36; i++) { // hotbar + main inventory only - never armor/offhand
+            ItemStack stack = inv.getItem(i);
+            if (stack.is(wanted)) {
+                ItemStack previous = player.getMainHandItem();
+                inv.setItem(i, previous);
+                player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, stack);
+                return;
+            }
+        }
     }
 
     /** Put a resource-pack staff's CustomModelData back once its cast is over. Called each tick. */

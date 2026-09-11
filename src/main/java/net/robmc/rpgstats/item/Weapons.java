@@ -60,6 +60,21 @@ public final class Weapons {
         return k == Kind.POLEARM || k == Kind.STAFF;
     }
 
+    /** Anything bindable to a spell slot's "auto-equip this before casting" preference. */
+    public static boolean isBindableWeapon(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        if (kind(stack) != Kind.NONE) {
+            return true;
+        }
+        Item item = stack.getItem();
+        return item instanceof net.minecraft.world.item.SwordItem
+                || item instanceof net.minecraft.world.item.BowItem
+                || item instanceof net.minecraft.world.item.CrossbowItem
+                || item instanceof net.minecraft.world.item.AxeItem;
+    }
+
     /** The CustomModelData int on a stack, or -1. */
     public static int customModelData(ItemStack stack) {
         CompoundTag tag = stack.getTag();

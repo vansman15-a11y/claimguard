@@ -165,6 +165,16 @@ public class SpellbookScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
+        if (button == 1 && mx >= listX() && mx <= listX() + LIST_W && my >= listY() && my <= listY() + listH()) {
+            int localY = (int) (my - listY()) + scroll;
+            for (Row row : rows()) {
+                if (localY >= row.y && localY < row.y + ROW_H && row.kind == Kind.SPELL) {
+                    net.robmc.claimguard.network.ClaimGuardNetwork.CHANNEL.sendToServer(
+                            new net.robmc.claimguard.network.SetWeaponPrefPacket(row.name));
+                    return true;
+                }
+            }
+        }
         if (button == 0) {
             int slot = slotAt(mx, my);
             if (slot >= 0 && !ClientSpells.slotName(slot).isEmpty()) {
@@ -239,7 +249,7 @@ public class SpellbookScreen extends Screen {
         g.fill(left, top, left + PANEL_W, top + PANEL_H, 0xE0140F1E);
         g.renderOutline(left, top, PANEL_W, PANEL_H, 0xFF3A5A88);
         g.drawString(this.font, "SPELLBOOK & SKILLS", left + 14, top + 12, 0xFF9FC0FF, false);
-        g.drawString(this.font, "drag a spell onto a bar slot", left + 148, top + 13, 0xFF6A6A6A, false);
+        g.drawString(this.font, "drag = bind slot, right-click = auto-equip weapon", left + 96, top + 13, 0xFF6A6A6A, false);
 
         int vx = listX();
         int vy = listY();
@@ -265,10 +275,15 @@ public class SpellbookScreen extends Screen {
             g.fill(vx + LIST_W + 3, thumbY, vx + LIST_W + 6, thumbY + thumbH, 0xAAB9C0D0);
         }
 
-        // the two bars
+        // the two bars - always shown vertical here regardless of their in-game HUD orientation
         for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
-            SpellBarOverlay.render(g, this.font, barX(bar), barY(), SpellBarOverlay.firstSlot(bar));
-            g.drawString(this.font, "Bar " + (bar + 1), barX(bar) - 1, barY() - 10, 0xFF9FC0FF, false);
+            int bx = barX(bar);
+            int by = barY();
+            for (int i = 0; i < SpellBarOverlay.SLOTS; i++) {
+                SpellBarOverlay.drawSlot(g, this.font, bx, by + i * SpellBarOverlay.SLOT,
+                        SpellBarOverlay.firstSlot(bar) + i, 1.0f);
+            }
+            g.drawString(this.font, "Bar " + (bar + 1), bx - 1, by - 10, 0xFF9FC0FF, false);
         }
 
         // drag ghost
@@ -331,6 +346,20 @@ public class SpellbookScreen extends Screen {
                 g.drawString(this.font, describe(spell), bx + 24, y + 12, 0xFF8FA0B4, false);
                 String lt = "Lv " + lvl + " (" + StatFormulas.effectivenessPercent(lvl) + "%)";
                 g.drawString(this.font, lt, x + LIST_W - 4 - this.font.width(lt), y + 3, 0xFFB9A9E3, false);
+
+                String prefId = ClientSpells.weaponPref(spell);
+                if (prefId != null) {
+                    var item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(
+                            net.minecraft.resources.ResourceLocation.tryParse(prefId));
+                    if (item != null) {
+                        int ix = x + LIST_W - 4 - 10;
+                        g.pose().pushPose();
+                        g.pose().translate(ix, y + 10, 0);
+                        g.pose().scale(0.6f, 0.6f, 1.0f);
+                        g.renderItem(new net.minecraft.world.item.ItemStack(item), 0, 0);
+                        g.pose().popPose();
+                    }
+                }
             }
         }
     }
