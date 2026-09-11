@@ -88,9 +88,16 @@ public final class SpellIcons {
 
     /** Draw a spell's icon at (x, y) scaled to size x size. */
     public static void draw(GuiGraphics g, Spell spell, int x, int y, int size) {
+        draw(g, spell, x, y, size, 1.0f);
+    }
+
+    /** Same, but faded to {@code opacity} - so a bar's opacity slider fades the icon along with its background. */
+    public static void draw(GuiGraphics g, Spell spell, int x, int y, int size, float opacity) {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
+        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, opacity);
         g.blit(of(spell), x, y, size, size, 0.0f, 0.0f, TEX, TEX, TEX, TEX);
+        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         RenderSystem.disableBlend();
     }
 }

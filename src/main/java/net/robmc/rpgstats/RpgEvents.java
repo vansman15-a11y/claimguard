@@ -384,6 +384,7 @@ public class RpgEvents {
         net.robmc.rpgstats.food.NourishmentManager.clear(id);
         net.robmc.rpgstats.food.FoodBuffManager.clear(id);
         JumpArcManager.clear(id);
+        net.robmc.rpgstats.magic.SpellCasting.clearLastSlot(id);
         lastPos.remove(id);
         wasSwinging.remove(id);
         lastMeleeHitTick.remove(id);

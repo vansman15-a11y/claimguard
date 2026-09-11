@@ -72,6 +72,8 @@ public final class SpellCasting {
     private static final Map<UUID, Pending> casting = new HashMap<>();
     private static final Map<UUID, Map<Spell, Long>> cooldowns = new HashMap<>();
     private static final Map<UUID, List<TransferGain>> transferGains = new HashMap<>();
+    /** Per bar, the global slot index of the last key pressed on it - drives the "currently selected" readout under the bar. */
+    private static final Map<UUID, int[]> lastSlotByBar = new HashMap<>();
     /** Players whose resource-pack staff we bumped to the glowing CustomModelData for a cast. */
     private static final java.util.Set<UUID> glowBumped = new java.util.HashSet<>();
 
@@ -89,6 +91,9 @@ public final class SpellCasting {
         Spell spell = Spell.byName(resolvedName);
         if (spell == null) {
             return;
+        }
+        if (slot >= 0) {
+            lastSlotByBar.computeIfAbsent(player.getUUID(), k -> defaultLastSlots())[slot / StatFormulas.BAR_SLOTS] = slot;
         }
         // Speed of Wind is a toggle: press it again to end the channel
         if (spell == Spell.SPEED_OF_WIND && WindChannel.isChanneling(player.getUUID())) {
@@ -319,6 +324,21 @@ public final class SpellCasting {
             out[i] = resolveSlotSpell(player, s, i);
         }
         return out;
+    }
+
+    private static int[] defaultLastSlots() {
+        int[] a = new int[StatFormulas.BAR_COUNT];
+        java.util.Arrays.fill(a, -1);
+        return a;
+    }
+
+    /** For SyncSpellBarPacket: per bar, the global slot index last pressed on it, or -1. */
+    public static int[] lastSlotArray(ServerPlayer player) {
+        return lastSlotByBar.getOrDefault(player.getUUID(), defaultLastSlots()).clone();
+    }
+
+    public static void clearLastSlot(UUID id) {
+        lastSlotByBar.remove(id);
     }
 
     /** Put a resource-pack staff's CustomModelData back once its cast is over. Called each tick. */

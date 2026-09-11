@@ -105,7 +105,8 @@ public final class RpgManager {
                 new SyncSpellBarPacket(s.getSpellBar().clone(), s.spellLevelArray(),
                         s.schoolLevelArray(), s.skillLevelArray(), s.weaponPrefArray(),
                         net.robmc.rpgstats.magic.SpellCasting.slotActiveArray(player, s),
-                        slotCount, slotCycleMode, slotAutoCast, slotWeaponId, slotForceWeapon));
+                        slotCount, slotCycleMode, slotAutoCast, slotWeaponId, slotForceWeapon,
+                        net.robmc.rpgstats.magic.SpellCasting.lastSlotArray(player)));
     }
 
     /**

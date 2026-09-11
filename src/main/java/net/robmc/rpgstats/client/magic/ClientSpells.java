@@ -27,6 +27,13 @@ public final class ClientSpells {
     private static boolean[] slotAutoCast = new boolean[SLOT_COUNT];
     private static String[] slotWeaponId = new String[SLOT_COUNT];
     private static boolean[] slotForceWeapon = new boolean[SLOT_COUNT];
+    private static int[] barLastSlot = defaultLastSlots();
+
+    private static int[] defaultLastSlots() {
+        int[] a = new int[StatFormulas.BAR_COUNT];
+        java.util.Arrays.fill(a, -1);
+        return a;
+    }
 
     private static int[] defaultSchoolLevels() {
         int[] a = new int[School.values().length];
@@ -80,6 +87,9 @@ public final class ClientSpells {
         if (p.slotForceWeapon != null && p.slotForceWeapon.length == SLOT_COUNT) {
             slotForceWeapon = p.slotForceWeapon;
         }
+        if (p.barLastSlot != null && p.barLastSlot.length == barLastSlot.length) {
+            barLastSlot = p.barLastSlot;
+        }
     }
 
     /** The item registry id this spell auto-equips before casting, or null if none is set. */
@@ -115,6 +125,30 @@ public final class ClientSpells {
 
     public static boolean slotForceWeapon(int i) {
         return i >= 0 && i < SLOT_COUNT && slotForceWeapon[i];
+    }
+
+    /** The global slot index of the last key pressed on this bar, or -1 if none yet this session. */
+    public static int lastSlot(int bar) {
+        return (bar >= 0 && bar < barLastSlot.length) ? barLastSlot[bar] : -1;
+    }
+
+    /** The spell shown in this bar's "currently selected" readout - whatever the last-pressed slot would fire. */
+    public static Spell barSelectedSpell(int bar) {
+        int slot = lastSlot(bar);
+        return slot >= 0 ? activeSlot(slot) : null;
+    }
+
+    /** The weapon shown under that readout: the last-pressed slot's forced weapon, else its spell's own weapon pref. */
+    public static String barSelectedWeaponId(int bar) {
+        int slot = lastSlot(bar);
+        if (slot < 0) {
+            return null;
+        }
+        if (slotForceWeapon(slot)) {
+            return slotWeaponId(slot);
+        }
+        Spell sp = activeSlot(slot);
+        return sp != null ? weaponPref(sp) : null;
     }
 
     public static void onCastState(CastStatePacket p) {
