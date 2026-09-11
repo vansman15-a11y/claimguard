@@ -160,9 +160,12 @@ public final class RpgManager {
         sync(player);
     }
 
-    /** Called on the regen interval - nudges every pool up a little. */
+    /** Called on the regen interval - nudges every pool up a little. Needs Nourishment (see food package) to run at all. */
     public static void regenTick(ServerPlayer player) {
         if (!player.isAlive()) {
+            return;
+        }
+        if (!net.robmc.rpgstats.food.NourishmentManager.isNourished(player.getUUID(), player.serverLevel().getGameTime())) {
             return;
         }
         PlayerStats s = stats(player);

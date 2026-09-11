@@ -78,6 +78,7 @@ public class RpgEvents {
             RpgManager.sync(player);
             RpgManager.syncSpellBar(player);
             grantSkillItems(player);
+            net.robmc.rpgstats.food.NourishmentManager.refresh(player); // a fresh 30 min grace period on login
         }
     }
 
@@ -119,6 +120,8 @@ public class RpgEvents {
             net.robmc.rpgstats.magic.HexManager.tick(event.getServer());
             net.robmc.rpgstats.magic.FireShockManager.tick(event.getServer());
             net.robmc.rpgstats.magic.PlagueManager.tick(event.getServer());
+            net.robmc.rpgstats.food.NourishmentManager.tick(event.getServer());
+            net.robmc.rpgstats.food.FoodBuffManager.tick(event.getServer());
         }
     }
 
@@ -376,6 +379,8 @@ public class RpgEvents {
         net.robmc.rpgstats.magic.FireShockManager.clearTarget(event.getEntity().getId());
         net.robmc.rpgstats.magic.PlagueManager.clearTarget(event.getEntity().getId());
         net.robmc.rpgstats.magic.AstralAnnihilationManager.clear(id);
+        net.robmc.rpgstats.food.NourishmentManager.clear(id);
+        net.robmc.rpgstats.food.FoodBuffManager.clear(id);
         lastPos.remove(id);
         wasSwinging.remove(id);
         lastMeleeHitTick.remove(id);
@@ -429,6 +434,20 @@ public class RpgEvents {
             event.setCanceled(true);
             player.displayClientMessage(exhaustedMsg(), true);
         }
+    }
+
+    /** Eating anything with FoodProperties grants a gradual Health/Stamina/Mana top-up and refreshes Nourishment. */
+    @SubscribeEvent
+    public static void onFoodEaten(LivingEntityUseItemEvent.Finish event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        var food = event.getItem().getFoodProperties(player);
+        if (food == null) {
+            return;
+        }
+        net.robmc.rpgstats.food.FoodBuffManager.grant(player, StatFormulas.foodTotalGain(food));
+        net.robmc.rpgstats.food.NourishmentManager.refresh(player);
     }
 
     @SubscribeEvent

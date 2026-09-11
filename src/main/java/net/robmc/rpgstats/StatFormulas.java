@@ -153,6 +153,27 @@ public final class StatFormulas {
         return MOVE_BONUS_MAX * eff(s, Stat.QUICKNESS);
     }
 
+    // --- food: eating grants Health/Stamina/Mana over a few seconds, and keeps you "Nourished" ---
+    // (hunger itself is pinned/inert - see onServerTick - food's only job now is this)
+
+    public static final int NOURISHMENT_DURATION_TICKS = 36000;  // 30 min - eat again before this runs out
+    public static final int FOOD_TICK_TOTAL_TICKS = 200;         // the gain plays out over 10 s, not all at once
+    public static final int FOOD_TICK_INTERVAL = 20;             // one pulse per second
+    public static final double FOOD_GAIN_PER_POINT = 1.25;
+
+    /**
+     * How much Health/Stamina/Mana one eat is worth, in total (paid out gradually - see
+     * FoodBuffManager). Reads only vanilla's own nutrition + saturation off the food, so every
+     * existing (and future/modded) food item scales sensibly with zero per-item hardcoding:
+     * a hearty cooked meal like Steak or Rabbit Stew lands near the top (~25-28), raw meat and
+     * plain veg sit well below it, and a Golden Carrot's saturation bonus makes it noticeably
+     * better than a plain Carrot despite similar nutrition.
+     */
+    public static double foodTotalGain(net.minecraft.world.food.FoodProperties food) {
+        double points = food.getNutrition() + food.getSaturationModifier() * food.getNutrition() * 2.0;
+        return points * FOOD_GAIN_PER_POINT;
+    }
+
     // --- natural regen, per regen tick (see REGEN_INTERVAL_TICKS) ---
 
     public static final int REGEN_INTERVAL_TICKS = 40;   // ~2 s
