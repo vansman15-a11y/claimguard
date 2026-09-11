@@ -45,8 +45,16 @@ public class SpellbookScreen extends Screen {
     private final Set<String> expanded = SpellbookUiState.expanded();
     private int scroll = SpellbookUiState.scroll();
 
+    private static final int MINI = 16;
+    private static final int MINI_GAP = 2;
+
     private String draggingName;
     private int draggingSlot = -1;
+
+    /** Which bar slot's stacked-spell list is currently pinned open (right-click a multi-bind slot to toggle), or -1. */
+    private int expandedSlot = -1;
+    /** Index within expandedSlot's bind list currently being dragged (to swap with another), or -1. */
+    private int draggingExpandedFrom = -1;
 
     public SpellbookScreen() {
         super(Component.literal("Spellbook"));
@@ -167,6 +175,34 @@ public class SpellbookScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
+        if (expandedSlot >= 0) {
+            List<String> binds = ClientSpells.slotBinds(expandedSlot);
+            for (int i = 0; i < binds.size(); i++) {
+                int[] t = miniTileBox(expandedSlot, i);
+                if (inside(t, mx, my)) {
+                    if (button == 0 && mx >= t[0] + MINI - 6 && my <= t[1] + 6) {
+                        // the little "x" in the tile's top-right corner - drop just this one spell
+                        List<String> without = new ArrayList<>(binds);
+                        without.remove(i);
+                        sendOrder(expandedSlot, without);
+                        if (without.size() <= 1) {
+                            expandedSlot = -1;
+                        }
+                        return true;
+                    }
+                    if (button == 0) {
+                        draggingExpandedFrom = i;
+                        return true;
+                    }
+                }
+            }
+            int[] flyout = expandedBox(expandedSlot);
+            if (inside(new int[]{flyout[0] - 2, flyout[1] - 2, flyout[2] + 4, flyout[3] + 4}, mx, my)) {
+                return true; // inside the flyout's background but not on a tile - absorb it
+            }
+            expandedSlot = -1; // clicked elsewhere - close it and let this click fall through below
+        }
+
         if (button == 1 && mx >= listX() && mx <= listX() + LIST_W && my >= listY() && my <= listY() + listH()) {
             int localY = (int) (my - listY()) + scroll;
             for (Row row : rows()) {
@@ -178,9 +214,13 @@ public class SpellbookScreen extends Screen {
             }
         }
         if (button == 1) {
-            // right-click a bound bar slot: pop the most recently stacked spell off a ray bar,
-            // or clear it entirely if there's only the one
+            // right-click a bound bar slot: more than one spell stacked there -> toggle its
+            // expanded view (drag to reorder, click x to drop one); just the one -> clear it
             int slot = slotAt(mx, my);
+            if (slot >= 0 && ClientSpells.slotBindCount(slot) > 1) {
+                expandedSlot = expandedSlot == slot ? -1 : slot;
+                return true;
+            }
             if (slot >= 0 && !ClientSpells.slotName(slot).isEmpty()) {
                 net.robmc.claimguard.network.ClaimGuardNetwork.CHANNEL.sendToServer(
                         new net.robmc.claimguard.network.PopSlotBindPacket(slot));
@@ -217,6 +257,18 @@ public class SpellbookScreen extends Screen {
 
     @Override
     public boolean mouseReleased(double mx, double my, int button) {
+        if (draggingExpandedFrom >= 0) {
+            List<String> binds = new ArrayList<>(ClientSpells.slotBinds(expandedSlot));
+            for (int i = 0; i < binds.size(); i++) {
+                if (i != draggingExpandedFrom && inside(miniTileBox(expandedSlot, i), mx, my)) {
+                    java.util.Collections.swap(binds, draggingExpandedFrom, i);
+                    sendOrder(expandedSlot, binds);
+                    break;
+                }
+            }
+            draggingExpandedFrom = -1;
+            return super.mouseReleased(mx, my, button);
+        }
         int slot = slotAt(mx, my);
         if (draggingName != null && slot >= 0) {
             // dropping onto an empty slot just sets it; onto an already-bound one, it stacks
@@ -247,6 +299,11 @@ public class SpellbookScreen extends Screen {
         }
     }
 
+    private void sendOrder(int slot, List<String> names) {
+        ClaimGuardNetwork.CHANNEL.sendToServer(
+                new net.robmc.claimguard.network.SetSlotBindOrderPacket(slot, names.toArray(new String[0])));
+    }
+
     private int slotAt(double mx, double my) {
         for (int bar = 0; bar < StatFormulas.BAR_COUNT; bar++) {
             int bx = barX(bar);
@@ -259,6 +316,29 @@ public class SpellbookScreen extends Screen {
             }
         }
         return -1;
+    }
+
+    // --- expanded multi-bind slot flyout ---
+
+    private int[] expandedBox(int slot) {
+        int bar = slot / SpellBarOverlay.SLOTS;
+        int i = slot % SpellBarOverlay.SLOTS;
+        int count = ClientSpells.slotBindCount(slot);
+        int w = count * (MINI + MINI_GAP) + MINI_GAP;
+        int x = barX(bar) - w - 6; // floats to the left of the bar, drawn on top of everything else
+        int y = barY() + i * SpellBarOverlay.SLOT;
+        return new int[]{x, y, w, SpellBarOverlay.SLOT};
+    }
+
+    private int[] miniTileBox(int slot, int index) {
+        int[] box = expandedBox(slot);
+        int x = box[0] + MINI_GAP + index * (MINI + MINI_GAP);
+        int y = box[1] + (box[3] - MINI) / 2;
+        return new int[]{x, y, MINI, MINI};
+    }
+
+    private static boolean inside(int[] box, double mx, double my) {
+        return mx >= box[0] && mx <= box[0] + box[2] && my >= box[1] && my <= box[1] + box[3];
     }
 
     // --- render ---
@@ -321,15 +401,50 @@ public class SpellbookScreen extends Screen {
             }
         }
 
+        if (expandedSlot >= 0 && ClientSpells.slotBindCount(expandedSlot) > 1) {
+            renderExpandedSlot(g, expandedSlot);
+        }
+
         // drag ghost
         String ghost = draggingName != null ? draggingName
                 : (draggingSlot >= 0 ? ClientSpells.slotName(draggingSlot) : "");
         Spell gs = Spell.byName(ghost);
         if (gs != null) {
             SpellIcons.draw(g, gs, mouseX - 8, mouseY - 8, 16);
+        } else if (draggingExpandedFrom >= 0) {
+            Spell dragged = Spell.byName(ClientSpells.slotBinds(expandedSlot).get(draggingExpandedFrom));
+            if (dragged != null) {
+                SpellIcons.draw(g, dragged, mouseX - 7, mouseY - 7, MINI);
+            }
         }
 
         super.render(g, mouseX, mouseY, partialTick);
+    }
+
+    /**
+     * The flyout for a multi-bind slot: one small tile per stacked spell, in cast order (the
+     * gold-outlined first one is what a Cycle-mode press reaches first). Click a tile's "x" to
+     * drop just that spell; drag one tile onto another to swap their order.
+     */
+    private void renderExpandedSlot(GuiGraphics g, int slot) {
+        List<String> binds = ClientSpells.slotBinds(slot);
+        int[] box = expandedBox(slot);
+        g.fill(box[0] - 2, box[1] - 2, box[0] + box[2] + 2, box[1] + box[3] + 2, 0xF0141824);
+        g.renderOutline(box[0] - 2, box[1] - 2, box[2] + 4, box[3] + 4, 0xFF9FC0FF);
+        for (int i = 0; i < binds.size(); i++) {
+            int[] t = miniTileBox(slot, i);
+            Spell sp = Spell.byName(binds.get(i));
+            g.fill(t[0], t[1], t[0] + MINI, t[1] + MINI, 0xC0202838);
+            g.renderOutline(t[0], t[1], MINI, MINI, i == 0 ? 0xFFFFE066 : 0xFF5A6B85);
+            if (sp != null) {
+                SpellIcons.draw(g, sp, t[0] + 1, t[1] + 1, MINI - 2);
+            }
+            g.pose().pushPose();
+            g.pose().translate(t[0] + MINI - 6.0f, t[1] - 1.0f, 0.0f);
+            g.pose().scale(0.6f, 0.6f, 1.0f);
+            g.drawString(this.font, "x", 0, 0, 0xFFFF8080, true);
+            g.pose().popPose();
+        }
     }
 
     private void drawRow(GuiGraphics g, Row row, int x, int y) {

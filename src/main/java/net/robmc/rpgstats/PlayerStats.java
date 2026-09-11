@@ -366,6 +366,32 @@ public class PlayerStats {
         }
     }
 
+    /**
+     * Replace this slot's whole bind list with {@code names}, in that exact order - the
+     * Spellbook's expanded-slot view uses this both to drop one specific spell out of a stack
+     * and to reorder the stack (which one a Cycle-mode press reaches first). Invalid/duplicate
+     * names are dropped rather than rejecting the whole call.
+     */
+    public void setSlotBindOrder(int slot, List<String> names) {
+        if (slot < 0 || slot >= spellBar.length || names == null) {
+            return;
+        }
+        List<String> valid = new ArrayList<>();
+        for (String name : names) {
+            if (name != null && !name.isEmpty() && Spell.byName(name) != null
+                    && !valid.contains(name) && valid.size() < StatFormulas.MAX_SLOT_BINDS) {
+                valid.add(name);
+            }
+        }
+        spellBar[slot] = valid.isEmpty() ? "" : valid.get(0);
+        slotExtra.get(slot).clear();
+        if (valid.size() > 1) {
+            slotExtra.get(slot).addAll(valid.subList(1, valid.size()));
+            setSlotAutoCast(slot, true);
+        }
+        slotCursor[slot] = 0;
+    }
+
     /** Pop the most recently added extra spell off this slot, or clear it entirely if it's down to just the primary. */
     public void popSlotBind(int slot) {
         if (slot < 0 || slot >= spellBar.length) {

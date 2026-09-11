@@ -72,8 +72,8 @@ public final class SpellCasting {
     private static final Map<UUID, Pending> casting = new HashMap<>();
     private static final Map<UUID, Map<Spell, Long>> cooldowns = new HashMap<>();
     private static final Map<UUID, List<TransferGain>> transferGains = new HashMap<>();
-    /** Per bar, the global slot index of the last key pressed on it - drives the "currently selected" readout under the bar. */
-    private static final Map<UUID, int[]> lastSlotByBar = new HashMap<>();
+    /** The global slot index of the last key pressed, on either bar - drives the "currently selected" readout under Bar 1. */
+    private static final Map<UUID, Integer> lastSlotGlobal = new HashMap<>();
     /** Players whose resource-pack staff we bumped to the glowing CustomModelData for a cast. */
     private static final java.util.Set<UUID> glowBumped = new java.util.HashSet<>();
 
@@ -93,7 +93,7 @@ public final class SpellCasting {
             return;
         }
         if (slot >= 0) {
-            lastSlotByBar.computeIfAbsent(player.getUUID(), k -> defaultLastSlots())[slot / StatFormulas.BAR_SLOTS] = slot;
+            lastSlotGlobal.put(player.getUUID(), slot);
             // push the "currently selected" readout the moment the key is pressed - don't wait for the cast to finish
             RpgManager.syncSpellBar(player);
         }
@@ -328,19 +328,22 @@ public final class SpellCasting {
         return out;
     }
 
-    private static int[] defaultLastSlots() {
-        int[] a = new int[StatFormulas.BAR_COUNT];
-        java.util.Arrays.fill(a, -1);
-        return a;
+    /** For SyncSpellBarPacket: every slot's full, ordered bind list (see PlayerStats.getSlotBinds). */
+    public static String[][] slotBindsArray(PlayerStats s) {
+        String[][] out = new String[StatFormulas.TOTAL_BAR_SLOTS][];
+        for (int i = 0; i < out.length; i++) {
+            out[i] = s.getSlotBinds(i).toArray(new String[0]);
+        }
+        return out;
     }
 
-    /** For SyncSpellBarPacket: per bar, the global slot index last pressed on it, or -1. */
-    public static int[] lastSlotArray(ServerPlayer player) {
-        return lastSlotByBar.getOrDefault(player.getUUID(), defaultLastSlots()).clone();
+    /** For SyncSpellBarPacket: the global slot index last pressed on either bar, or -1. */
+    public static int lastSlot(ServerPlayer player) {
+        return lastSlotGlobal.getOrDefault(player.getUUID(), -1);
     }
 
     public static void clearLastSlot(UUID id) {
-        lastSlotByBar.remove(id);
+        lastSlotGlobal.remove(id);
     }
 
     /** Put a resource-pack staff's CustomModelData back once its cast is over. Called each tick. */

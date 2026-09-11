@@ -140,14 +140,13 @@ public class SpellBarOverlay {
         if (!hasReadout(layoutKey)) {
             return; // only Bar 1 shows the "currently selected" + weapon readout
         }
-        int bar = firstSlot / SLOTS;
         int selX = horiz ? x + SLOTS * SLOT + SELECTED_GAP : x;
         int selY = horiz ? y : y + SLOTS * SLOT + SELECTED_GAP;
-        drawTile(g, font, selX, selY, ClientSpells.barSelectedSpell(bar), opacity, 0x00C9A227);
+        drawTile(g, font, selX, selY, ClientSpells.selectedSpell(), opacity, 0x00C9A227);
 
         int wepX = horiz ? selX + SLOT : selX;
         int wepY = horiz ? selY : selY + SLOT;
-        drawWeaponTile(g, wepX, wepY, ClientSpells.barSelectedWeaponId(bar), opacity);
+        drawWeaponTile(g, wepX, wepY, ClientSpells.selectedWeaponId(), opacity);
     }
 
     static void drawSlot(GuiGraphics g, Font font, int x, int y, int index, float opacity) {

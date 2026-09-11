@@ -22,18 +22,12 @@ public final class ClientSpells {
     private static int[] skillLevels = new int[Skill.values().length];
     private static String[] weaponPrefs = new String[Spell.values().length];
     private static String[] slotActive = new String[SLOT_COUNT];
-    private static int[] slotCount = new int[SLOT_COUNT];
+    private static String[][] slotBinds = new String[SLOT_COUNT][0];
     private static int[] slotCycleMode = new int[SLOT_COUNT];
     private static boolean[] slotAutoCast = new boolean[SLOT_COUNT];
     private static String[] slotWeaponId = new String[SLOT_COUNT];
     private static boolean[] slotForceWeapon = new boolean[SLOT_COUNT];
-    private static int[] barLastSlot = defaultLastSlots();
-
-    private static int[] defaultLastSlots() {
-        int[] a = new int[StatFormulas.BAR_COUNT];
-        java.util.Arrays.fill(a, -1);
-        return a;
-    }
+    private static int lastSlot = -1;
 
     private static int[] defaultSchoolLevels() {
         int[] a = new int[School.values().length];
@@ -72,8 +66,8 @@ public final class ClientSpells {
         if (p.slotActive != null && p.slotActive.length == SLOT_COUNT) {
             slotActive = p.slotActive;
         }
-        if (p.slotCount != null && p.slotCount.length == SLOT_COUNT) {
-            slotCount = p.slotCount;
+        if (p.slotBinds != null && p.slotBinds.length == SLOT_COUNT) {
+            slotBinds = p.slotBinds;
         }
         if (p.slotCycleMode != null && p.slotCycleMode.length == SLOT_COUNT) {
             slotCycleMode = p.slotCycleMode;
@@ -87,9 +81,7 @@ public final class ClientSpells {
         if (p.slotForceWeapon != null && p.slotForceWeapon.length == SLOT_COUNT) {
             slotForceWeapon = p.slotForceWeapon;
         }
-        if (p.barLastSlot != null && p.barLastSlot.length == barLastSlot.length) {
-            barLastSlot = p.barLastSlot;
-        }
+        lastSlot = p.lastSlot;
     }
 
     /** The item registry id this spell auto-equips before casting, or null if none is set. */
@@ -103,9 +95,14 @@ public final class ClientSpells {
         return (i >= 0 && i < SLOT_COUNT && slotActive[i] != null) ? Spell.byName(slotActive[i]) : null;
     }
 
+    /** This slot's full, ordered bind list (see PlayerStats.getSlotBinds) - empty if the slot is empty. */
+    public static java.util.List<String> slotBinds(int i) {
+        return (i >= 0 && i < SLOT_COUNT && slotBinds[i] != null) ? java.util.Arrays.asList(slotBinds[i]) : java.util.List.of();
+    }
+
     /** How many spells are stacked onto this slot (1 for a plain single-bind slot, 0 if empty). */
     public static int slotBindCount(int i) {
-        return (i >= 0 && i < SLOT_COUNT) ? slotCount[i] : 0;
+        return slotBinds(i).size();
     }
 
     /** 0 = Cycle, 1 = First Available - see PlayerStats.CycleMode. */
@@ -127,27 +124,25 @@ public final class ClientSpells {
         return i >= 0 && i < SLOT_COUNT && slotForceWeapon[i];
     }
 
-    /** The global slot index of the last key pressed on this bar, or -1 if none yet this session. */
-    public static int lastSlot(int bar) {
-        return (bar >= 0 && bar < barLastSlot.length) ? barLastSlot[bar] : -1;
+    /** The global slot index last pressed, on either bar, or -1 if none yet this session. */
+    public static int lastSlot() {
+        return lastSlot;
     }
 
-    /** The spell shown in this bar's "currently selected" readout - whatever the last-pressed slot would fire. */
-    public static Spell barSelectedSpell(int bar) {
-        int slot = lastSlot(bar);
-        return slot >= 0 ? activeSlot(slot) : null;
+    /** The spell shown in Bar 1's "currently selected" readout - whatever the last-pressed slot (on either bar) would fire. */
+    public static Spell selectedSpell() {
+        return lastSlot >= 0 ? activeSlot(lastSlot) : null;
     }
 
     /** The weapon shown under that readout: the last-pressed slot's forced weapon, else its spell's own weapon pref. */
-    public static String barSelectedWeaponId(int bar) {
-        int slot = lastSlot(bar);
-        if (slot < 0) {
+    public static String selectedWeaponId() {
+        if (lastSlot < 0) {
             return null;
         }
-        if (slotForceWeapon(slot)) {
-            return slotWeaponId(slot);
+        if (slotForceWeapon(lastSlot)) {
+            return slotWeaponId(lastSlot);
         }
-        Spell sp = activeSlot(slot);
+        Spell sp = activeSlot(lastSlot);
         return sp != null ? weaponPref(sp) : null;
     }
 

@@ -89,13 +89,11 @@ public final class RpgManager {
     public static void syncSpellBar(ServerPlayer player) {
         PlayerStats s = stats(player);
         int n = StatFormulas.TOTAL_BAR_SLOTS;
-        int[] slotCount = new int[n];
         int[] slotCycleMode = new int[n];
         boolean[] slotAutoCast = new boolean[n];
         String[] slotWeaponId = new String[n];
         boolean[] slotForceWeapon = new boolean[n];
         for (int i = 0; i < n; i++) {
-            slotCount[i] = s.getSlotBinds(i).size();
             slotCycleMode[i] = s.getSlotCycleMode(i).ordinal();
             slotAutoCast[i] = s.isSlotAutoCast(i);
             slotWeaponId[i] = s.getSlotWeaponId(i);
@@ -105,8 +103,9 @@ public final class RpgManager {
                 new SyncSpellBarPacket(s.getSpellBar().clone(), s.spellLevelArray(),
                         s.schoolLevelArray(), s.skillLevelArray(), s.weaponPrefArray(),
                         net.robmc.rpgstats.magic.SpellCasting.slotActiveArray(player, s),
-                        slotCount, slotCycleMode, slotAutoCast, slotWeaponId, slotForceWeapon,
-                        net.robmc.rpgstats.magic.SpellCasting.lastSlotArray(player)));
+                        net.robmc.rpgstats.magic.SpellCasting.slotBindsArray(s),
+                        slotCycleMode, slotAutoCast, slotWeaponId, slotForceWeapon,
+                        net.robmc.rpgstats.magic.SpellCasting.lastSlot(player)));
     }
 
     /**

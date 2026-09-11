@@ -12,7 +12,6 @@ import java.util.function.Supplier;
 public class SyncSpellBarPacket {
 
     private static final int SLOTS = StatFormulas.TOTAL_BAR_SLOTS;
-    private static final int BARS = StatFormulas.BAR_COUNT;
 
     public final String[] slots;
     public final int[] spellLevels;   // indexed by Spell.ordinal()
@@ -20,28 +19,28 @@ public class SyncSpellBarPacket {
     public final int[] skillLevels;   // indexed by Skill.ordinal()
     public final String[] weaponPrefs; // indexed by Spell.ordinal(), "" = none
     public final String[] slotActive;     // per bar slot: which bound spell actually fires next, "" = empty
-    public final int[] slotCount;         // per bar slot: how many spells are stacked on it
+    public final String[][] slotBinds;    // per bar slot: its full ordered bind list (empty array = empty slot)
     public final int[] slotCycleMode;     // per bar slot: PlayerStats.CycleMode ordinal
     public final boolean[] slotAutoCast;  // per bar slot
     public final String[] slotWeaponId;   // per bar slot: forced-weapon registry id, "" = none
     public final boolean[] slotForceWeapon; // per bar slot
-    public final int[] barLastSlot;       // per bar (BAR_COUNT): global slot index last pressed on it, -1 = none yet
+    public final int lastSlot;            // the global slot index last pressed on either bar, -1 = none yet
 
     public SyncSpellBarPacket(String[] slots, int[] spellLevels, int[] schoolLevels, int[] skillLevels, String[] weaponPrefs,
-                               String[] slotActive, int[] slotCount, int[] slotCycleMode, boolean[] slotAutoCast,
-                               String[] slotWeaponId, boolean[] slotForceWeapon, int[] barLastSlot) {
+                               String[] slotActive, String[][] slotBinds, int[] slotCycleMode, boolean[] slotAutoCast,
+                               String[] slotWeaponId, boolean[] slotForceWeapon, int lastSlot) {
         this.slots = slots;
         this.spellLevels = spellLevels;
         this.schoolLevels = schoolLevels;
         this.skillLevels = skillLevels;
         this.weaponPrefs = weaponPrefs;
         this.slotActive = slotActive;
-        this.slotCount = slotCount;
+        this.slotBinds = slotBinds;
         this.slotCycleMode = slotCycleMode;
         this.slotAutoCast = slotAutoCast;
         this.slotWeaponId = slotWeaponId;
         this.slotForceWeapon = slotForceWeapon;
-        this.barLastSlot = barLastSlot;
+        this.lastSlot = lastSlot;
     }
 
     public static void encode(SyncSpellBarPacket p, FriendlyByteBuf buf) {
@@ -59,7 +58,11 @@ public class SyncSpellBarPacket {
             buf.writeUtf(i < p.slotActive.length && p.slotActive[i] != null ? p.slotActive[i] : "", 48);
         }
         for (int i = 0; i < SLOTS; i++) {
-            buf.writeVarInt(i < p.slotCount.length ? p.slotCount[i] : 0);
+            String[] binds = i < p.slotBinds.length && p.slotBinds[i] != null ? p.slotBinds[i] : new String[0];
+            buf.writeVarInt(binds.length);
+            for (String name : binds) {
+                buf.writeUtf(name != null ? name : "", 48);
+            }
         }
         for (int i = 0; i < SLOTS; i++) {
             buf.writeVarInt(i < p.slotCycleMode.length ? p.slotCycleMode[i] : 0);
@@ -73,9 +76,7 @@ public class SyncSpellBarPacket {
         for (int i = 0; i < SLOTS; i++) {
             buf.writeBoolean(i < p.slotForceWeapon.length && p.slotForceWeapon[i]);
         }
-        for (int i = 0; i < BARS; i++) {
-            buf.writeVarInt(i < p.barLastSlot.length ? p.barLastSlot[i] : -1);
-        }
+        buf.writeVarInt(p.lastSlot);
     }
 
     public static SyncSpellBarPacket decode(FriendlyByteBuf buf) {
@@ -95,9 +96,14 @@ public class SyncSpellBarPacket {
         for (int i = 0; i < SLOTS; i++) {
             slotActive[i] = buf.readUtf(48);
         }
-        int[] slotCount = new int[SLOTS];
+        String[][] slotBinds = new String[SLOTS][];
         for (int i = 0; i < SLOTS; i++) {
-            slotCount[i] = buf.readVarInt();
+            int bn = Math.max(0, Math.min(buf.readVarInt(), StatFormulas.MAX_SLOT_BINDS));
+            String[] binds = new String[bn];
+            for (int j = 0; j < bn; j++) {
+                binds[j] = buf.readUtf(48);
+            }
+            slotBinds[i] = binds;
         }
         int[] slotCycleMode = new int[SLOTS];
         for (int i = 0; i < SLOTS; i++) {
@@ -115,12 +121,9 @@ public class SyncSpellBarPacket {
         for (int i = 0; i < SLOTS; i++) {
             slotForceWeapon[i] = buf.readBoolean();
         }
-        int[] barLastSlot = new int[BARS];
-        for (int i = 0; i < BARS; i++) {
-            barLastSlot[i] = buf.readVarInt();
-        }
+        int lastSlot = buf.readVarInt();
         return new SyncSpellBarPacket(slots, spellLevels, schoolLevels, skillLevels, weaponPrefs,
-                slotActive, slotCount, slotCycleMode, slotAutoCast, slotWeaponId, slotForceWeapon, barLastSlot);
+                slotActive, slotBinds, slotCycleMode, slotAutoCast, slotWeaponId, slotForceWeapon, lastSlot);
     }
 
     private static void writeInts(FriendlyByteBuf buf, int[] arr) {
