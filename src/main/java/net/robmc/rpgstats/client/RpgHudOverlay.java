@@ -169,9 +169,84 @@ public class RpgHudOverlay {
         @SubscribeEvent
         public static void post(RenderGuiOverlayEvent.Post event) {
             var id = event.getOverlay().id();
-            if (isHotbarGroup(id) || id.equals(VanillaGuiOverlay.POTION_ICONS.id())) {
+            if (id.equals(VanillaGuiOverlay.POTION_ICONS.id())) {
+                drawEffectDurations(event.getGuiGraphics());
+                event.getGuiGraphics().pose().popPose();
+                return;
+            }
+            if (isHotbarGroup(id)) {
                 event.getGuiGraphics().pose().popPose();
             }
+        }
+
+        /**
+         * Vanilla's own effect-icon HUD draws no duration text at all - just the icon, plus a
+         * subtle alpha pulse near expiry. Replicates its exact per-icon layout math (Gui.renderEffects:
+         * beneficial effects stack right-to-left on row 1, harmful ones on row 2) so our countdown
+         * lands squarely on each icon regardless of how many are showing.
+         */
+        private static void drawEffectDurations(GuiGraphics g) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player == null) {
+                return;
+            }
+            var effects = mc.player.getActiveEffects();
+            if (effects.isEmpty()) {
+                return;
+            }
+            int screenWidth = mc.getWindow().getGuiScaledWidth();
+            int beneficialCount = 0;
+            int harmfulCount = 0;
+            for (var inst : com.google.common.collect.Ordering.natural().reverse().sortedCopy(effects)) {
+                if (!inst.showIcon()) {
+                    continue;
+                }
+                int i = screenWidth;
+                int j = 1;
+                if (mc.isDemo()) {
+                    j += 15;
+                }
+                if (inst.getEffect().isBeneficial()) {
+                    beneficialCount++;
+                    i -= 25 * beneficialCount;
+                } else {
+                    harmfulCount++;
+                    i -= 25 * harmfulCount;
+                    j += 26;
+                }
+                drawIconCountdown(g, mc.font, i, j, inst.getDuration());
+            }
+        }
+
+        private static void drawIconCountdown(GuiGraphics g, Font font, int iconX, int iconY, int durationTicks) {
+            String text = effectCountdownText(durationTicks);
+            if (text == null) {
+                return;
+            }
+            float scale = 0.6f;
+            float tw = font.width(text) * scale;
+            g.pose().pushPose();
+            g.pose().translate(iconX + (24 - tw) / 2.0f, iconY + 24 - 7 * scale - 1, 300);
+            g.pose().scale(scale, scale, 1.0f);
+            g.drawString(font, text, 0, 0, 0xC8FFFFFF, true);
+            g.pose().popPose();
+        }
+
+        /** "12s" under a minute, "1:05" at a minute or more; null for an effect with no meaningful end (negative/infinite duration). */
+        private static String effectCountdownText(int durationTicks) {
+            if (durationTicks < 0) {
+                return null;
+            }
+            int total = (int) Math.ceil(durationTicks / 20.0);
+            if (total <= 0) {
+                return null;
+            }
+            if (total >= 60) {
+                int m = total / 60;
+                int s = total % 60;
+                return m + ":" + (s < 10 ? "0" + s : String.valueOf(s));
+            }
+            return total + "s";
         }
 
         private static boolean isHotbarGroup(net.minecraft.resources.ResourceLocation id) {

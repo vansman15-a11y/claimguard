@@ -217,6 +217,19 @@ public final class ClientSpells {
         return 1.0f - since / READY_FLASH_TICKS;
     }
 
+    /** Seconds left on this spell's cooldown (rounded up), or 0 once it's ready. */
+    public static double cooldownSecondsLeft(Spell spell) {
+        if (spell == null) {
+            return 0;
+        }
+        int d = cdDuration[spell.ordinal()];
+        if (d <= 0) {
+            return 0;
+        }
+        long remainingTicks = d - (clientTick() - cdStart[spell.ordinal()]);
+        return remainingTicks > 0 ? remainingTicks / 20.0 : 0;
+    }
+
     public static void setSlotLocal(int i, String spellName) {
         if (i >= 0 && i < SLOT_COUNT) {
             SLOTS[i] = spellName == null ? "" : spellName;

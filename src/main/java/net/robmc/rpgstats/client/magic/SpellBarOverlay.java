@@ -173,6 +173,7 @@ public class SpellBarOverlay {
         if (cdp < 1.0f) {
             int a = (int) (0x8C * (1.0f - cdp) * opacity);
             g.fill(x + 1, y + 1, x + SLOT - 1, y + SLOT - 1, (a << 24) | 0x00FFE2A6);
+            drawCooldownText(g, font, x, y, net.robmc.combat.client.ClientSwingCooldown.secondsLeft(), opacity);
         }
 
         float flash = net.robmc.combat.client.ClientSwingCooldown.readyFlash();
@@ -231,6 +232,7 @@ public class SpellBarOverlay {
         if (cdp < 1.0f) {
             int a = (int) (0x8C * (1.0f - cdp) * opacity);
             g.fill(x + 1, y + 1, x + SLOT - 1, y + SLOT - 1, (a << 24) | 0x00FFE2A6);
+            drawCooldownText(g, font, x, y, ClientSpells.cooldownSecondsLeft(spell), opacity);
         }
 
         // Off cooldown: a very short, subtle flash to say "ready".
@@ -272,6 +274,35 @@ public class SpellBarOverlay {
         g.renderItem(new ItemStack(item), 0, 0);
         g.pose().popPose();
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+
+    /** The numeric cooldown readout centered on a tile - "12s" under a minute, "1:05" at or past it. Faded so it doesn't overtake the icon. */
+    private static void drawCooldownText(GuiGraphics g, Font font, int x, int y, double secondsLeft, float opacity) {
+        String text = formatCooldown(secondsLeft);
+        if (text == null) {
+            return;
+        }
+        float scale = 0.65f;
+        float tw = font.width(text) * scale;
+        g.pose().pushPose();
+        g.pose().translate(x + (SLOT - tw) / 2.0f, y + (SLOT - 7 * scale) / 2.0f, 300);
+        g.pose().scale(scale, scale, 1.0f);
+        g.drawString(font, text, 0, 0, fade(0xC8FFFFFF, opacity), true);
+        g.pose().popPose();
+    }
+
+    /** "12s" under a minute, "1:05" at a minute or more; null once there's nothing left to show. */
+    private static String formatCooldown(double secondsLeft) {
+        int total = (int) Math.ceil(secondsLeft);
+        if (total <= 0) {
+            return null;
+        }
+        if (total >= 60) {
+            int m = total / 60;
+            int s = total % 60;
+            return m + ":" + (s < 10 ? "0" + s : String.valueOf(s));
+        }
+        return total + "s";
     }
 
     /** Scales an ARGB color's alpha channel by {@code opacity}. */

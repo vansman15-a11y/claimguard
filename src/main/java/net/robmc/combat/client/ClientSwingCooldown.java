@@ -44,6 +44,15 @@ public final class ClientSwingCooldown {
         return Math.max(0f, Math.min(1f, p));
     }
 
+    /** Seconds left on the swing cooldown (rounded up), or 0 once it's ready. */
+    public static double secondsLeft() {
+        if (cdDuration <= 0) {
+            return 0;
+        }
+        long remainingTicks = cdDuration - (clientTick() - cdStart);
+        return remainingTicks > 0 ? remainingTicks / 20.0 : 0;
+    }
+
     /** 1..0 fading pulse for the first READY_FLASH_TICKS once the cooldown ends; 0 otherwise. */
     public static float readyFlash() {
         if (cdDuration <= 0) {
