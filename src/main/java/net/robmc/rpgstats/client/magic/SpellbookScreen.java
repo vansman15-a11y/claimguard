@@ -56,6 +56,9 @@ public class SpellbookScreen extends Screen {
     /** Index within expandedSlot's bind list currently being dragged (to swap with another), or -1. */
     private int draggingExpandedFrom = -1;
 
+    /** Which occupied slot is showing the "drop here to stack" preview flyout this frame, or -1. */
+    private int dragPreviewSlot = -1;
+
     public SpellbookScreen() {
         super(Component.literal("Spellbook"));
     }
@@ -270,6 +273,13 @@ public class SpellbookScreen extends Screen {
             return super.mouseReleased(mx, my, button);
         }
         int slot = slotAt(mx, my);
+        if (slot < 0 && draggingName != null && dragPreviewSlot >= 0) {
+            // released inside the drag-preview flyout rather than the tiny slot icon itself
+            int[] box = flyoutBox(dragPreviewSlot, ClientSpells.slotBindCount(dragPreviewSlot) + 1);
+            if (inside(new int[]{box[0] - 2, box[1] - 2, box[2] + 4, box[3] + 4}, mx, my)) {
+                slot = dragPreviewSlot;
+            }
+        }
         if (draggingName != null && slot >= 0) {
             // dropping onto an empty slot just sets it; onto an already-bound one, it stacks
             // on top instead (a "ray bar") - hold Shift to force a full replace instead
@@ -320,18 +330,24 @@ public class SpellbookScreen extends Screen {
 
     // --- expanded multi-bind slot flyout ---
 
-    private int[] expandedBox(int slot) {
+    private int[] flyoutBox(int slot, int tileCount) {
         int bar = slot / SpellBarOverlay.SLOTS;
         int i = slot % SpellBarOverlay.SLOTS;
-        int count = ClientSpells.slotBindCount(slot);
-        int w = count * (MINI + MINI_GAP) + MINI_GAP;
+        int w = tileCount * (MINI + MINI_GAP) + MINI_GAP;
         int x = barX(bar) - w - 6; // floats to the left of the bar, drawn on top of everything else
         int y = barY() + i * SpellBarOverlay.SLOT;
         return new int[]{x, y, w, SpellBarOverlay.SLOT};
     }
 
+    private int[] expandedBox(int slot) {
+        return flyoutBox(slot, ClientSpells.slotBindCount(slot));
+    }
+
     private int[] miniTileBox(int slot, int index) {
-        int[] box = expandedBox(slot);
+        return miniTileBoxIn(expandedBox(slot), index);
+    }
+
+    private static int[] miniTileBoxIn(int[] box, int index) {
         int x = box[0] + MINI_GAP + index * (MINI + MINI_GAP);
         int y = box[1] + (box[3] - MINI) / 2;
         return new int[]{x, y, MINI, MINI};
@@ -389,15 +405,14 @@ public class SpellbookScreen extends Screen {
             g.drawString(this.font, "Bar " + (bar + 1), bx - 1, by - 10, 0xFF9FC0FF, false);
         }
 
-        // dragging a spell over an already-bound slot - it'll stack there (a "ray bar"); expand the outline to show it
+        // dragging a spell over an already-bound slot - it'll stack there (a "ray bar"); preview
+        // the resulting stack (every spell already there, plus an empty tile for the new one)
+        dragPreviewSlot = -1;
         if (draggingName != null) {
             int hover = slotAt(mouseX, mouseY);
             if (hover >= 0 && !ClientSpells.slotName(hover).isEmpty() && !hasShiftDown()) {
-                int hb = hover / SpellBarOverlay.SLOTS;
-                int hi = hover % SpellBarOverlay.SLOTS;
-                int hx = barX(hb) - 2;
-                int hy = barY() + hi * SpellBarOverlay.SLOT - 2;
-                g.renderOutline(hx, hy, SpellBarOverlay.SLOT + 4, SpellBarOverlay.SLOT + 4, 0xFFFFE066);
+                dragPreviewSlot = hover;
+                renderDragPreview(g, dragPreviewSlot);
             }
         }
 
@@ -445,6 +460,30 @@ public class SpellbookScreen extends Screen {
             g.drawString(this.font, "x", 0, 0, 0xFFFF8080, true);
             g.pose().popPose();
         }
+    }
+
+    /**
+     * Hovering a dragged spell over an already-occupied slot: every spell already stacked there,
+     * plus one empty tile (highlighted) showing exactly where the new one will land - drop
+     * anywhere in this flyout, not just the tiny slot icon itself, to stack it there.
+     */
+    private void renderDragPreview(GuiGraphics g, int slot) {
+        List<String> binds = ClientSpells.slotBinds(slot);
+        int[] box = flyoutBox(slot, binds.size() + 1);
+        g.fill(box[0] - 2, box[1] - 2, box[0] + box[2] + 2, box[1] + box[3] + 2, 0xF0141824);
+        g.renderOutline(box[0] - 2, box[1] - 2, box[2] + 4, box[3] + 4, 0xFF9FC0FF);
+        for (int i = 0; i < binds.size(); i++) {
+            int[] t = miniTileBoxIn(box, i);
+            Spell sp = Spell.byName(binds.get(i));
+            g.fill(t[0], t[1], t[0] + MINI, t[1] + MINI, 0xC0202838);
+            g.renderOutline(t[0], t[1], MINI, MINI, i == 0 ? 0xFFFFE066 : 0xFF5A6B85);
+            if (sp != null) {
+                SpellIcons.draw(g, sp, t[0] + 1, t[1] + 1, MINI - 2);
+            }
+        }
+        int[] empty = miniTileBoxIn(box, binds.size());
+        g.fill(empty[0], empty[1], empty[0] + MINI, empty[1] + MINI, 0x60202838);
+        g.renderOutline(empty[0], empty[1], MINI, MINI, 0xFF66D9FF);
     }
 
     private void drawRow(GuiGraphics g, Row row, int x, int y) {
