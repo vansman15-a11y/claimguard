@@ -36,7 +36,7 @@ public enum Spell {
 
     // --- Air Magic (lightning & wind - mobility, chains, displacement) ---
     LIGHTNING_STRIKE("Lightning Strike", School.AIR, 1, Kind.LIGHTNING_STRIKE, Pool.MANA, null, 8, 14, 50),
-    SPEED_OF_WIND("Speed of Wind", School.AIR, 2, Kind.SPEED_OF_WIND, Pool.MANA, null, 10, 30, 60),
+    SPEED_OF_WIND("Speed of Wind", School.AIR, 2, Kind.SPEED_OF_WIND, Pool.MANA, null, 15, 60, 60),
     CHAIN_SHOCK("Chain Shock", School.AIR, 3, Kind.CHAIN_SHOCK, Pool.MANA, null, 13, 2, 120),
     WIND_LURE("Wind Lure", School.AIR, 4, Kind.WIND_LURE, Pool.MANA, null, 9, 30, 160),
     HOWLING_IMPACT("Howling Impact", School.AIR, 5, Kind.HOWLING_IMPACT, Pool.MANA, null, 12, 50, 600),

@@ -97,11 +97,6 @@ public final class SpellCasting {
             // push the "currently selected" readout the moment the key is pressed - don't wait for the cast to finish
             RpgManager.syncSpellBar(player);
         }
-        // Speed of Wind is a toggle: press it again to end the channel
-        if (spell == Spell.SPEED_OF_WIND && WindChannel.isChanneling(player.getUUID())) {
-            WindChannel.stop(player);
-            return;
-        }
         // Water Spout is a toggle too, and casting anything else drops it
         if (WaterSpoutManager.isActive(player.getUUID())) {
             WaterSpoutManager.stop(player);
@@ -367,7 +362,6 @@ public final class SpellCasting {
     }
 
     public static void interrupt(ServerPlayer player) {
-        WindChannel.stop(player); // a hit / silence also drops a Speed of Wind channel
         WaterSpoutManager.stop(player);
         MassMendManager.stop(player);
         AstralAnnihilationManager.stop(player);
@@ -991,19 +985,9 @@ public final class SpellCasting {
         }
     }
 
-    /** Speed of Wind: open a channel that hastens an ally while it drains your mana. */
+    /** Speed of Wind: a self-buff, +10% movement and +10% spell casting speed for 30 minutes. */
     private static void castSpeedOfWind(ServerPlayer player) {
-        net.minecraft.world.entity.LivingEntity target = aimedTarget(player, StatFormulas.SPEED_OF_WIND_RANGE,
-                e -> e instanceof ServerPlayer);
-        if (!(target instanceof ServerPlayer ally)) {
-            player.displayClientMessage(Component.literal("Aim at a player to channel Speed of Wind.").withStyle(ChatFormatting.GRAY), true);
-            return;
-        }
-        if (ally != player && !net.robmc.claimguard.clan.ClanActions.areFriendly(player.server, player.getUUID(), ally.getUUID())) {
-            player.displayClientMessage(Component.literal("Speed of Wind only flows to allies.").withStyle(ChatFormatting.GRAY), true);
-            return;
-        }
-        WindChannel.start(player, ally);
+        SpeedOfWindBuff.grant(player);
     }
 
     /** Chain Shock: an instant bolt that arcs from the first target to nearby ones for less each jump. */

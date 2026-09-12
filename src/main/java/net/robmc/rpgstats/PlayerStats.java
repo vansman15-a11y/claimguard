@@ -43,6 +43,9 @@ public class PlayerStats {
     /** Battle Hymn's temporary +N to Strength / Vitality / Quickness (0 = not buffed). Not persisted. */
     private int hymnBonus = 0;
 
+    /** Speed of Wind's temporary +move-speed / +cast-speed self-buff. Not persisted. */
+    private boolean windSpeedBuff = false;
+
     /** Summed encumbrance of the 4 worn armour pieces. Derived, refreshed by RpgManager.stats() - not persisted. */
     private double armorEncumbrance = 0.0;
 
@@ -112,6 +115,14 @@ public class PlayerStats {
 
     public boolean hasHymn() {
         return hymnBonus > 0;
+    }
+
+    public void setWindSpeedBuff(boolean value) {
+        this.windSpeedBuff = value;
+    }
+
+    public boolean hasWindSpeedBuff() {
+        return windSpeedBuff;
     }
 
     public double getArmorEncumbrance() {

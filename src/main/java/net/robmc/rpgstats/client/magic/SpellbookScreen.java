@@ -575,7 +575,7 @@ public class SpellbookScreen extends Screen {
             case PESTILENCE -> "instant disease ray, damage over 5s";
             case HEXDRAIN -> "bolt: steal mana from a player (1 min CD)";
             case LIGHTNING_STRIKE -> "aimed - a bolt from the sky onto a target";
-            case SPEED_OF_WIND -> "channel: haste an ally, drains your mana";
+            case SPEED_OF_WIND -> "self: +10% move & cast speed, 30 min";
             case CHAIN_SHOCK -> "instant ray, arcs to nearby targets for less";
             case WIND_LURE -> "yank a target up and toward you";
             case HOWLING_IMPACT -> "bolt bursts into a damaging wind gust";

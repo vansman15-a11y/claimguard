@@ -112,7 +112,11 @@ public final class StatFormulas {
 
     /** Cast-time multiplier (&lt;1 = faster). Floors at 0.5x from Intelligence alone, but heavy armour can push it back up past 1x. */
     public static double castSpeedMultiplier(PlayerStats s) {
-        return Math.max(0.5, 1.0 - CAST_MAX_CUT * eff(s, Stat.INTELLIGENCE)) * encumbranceCastTimeMult(s.getArmorEncumbrance());
+        double mult = Math.max(0.5, 1.0 - CAST_MAX_CUT * eff(s, Stat.INTELLIGENCE)) * encumbranceCastTimeMult(s.getArmorEncumbrance());
+        if (s.hasWindSpeedBuff()) {
+            mult *= 1.0 - SPEED_OF_WIND_CAST_SPEED;
+        }
+        return mult;
     }
 
     // --- encumbrance: heavy armour is a real tax on spellcasting ---
@@ -846,10 +850,9 @@ public final class StatFormulas {
     }
 
     // Speed of Wind: a channelled beam onto an ally - faster attacks + move speed while it drains your mana
-    public static final double SPEED_OF_WIND_RANGE = 22.0;
-    public static final double SPEED_OF_WIND_MANA_PER_TICK = 0.9;   // ~18 / second
-    public static final double SPEED_OF_WIND_ATTACK_SPEED = 0.25;   // +25% weapon attack speed on the target
+    public static final int SPEED_OF_WIND_DURATION_TICKS = 36000;   // 30 minutes
     public static final double SPEED_OF_WIND_MOVE_SPEED = 0.10;     // +10% movement speed
+    public static final double SPEED_OF_WIND_CAST_SPEED = 0.10;     // +10% spell casting speed (~10% less cast time)
 
     // Chain Shock: instant hitscan; the hit arcs to nearby targets for less and less
     public static final double CHAIN_SHOCK_RANGE = 34.0;

@@ -110,7 +110,6 @@ public final class WildShapeManager {
         s.form = form;
         s.spellLevel = spellLevel;
         shapes.put(player.getUUID(), s);
-        WindChannel.stop(player);
         WaterSpoutManager.stop(player);
         sync(player, form);
         burst(player);
