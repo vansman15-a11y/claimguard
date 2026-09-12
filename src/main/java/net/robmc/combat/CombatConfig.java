@@ -12,6 +12,12 @@ public final class CombatConfig {
     /** Hard floor between swings, regardless of attack-speed charge - stops click-spamming from bypassing it. */
     public static final int SWING_COOLDOWN_TICKS = 30; // 1.5s
 
+    // --- parry ---
+    /** Damage reduction while holding right-click with any melee weapon (not a staff - see isMeleeWeapon) alone. */
+    public static final double PARRY_WEAPON_REDUCTION = 0.35;
+    /** Damage reduction while holding right-click with a melee weapon AND a shield in the offhand. */
+    public static final double PARRY_SHIELD_REDUCTION = 0.75;
+
     // --- cleave arc ---
     /** How far in front of you the cleave reaches (blocks). Vanilla melee is ~3. */
     public static final double ARC_RANGE = 4.6;

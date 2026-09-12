@@ -7,12 +7,14 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.TridentItem;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -44,6 +46,9 @@ public final class CombatEvents {
      * doing anything else for a swing - a click that fails this check should have zero effect.
      */
     public static boolean tryStartSwing(ServerPlayer player) {
+        if (ParryManager.isParrying(player.getUUID())) {
+            return false; // shield/weapon's up - can't swing while parrying
+        }
         long now = player.serverLevel().getGameTime();
         // 0, not Long.MIN_VALUE - "now - Long.MIN_VALUE" overflows and wraps to a huge negative
         // number, which read as "still on cooldown" and blocked every player's very first swing
@@ -109,9 +114,23 @@ public final class CombatEvents {
         MeleeArc.sweep(player, primary, true); // the vanilla primary hit is about to land
     }
 
+    /** Cancel vanilla's own shield-block entirely - ParryManager's flat percentage is the only mitigation. */
+    @SubscribeEvent
+    public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        if (event.getItemStack().getItem() instanceof ShieldItem) {
+            event.setCanceled(true);
+        }
+    }
+
     /** Runs after every other damage modifier so the crit multiplies the final number. */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingHurt(LivingHurtEvent event) {
+        if (event.getEntity() instanceof ServerPlayer defender) {
+            float reduction = ParryManager.damageReduction(defender);
+            if (reduction > 0f) {
+                event.setAmount(event.getAmount() * (1f - reduction));
+            }
+        }
         if (MeleeArc.isApplyingArcHit()) {
             return; // the cleave already baked in the crit
         }
@@ -136,8 +155,19 @@ public final class CombatEvents {
     }
 
     @SubscribeEvent
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer sp) {
+            ParryManager.tick(sp);
+            ShieldSwapManager.tick(sp);
+        }
+    }
+
+    @SubscribeEvent
     public static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        ComboTracker.clear(event.getEntity().getUUID());
-        lastSwingTick.remove(event.getEntity().getUUID());
+        UUID id = event.getEntity().getUUID();
+        ComboTracker.clear(id);
+        lastSwingTick.remove(id);
+        ParryManager.clear(id);
+        ShieldSwapManager.clear(id);
     }
 }

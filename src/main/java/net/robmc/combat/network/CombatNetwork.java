@@ -7,7 +7,7 @@ import net.robmc.combat.CombatMod;
 
 public final class CombatNetwork {
 
-    private static final String PROTOCOL_VERSION = "2";
+    private static final String PROTOCOL_VERSION = "3";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(CombatMod.MODID, "main"),
@@ -28,5 +28,9 @@ public final class CombatNetwork {
                 SwingPacket::encode, SwingPacket::decode, SwingPacket::handle);
         CHANNEL.registerMessage(nextId++, SwingCooldownPacket.class,
                 SwingCooldownPacket::encode, SwingCooldownPacket::decode, SwingCooldownPacket::handle);
+        CHANNEL.registerMessage(nextId++, ParryStatePacket.class,
+                ParryStatePacket::encode, ParryStatePacket::decode, ParryStatePacket::handle);
+        CHANNEL.registerMessage(nextId++, BindShieldPacket.class,
+                BindShieldPacket::encode, BindShieldPacket::decode, BindShieldPacket::handle);
     }
 }
