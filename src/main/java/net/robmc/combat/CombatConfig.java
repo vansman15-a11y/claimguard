@@ -17,6 +17,8 @@ public final class CombatConfig {
     public static final double PARRY_WEAPON_REDUCTION = 0.35;
     /** Damage reduction while holding right-click with a melee weapon AND a shield in the offhand. */
     public static final double PARRY_SHIELD_REDUCTION = 0.75;
+    /** Half-angle (degrees) of the frontal block cone - covers the front and part of the sides; a hit from behind that ignores it. */
+    public static final double PARRY_CONE_HALF_ANGLE_DEG = 65.0;
 
     // --- cleave arc ---
     /** How far in front of you the cleave reaches (blocks). Vanilla melee is ~3. */

@@ -126,7 +126,8 @@ public final class CombatEvents {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingHurt(LivingHurtEvent event) {
         if (event.getEntity() instanceof ServerPlayer defender) {
-            float reduction = ParryManager.damageReduction(defender);
+            LivingEntity attacker = event.getSource().getEntity() instanceof LivingEntity le ? le : null;
+            float reduction = ParryManager.damageReduction(defender, attacker);
             if (reduction > 0f) {
                 event.setAmount(event.getAmount() * (1f - reduction));
             }

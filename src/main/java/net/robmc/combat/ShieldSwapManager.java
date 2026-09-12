@@ -3,9 +3,12 @@ package net.robmc.combat;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.item.SwordItem;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -16,7 +19,9 @@ import java.util.UUID;
 /**
  * Watches for the player switching their hotbar selection onto a sword that has a shield bound
  * to it (see {@link ShieldBindings}), and pulls that shield into the offhand from wherever it
- * sits in the inventory - so selecting the sword is the only hotkey needed for the pair.
+ * sits in the inventory - so selecting the sword is the only hotkey needed for the pair. Also
+ * the reverse: bows and crossbows are two-handed, so switching to one strips any shield out of
+ * the offhand back into the inventory.
  */
 public final class ShieldSwapManager {
 
@@ -38,6 +43,10 @@ public final class ShieldSwapManager {
             return; // hotbar selection hasn't changed since last tick
         }
         ItemStack held = inv.items.get(sel);
+        if (held.getItem() instanceof BowItem || held.getItem() instanceof CrossbowItem) {
+            unequipShield(player);
+            return;
+        }
         if (!(held.getItem() instanceof SwordItem)) {
             return;
         }
@@ -68,6 +77,18 @@ public final class ShieldSwapManager {
                 player.setItemInHand(InteractionHand.OFF_HAND, stack);
                 return;
             }
+        }
+    }
+
+    /** A bow/crossbow needs both hands - put whatever shield is in the offhand back in the inventory. */
+    private static void unequipShield(ServerPlayer player) {
+        ItemStack shield = player.getOffhandItem();
+        if (!(shield.getItem() instanceof ShieldItem)) {
+            return;
+        }
+        player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+        if (!player.getInventory().add(shield)) {
+            player.drop(shield, false);
         }
     }
 }
