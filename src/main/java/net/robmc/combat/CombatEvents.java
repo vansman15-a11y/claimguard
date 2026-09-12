@@ -45,7 +45,11 @@ public final class CombatEvents {
      */
     public static boolean tryStartSwing(ServerPlayer player) {
         long now = player.serverLevel().getGameTime();
-        long last = lastSwingTick.getOrDefault(player.getUUID(), Long.MIN_VALUE);
+        // 0, not Long.MIN_VALUE - "now - Long.MIN_VALUE" overflows and wraps to a huge negative
+        // number, which read as "still on cooldown" and blocked every player's very first swing
+        // forever (the early return meant lastSwingTick never got set, so every later swing hit
+        // the same overflow again)
+        long last = lastSwingTick.getOrDefault(player.getUUID(), 0L);
         if (now - last < CombatConfig.SWING_COOLDOWN_TICKS) {
             return false;
         }
