@@ -44,6 +44,7 @@ public final class AstralAnnihilationManager {
         final long startTick;
         long nextDamageTick;
         long nextDigTick;
+        Double firstDigY; // set on the first dig pass - later passes never eat below this, however deep the beam's own hole lets it reach
 
         Channel(int spellLevel, long now) {
             this.spellLevel = spellLevel;
@@ -151,7 +152,10 @@ public final class AstralAnnihilationManager {
 
             if (now >= ch.nextDigTick) {
                 ch.nextDigTick += StatFormulas.ASTRAL_ANNIHILATION_DIG_INTERVAL;
-                digAt(level, caster, end, radius);
+                if (ch.firstDigY == null) {
+                    ch.firstDigY = end.y;
+                }
+                digAt(level, caster, end, radius, ch.firstDigY);
             }
             return false;
         });
@@ -170,11 +174,17 @@ public final class AstralAnnihilationManager {
         level.playSound(null, BlockPos.containing(to), SoundEvents.BEACON_AMBIENT, SoundSource.PLAYERS, 0.4f + (float) charge, 0.5f + (float) charge);
     }
 
-    private static void digAt(ServerLevel level, ServerPlayer caster, Vec3 at, double radius) {
+    private static void digAt(ServerLevel level, ServerPlayer caster, Vec3 at, double radius, double floorY) {
         int r = (int) Math.ceil(radius);
         BlockPos centre = BlockPos.containing(at);
+        double minY = floorY - StatFormulas.ASTRAL_ANNIHILATION_MAX_DIG_DEPTH;
         for (BlockPos p : BlockPos.betweenClosed(centre.offset(-r, -r, -r), centre.offset(r, r, r))) {
             if (p.distSqr(centre) > radius * radius) {
+                continue;
+            }
+            // the beam's own hole would otherwise let each later pass reach further down than
+            // the last, digging an ever-deepening shaft instead of a shallow scorched patch
+            if (p.getY() < minY) {
                 continue;
             }
             BlockState state = level.getBlockState(p);

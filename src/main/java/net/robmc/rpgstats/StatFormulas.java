@@ -651,7 +651,7 @@ public final class StatFormulas {
     public static final int SPELLBIND_LOCK_TICKS = 60;           // 3 s
 
     // Arcane Shift: a short forward blink that can't pass through terrain
-    public static final double ARCANE_SHIFT_DISTANCE = 7.0;
+    public static final double ARCANE_SHIFT_DISTANCE = 13.0;
     public static final double ARCANE_SHIFT_MIN_TRAVEL = 1.5;    // shorter than this and it fizzles
     public static final double ARCANE_SHIFT_DECOY_RADIUS = 10.0; // hostiles this close to the old spot lose your trail
 
@@ -661,7 +661,7 @@ public final class StatFormulas {
     public static final double ASTRAL_ANNIHILATION_MANA_PER_TICK_MIN = 1.0;
     public static final double ASTRAL_ANNIHILATION_MANA_PER_TICK_MAX = 3.2;
     public static final double ASTRAL_ANNIHILATION_RANGE = 14.0;
-    public static final double ASTRAL_ANNIHILATION_MIN_RADIUS = 0.6;
+    public static final double ASTRAL_ANNIHILATION_MIN_RADIUS = 1.1;      // was 0.6 - too thin to land on a moving target
     public static final double ASTRAL_ANNIHILATION_MAX_RADIUS = 2.4;
     public static final int ASTRAL_ANNIHILATION_DAMAGE_INTERVAL = 5;      // every 0.25 s
     private static final double ASTRAL_ANNIHILATION_TICK_DMG_MIN = 0.5;
@@ -669,6 +669,7 @@ public final class StatFormulas {
     public static final int ASTRAL_ANNIHILATION_DIG_START_TICKS = 30;     // digging starts 1.5 s into the channel
     public static final int ASTRAL_ANNIHILATION_DIG_INTERVAL = 4;
     public static final double ASTRAL_ANNIHILATION_DIG_HARDNESS_CAP = 30.0; // won't eat obsidian/bedrock-tier blocks
+    public static final double ASTRAL_ANNIHILATION_MAX_DIG_DEPTH = 3.0;   // never eats more than this far below the first spot it dug
 
     /** 0 at the start of the channel, 1 at full charge (and capped there). */
     public static double astralAnnihilationCharge(long channelTicks) {
@@ -715,7 +716,7 @@ public final class StatFormulas {
     }
 
     // Wraith Step: a short blink with a blast where you land
-    public static final double WRAITH_STEP_DISTANCE = 5.0;
+    public static final double WRAITH_STEP_DISTANCE = 13.0;
     public static final double WRAITH_STEP_BLAST_RADIUS = 2.6;
     public static final double WRAITH_STEP_KNOCKBACK = 0.6;
     private static final double WRAITH_STEP_DMG_MIN = 2.5;

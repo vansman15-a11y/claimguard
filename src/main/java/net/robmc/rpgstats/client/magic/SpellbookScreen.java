@@ -593,7 +593,7 @@ public class SpellbookScreen extends Screen {
             case RAISE_MINION -> "raise a skeleton to fight for you (30s)";
             case SOUL_DRAIN -> "fast bolt, steals ~25 health from a player";
             case EYE_DECAY -> "bolt: blinds their screen in blood 1.5s";
-            case WRAITH_STEP -> "blink 5 blocks, blast where you passed";
+            case WRAITH_STEP -> "blink 13 blocks, blast where you passed";
             case CHANT_OF_GROWTH -> "hurry nearby crops & saplings along";
             case BATTLE_HYMN -> "channel: +10 STR/QUI/VIT to allies, 15 min";
             case WORD_OF_UNMAKING -> "erase a few blocks (drop them through)";
@@ -602,7 +602,7 @@ public class SpellbookScreen extends Screen {
             case ARCANE_BOLT -> "fast piercing bolt, marks for +30%";
             case MANA_RIFT -> "cracked-ground AoE, damages + disrupts casts";
             case SPELLBIND -> "instant bolt: locks their casting for 3s";
-            case ARCANE_SHIFT -> "blink 7 blocks, afterimage loses hostiles";
+            case ARCANE_SHIFT -> "blink 13 blocks, afterimage loses hostiles";
             case ASTRAL_ANNIHILATION -> "channelled beam, ramps up, roots you";
             case THORNS -> "buff: reflect part of melee/arrow hits";
             case WOLF_FORM -> "toggle wolf: +25% speed, bite + leap";

@@ -1116,7 +1116,27 @@ public final class SpellCasting {
         return target instanceof net.minecraft.world.entity.monster.Enemy;
     }
 
-    /** Wraith Step: blink 5 blocks along your aim and blast the space you passed through. */
+    /**
+     * Pulling a blink's landing point back off a wall/floor by a small fixed distance along the
+     * caster's full 3D look vector isn't enough clearance when they're looking at a shallow
+     * downward angle - the vertical component of that pull-back shrinks with the angle, but the
+     * player's own height doesn't, so a blink aimed roughly at the ground routinely lands with
+     * the feet a block or more into it. Rather than try to get the geometry perfect for every
+     * angle, just nudge the computed destination straight up, a block at a time, until the
+     * player's own bounding box is actually clear of blocks there.
+     */
+    private static Vec3 safeLandingSpot(ServerLevel level, ServerPlayer player, Vec3 dest) {
+        for (int i = 0; i < 8; i++) {
+            var box = player.getDimensions(player.getPose()).makeBoundingBox(dest);
+            if (level.noCollision(player, box)) {
+                return dest;
+            }
+            dest = dest.add(0, 1.0, 0);
+        }
+        return dest;
+    }
+
+    /** Wraith Step: blink 13 blocks along your aim and blast the space you passed through. */
     private static void castWraithStep(ServerPlayer player, int spellLevel) {
         ServerLevel level = player.serverLevel();
         Vec3 eye = player.getEyePosition();
@@ -1129,7 +1149,7 @@ public final class SpellCasting {
                 ? bhr.getLocation().subtract(look.scale(0.7)) : want;
         Vec3 origin = player.position();
         double dy = landEye.y - eye.y;
-        Vec3 dest = new Vec3(landEye.x, origin.y + dy, landEye.z);
+        Vec3 dest = safeLandingSpot(level, player, new Vec3(landEye.x, origin.y + dy, landEye.z));
 
         level.sendParticles(net.minecraft.core.particles.ParticleTypes.SCULK_SOUL,
                 origin.x, origin.y + 1.0, origin.z, 24, 0.3, 0.6, 0.3, 0.02);
@@ -1214,7 +1234,7 @@ public final class SpellCasting {
         }
     }
 
-    /** Arcane Shift: blink 7 blocks along your aim, leaving an afterimage that loses nearby hostiles your trail. */
+    /** Arcane Shift: blink 13 blocks along your aim, leaving an afterimage that loses nearby hostiles your trail. */
     private static void castArcaneShift(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
         Vec3 eye = player.getEyePosition();
@@ -1231,7 +1251,7 @@ public final class SpellCasting {
             return;
         }
         double dy = landEye.y - eye.y;
-        Vec3 dest = new Vec3(landEye.x, origin.y + dy, landEye.z);
+        Vec3 dest = safeLandingSpot(level, player, new Vec3(landEye.x, origin.y + dy, landEye.z));
 
         // the afterimage: a lingering burst where you stood, and nearby hostiles lose track of you
         level.sendParticles(net.minecraft.core.particles.ParticleTypes.FLASH, origin.x, origin.y + 1.0, origin.z, 1, 0, 0, 0, 0);

@@ -56,7 +56,7 @@ public enum Spell {
     FISSURE("Fissure", School.EARTH, 5, Kind.FISSURE, Pool.MANA, null, 20, 80, 2400),
 
     // --- Arcana (raw arcane power - bolts, rifts, control, blinks, a channelled ultimate) ---
-    ARCANE_BOLT("Arcane Bolt", School.ARCANA, 1, Kind.ARCANE_BOLT, Pool.MANA, null, 8, 40, 80),
+    ARCANE_BOLT("Arcane Bolt", School.ARCANA, 1, Kind.ARCANE_BOLT, Pool.MANA, null, 8, 40, 30),
     MANA_RIFT("Mana Rift", School.ARCANA, 2, Kind.MANA_RIFT, Pool.MANA, null, 12, 60, 700),
     SPELLBIND("Spellbind", School.ARCANA, 3, Kind.SPELLBIND, Pool.MANA, null, 10, 20, 600),
     ARCANE_SHIFT("Arcane Shift", School.ARCANA, 4, Kind.ARCANE_SHIFT, Pool.MANA, null, 10, 2, 900),
